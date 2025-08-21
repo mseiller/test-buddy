@@ -88,8 +88,8 @@ export class FileProcessor {
       // Import pdfjs-dist dynamically to avoid SSR issues
       const pdfjsLib = await import('pdfjs-dist');
       
-      // Set worker source to a CDN version
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      // Set worker source to a CDN version that matches our library version
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.54/pdf.worker.min.js';
       
       // Read the file as ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
