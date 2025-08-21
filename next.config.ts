@@ -6,8 +6,6 @@ const nextConfig: NextConfig = {
     // Reduce memory usage during build
     optimizePackageImports: ['lucide-react'],
   },
-  // Reduce bundle size
-  swcMinify: true,
   // Optimize images
   images: {
     unoptimized: true,

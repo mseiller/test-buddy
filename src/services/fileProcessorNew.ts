@@ -11,8 +11,9 @@ export class FileProcessorNew {
       case 'pdf':
         return this.extractFromPdf(file);
       case 'doc':
-      case 'docx':
         return this.extractFromDoc(file);
+      case 'docx':
+        return this.extractFromDocx(file);
       case 'csv':
         return this.extractFromCsv(file);
       case 'xls':
@@ -82,18 +83,52 @@ export class FileProcessorNew {
   }
 
   private static async extractFromDoc(file: File): Promise<string> {
+    console.log('NEW DOC PROCESSOR - Starting DOC extraction for file:', file.name, 'Size:', file.size);
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
           const arrayBuffer = e.target?.result as ArrayBuffer;
+          console.log('NEW DOC PROCESSOR - Extracting text from DOC file...');
           const result = await mammoth.extractRawText({ arrayBuffer });
+          console.log('NEW DOC PROCESSOR - DOC extraction successful. Text length:', result.value?.length || 0);
           resolve(result.value);
         } catch (error) {
+          console.error('NEW DOC PROCESSOR - DOC extraction failed:', error);
           reject(error);
         }
       };
       reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  private static async extractFromDocx(file: File): Promise<string> {
+    console.log('NEW DOCX PROCESSOR - Starting DOCX extraction for file:', file.name, 'Size:', file.size);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          console.log('NEW DOCX PROCESSOR - Extracting text from DOCX file...');
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          console.log('NEW DOCX PROCESSOR - DOCX extraction successful. Text length:', result.value?.length || 0);
+          
+          if (!result.value || result.value.trim().length === 0) {
+            console.warn('NEW DOCX PROCESSOR - DOCX extracted but contains no text content');
+            throw new Error('No text content found in DOCX file. The file might be corrupted or contain only images.');
+          }
+          
+          resolve(result.value);
+        } catch (error) {
+          console.error('NEW DOCX PROCESSOR - DOCX extraction failed:', error);
+          reject(error);
+        }
+      };
+      reader.onerror = (error) => {
+        console.error('NEW DOCX PROCESSOR - FileReader error:', error);
+        reject(error);
+      };
       reader.readAsArrayBuffer(file);
     });
   }
