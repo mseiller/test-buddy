@@ -35,12 +35,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
       return;
     }
     
-    if (files.length > 1) {
-      onError('Please upload only one file at a time. Multiple files are not supported.');
-      return;
-    }
-    
-    handleFile(files[0]);
+    handleMultipleFiles(files);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,50 +44,60 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
       return;
     }
     
-    if (files.length > 1) {
-      onError('Please upload only one file at a time. Multiple files are not supported.');
-      return;
-    }
-    
-    handleFile(files[0]);
+    handleMultipleFiles(Array.from(files));
   };
 
-  const handleFile = async (file: File) => {
-    // Validate file type
-    if (!FileProcessor.validateFileType(file.name)) {
-      onError('Unsupported file type. Please upload .txt, .pdf, .doc, .docx, .csv, .xls, or .xlsx files.');
-      return;
-    }
+  const handleMultipleFiles = async (files: File[]) => {
+    // Validate all files
+    for (const file of files) {
+      if (!FileProcessor.validateFileType(file.name)) {
+        onError(`Unsupported file type: ${file.name}. Please upload .txt, .pdf, .doc, .docx, .csv, .xls, or .xlsx files.`);
+        return;
+      }
 
-    // Validate file size
-    if (file.size > FileProcessor.getMaxFileSize()) {
-      onError('File size too large. Please upload files smaller than 10MB.');
-      return;
+      if (file.size > FileProcessor.getMaxFileSize()) {
+        onError(`File too large: ${file.name}. Please upload files smaller than 10MB.`);
+        return;
+      }
     }
 
     setProcessing(true);
     try {
-      const extractedText = await FileProcessor.extractTextFromFile(file);
+      let combinedText = '';
+      const fileNames: string[] = [];
+
+      for (const file of files) {
+        const extractedText = await FileProcessor.extractTextFromFile(file);
+        
+        if (extractedText.trim()) {
+          combinedText += `\n\n--- ${file.name} ---\n\n${extractedText}`;
+          fileNames.push(file.name);
+        }
+      }
       
-      if (!extractedText.trim()) {
-        onError('No text could be extracted from this file. Please try a different file.');
+      if (!combinedText.trim()) {
+        onError('No text could be extracted from any of the files. Please try different files.');
         return;
       }
 
       const fileUpload: FileUploadType = {
-        file,
-        extractedText,
-        fileName: file.name,
-        fileType: file.type || 'unknown',
+        file: files[0], // Use first file as representative
+        extractedText: combinedText,
+        fileName: files.length === 1 ? files[0].name : `${files.length} files: ${fileNames.join(', ')}`,
+        fileType: 'multiple',
       };
 
       setUploadedFile(fileUpload);
       onFileProcessed(fileUpload);
     } catch (error: any) {
-      onError(error.message || 'Failed to process file');
+      onError(error.message || 'Failed to process files');
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleFile = async (file: File) => {
+    await handleMultipleFiles([file]);
   };
 
   const removeFile = () => {
@@ -159,10 +164,10 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
             <>
               <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Upload a file to create a quiz
+                Upload files to create a quiz
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Drag and drop a single file here, or click to browse
+                Drag and drop files here, or click to browse
               </p>
               
               <button
@@ -176,6 +181,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 accept={getSupportedFormats().join(',')}
                 onChange={handleFileSelect}
                 className="hidden"
@@ -185,7 +191,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
                 <p className="mb-1">Supported formats:</p>
                 <p>{getSupportedFormats().join(', ')}</p>
                 <p className="mt-1">Maximum file size: 10MB</p>
-                <p className="mt-1 text-indigo-600">Note: Only one file at a time</p>
+                <p className="mt-1 text-indigo-600">Note: Multiple files will be combined</p>
               </div>
             </>
           )}

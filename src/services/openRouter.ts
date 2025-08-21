@@ -25,7 +25,7 @@ export class OpenRouterService {
           'X-Title': 'Test Buddy Quiz Generator',
         },
         body: JSON.stringify({
-          model: 'microsoft/wizardlm-2-8x22b',
+          model: 'gpt-oss-20b',
           messages: [
             {
               role: 'system',
@@ -208,7 +208,7 @@ Requirements:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'microsoft/wizardlm-2-8x22b',
+          model: 'gpt-oss-20b',
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 10,
         }),
