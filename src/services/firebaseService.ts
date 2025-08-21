@@ -5,6 +5,8 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import {
   collection,
@@ -54,6 +56,22 @@ export class FirebaseService {
       };
     } catch (error: any) {
       throw new Error(error.message || 'Failed to sign in');
+    }
+  }
+
+  static async signInWithGoogle(): Promise<User> {
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      return {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || undefined,
+      };
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to sign in with Google');
     }
   }
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FirebaseService } from '@/services/firebaseService';
 import { User } from '@/types';
+import { Chrome } from 'lucide-react';
 
 interface AuthFormProps {
   onAuthSuccess: (user: User) => void;
@@ -28,6 +29,20 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps) {
       } else {
         user = await FirebaseService.signIn(email, password);
       }
+      onAuthSuccess(user);
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const user = await FirebaseService.signInWithGoogle();
       onAuthSuccess(user);
     } catch (error: any) {
       setError(error.message);
@@ -108,7 +123,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps) {
             </div>
           </div>
 
-          <div>
+          <div className="space-y-3">
             <button
               type="submit"
               disabled={loading}
@@ -122,6 +137,25 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps) {
               ) : (
                 isSignUp ? 'Create Account' : 'Sign In'
               )}
+            </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            >
+              <Chrome className="h-5 w-5 mr-2" />
+              Google
             </button>
           </div>
 
