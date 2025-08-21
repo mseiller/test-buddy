@@ -26,6 +26,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [authLoading, setAuthLoading] = useState(true);
+  const [isRetaking, setIsRetaking] = useState(false);
+  const [retakeTestName, setRetakeTestName] = useState('');
 
   // Check authentication state on mount
   useEffect(() => {
@@ -71,6 +73,8 @@ export default function Home() {
     setScore(0);
     setTimeTaken(0);
     setError('');
+    setIsRetaking(false);
+    setRetakeTestName('');
   };
 
   const handleFileProcessed = (fileUpload: FileUploadType) => {
@@ -88,6 +92,10 @@ export default function Home() {
     setLoading(true);
     setError('');
     setTestName(name);
+    
+    // Reset retake states when starting new quiz
+    setIsRetaking(false);
+    setRetakeTestName('');
 
     try {
       const generatedQuestions = await OpenRouterService.generateQuiz(
@@ -122,6 +130,8 @@ export default function Home() {
         userId: user.uid,
         testName,
         fileName: uploadedFile.fileName,
+        fileType: uploadedFile.fileType,
+        extractedText: uploadedFile.extractedText, // Store for retaking
         quizType: questions.every(q => q.type === questions[0].type) 
           ? questions[0].type as QuizType 
           : 'Mixed',
@@ -148,6 +158,14 @@ export default function Home() {
     setAppState('quiz');
   };
 
+  const handleNewQuizFromFile = () => {
+    // Go back to config to generate new questions from the same file
+    setAnswers([]);
+    setScore(0);
+    setTimeTaken(0);
+    setAppState('config');
+  };
+
   const handleGoHome = () => {
     resetAppState();
     setAppState('upload');
@@ -172,6 +190,21 @@ export default function Home() {
 
   const handleViewHistory = () => {
     setAppState('history');
+  };
+
+  const handleRetakeFromHistory = (test: TestHistoryType) => {
+    // Create a file upload object from the stored test data
+    const fileUpload: FileUploadType = {
+      file: new File([test.extractedText], test.fileName), // Create file with stored text
+      extractedText: test.extractedText,
+      fileName: test.fileName,
+      fileType: test.fileType
+    };
+    
+    setUploadedFile(fileUpload);
+    setIsRetaking(true);
+    setRetakeTestName(test.testName);
+    setAppState('config');
   };
 
   if (authLoading) {
@@ -289,6 +322,8 @@ export default function Home() {
             <QuizConfig 
               onConfigSubmit={handleConfigSubmit}
               loading={loading}
+              isRetake={isRetaking}
+              originalTestName={retakeTestName}
             />
           </div>
         )}
@@ -311,11 +346,15 @@ export default function Home() {
             testName={testName}
             onRetakeQuiz={handleRetakeQuiz}
             onGoHome={handleGoHome}
+            onNewQuizFromFile={handleNewQuizFromFile}
           />
         )}
 
         {appState === 'history' && user && (
-          <TestHistory userId={user.uid} />
+          <TestHistory 
+            userId={user.uid} 
+            onRetakeQuiz={handleRetakeFromHistory}
+          />
         )}
       </main>
 

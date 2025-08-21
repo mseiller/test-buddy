@@ -7,6 +7,8 @@ import { QuizType } from '@/types';
 interface QuizConfigProps {
   onConfigSubmit: (quizType: QuizType, questionCount: number, testName: string) => void;
   loading?: boolean;
+  isRetake?: boolean;
+  originalTestName?: string;
 }
 
 export default function QuizConfig({ onConfigSubmit, loading = false }: QuizConfigProps) {
@@ -54,8 +56,24 @@ export default function QuizConfig({ onConfigSubmit, loading = false }: QuizConf
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center space-x-3 mb-6">
         <Settings className="h-6 w-6 text-indigo-600" />
-        <h2 className="text-xl font-semibold text-gray-900">Quiz Configuration</h2>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {isRetake ? 'Retake Quiz Configuration' : 'Quiz Configuration'}
+        </h2>
       </div>
+
+      {isRetake && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center space-x-2">
+            <Shuffle className="h-5 w-5 text-blue-600" />
+            <div>
+              <h3 className="text-blue-800 font-medium">Retaking Quiz</h3>
+              <p className="text-blue-700 text-sm">
+                Generating new questions from the same content: <strong>{originalTestName}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Test Name */}

@@ -9,6 +9,8 @@ export interface TestHistory {
   userId: string;
   testName: string;
   fileName: string;
+  fileType: string;
+  extractedText: string; // Store the extracted text for retaking
   quizType: QuizType;
   questions: Question[];
   answers: UserAnswer[];

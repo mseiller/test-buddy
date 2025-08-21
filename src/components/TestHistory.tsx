@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { History, Clock, FileText, Trophy, Trash2, Eye, Calendar } from 'lucide-react';
+import { History, Clock, FileText, Trophy, Trash2, Eye, Calendar, RotateCcw } from 'lucide-react';
 import { TestHistory as TestHistoryType } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
 
 interface TestHistoryProps {
   userId: string;
   onViewTest?: (testId: string) => void;
+  onRetakeQuiz?: (test: TestHistoryType) => void;
 }
 
 export default function TestHistory({ userId, onViewTest }: TestHistoryProps) {
@@ -193,6 +194,16 @@ export default function TestHistory({ userId, onViewTest }: TestHistoryProps) {
                   </div>
 
                   <div className="flex items-center space-x-2 ml-4">
+                    {onRetakeQuiz && (
+                      <button
+                        onClick={() => onRetakeQuiz(test)}
+                        className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                        title="Retake quiz with new questions"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </button>
+                    )}
+                    
                     {onViewTest && (
                       <button
                         onClick={() => onViewTest(test.id)}

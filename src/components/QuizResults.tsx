@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trophy, CheckCircle, XCircle, Clock, Book, RotateCcw, Home, Eye } from 'lucide-react';
+import { Trophy, CheckCircle, XCircle, Clock, Book, RotateCcw, Home, Eye, Shuffle } from 'lucide-react';
 import { Question, UserAnswer } from '@/types';
 
 interface QuizResultsProps {
@@ -12,6 +12,7 @@ interface QuizResultsProps {
   testName: string;
   onRetakeQuiz: () => void;
   onGoHome: () => void;
+  onNewQuizFromFile?: () => void;
 }
 
 export default function QuizResults({ 
@@ -274,6 +275,16 @@ export default function QuizResults({
             <RotateCcw className="h-4 w-4" />
             <span>Retake Quiz</span>
           </button>
+          
+          {onNewQuizFromFile && (
+            <button
+              onClick={onNewQuizFromFile}
+              className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Shuffle className="h-4 w-4" />
+              <span>New Questions</span>
+            </button>
+          )}
           
           <button
             onClick={onGoHome}
