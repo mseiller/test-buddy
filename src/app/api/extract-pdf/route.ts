@@ -63,8 +63,10 @@ export async function POST(request: NextRequest) {
       // Provide more specific error information
       let errorMessage = 'Failed to extract text from PDF.';
       let statusCode = 500;
+      let originalError = 'Unknown error';
       
-      if (pdfError.message) {
+      if (pdfError instanceof Error) {
+        originalError = pdfError.message;
         const errorMsg = pdfError.message.toLowerCase();
         
         if (errorMsg.includes('password') || errorMsg.includes('encrypted')) {
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: errorMessage,
-          originalError: pdfError.message,
+          originalError: originalError,
           suggestion: 'Try converting the PDF to a different format or removing any password protection.'
         },
         { status: statusCode }
