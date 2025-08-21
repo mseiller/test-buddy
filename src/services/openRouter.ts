@@ -16,6 +16,18 @@ export class OpenRouterService {
     const prompt = this.createPrompt(text, quizType, questionCount);
 
     try {
+      console.log('OpenRouter: Starting API request to:', this.API_URL);
+      console.log('OpenRouter: API Key configured:', !!this.API_KEY);
+      console.log('OpenRouter: Request payload size:', JSON.stringify({
+        model: 'gpt-oss-20b',
+        messages: [
+          { role: 'system', content: '...' },
+          { role: 'user', content: prompt.substring(0, 100) + '...' }
+        ],
+        temperature: 0.5,
+        max_tokens: 4000,
+      }).length, 'characters');
+      
       const response = await fetch(this.API_URL, {
         method: 'POST',
         headers: {
@@ -41,21 +53,36 @@ export class OpenRouterService {
         }),
       });
 
+      console.log('OpenRouter: Response status:', response.status, response.statusText);
+      console.log('OpenRouter: Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenRouter: Error response body:', errorText);
         throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('OpenRouter: Response data structure:', Object.keys(data));
       const content = data.choices[0]?.message?.content;
 
       if (!content) {
+        console.error('OpenRouter: No content in response data:', data);
         throw new Error('No content received from OpenRouter API');
       }
 
+      console.log('OpenRouter: Content received, length:', content.length);
       return this.parseQuizResponse(content);
     } catch (error) {
-      console.error('OpenRouter API error:', error);
-      throw new Error('Failed to generate quiz questions');
+      console.error('OpenRouter: Detailed error information:', error);
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.error('OpenRouter: Network error - this usually means:');
+        console.error('1. No internet connection');
+        console.error('2. CORS issue');
+        console.error('3. API endpoint is down');
+        console.error('4. Request timeout');
+      }
+      throw new Error(`Failed to generate quiz questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

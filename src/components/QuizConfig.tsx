@@ -69,7 +69,7 @@ export default function QuizConfig({ onConfigSubmit, loading = false }: QuizConf
             value={testName}
             onChange={(e) => setTestName(e.target.value)}
             placeholder="Enter a name for your test (e.g., 'Software Security Quiz')"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-base"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-base text-black"
             autoFocus
           />
           <p className="text-xs text-gray-500 mt-1">
