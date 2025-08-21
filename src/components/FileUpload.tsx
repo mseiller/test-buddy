@@ -198,7 +198,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
               <div className="mt-4 text-xs text-gray-500">
                 <p className="mb-1">Supported formats:</p>
                 <p>{getSupportedFormats().join(', ')}</p>
-                <p className="mt-1">Maximum file size: 15MB</p>
+                <p className="mt-1">Maximum file size: 15MB (PDFs limited to 4MB)</p>
                 <p className="mt-1 text-indigo-600">Note: Multiple files will be combined</p>
               </div>
             </>
