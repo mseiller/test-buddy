@@ -76,7 +76,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
       }
       
       if (!combinedText.trim()) {
-        onError('No text could be extracted from any of the files. Please try different files.');
+        onError('No text could be extracted from any of the files. Please try different files or manually enter text.');
         return;
       }
 
