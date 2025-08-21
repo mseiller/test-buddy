@@ -42,6 +42,12 @@ export class FileProcessor {
   private static async extractFromPdf(file: File): Promise<string> {
     console.log('Starting PDF extraction for file:', file.name, 'Size:', file.size);
     
+    // For files larger than 4MB, use client-side parsing to avoid Vercel's 4.5MB limit
+    if (file.size > 4 * 1024 * 1024) {
+      console.log('File is larger than 4MB, using client-side parsing');
+      return this.extractFromPdfClientSide(file);
+    }
+    
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -72,6 +78,54 @@ export class FileProcessor {
     } catch (error) {
       console.error('PDF extraction failed:', error);
       throw new Error(`PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  private static async extractFromPdfClientSide(file: File): Promise<string> {
+    console.log('Using client-side PDF parsing for large file');
+    
+    try {
+      // Import pdfjs-dist dynamically to avoid SSR issues
+      const pdfjsLib = await import('pdfjs-dist');
+      
+      // Set up the worker
+      const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+      
+      // Read the file as ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Load the PDF document
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      
+      console.log('PDF loaded, pages:', pdf.numPages);
+      
+      let fullText = '';
+      
+      // Extract text from each page
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+        
+        fullText += pageText + '\n\n';
+        
+        console.log(`Extracted page ${pageNum}/${pdf.numPages}`);
+      }
+      
+      if (fullText.trim()) {
+        console.log('Client-side PDF extraction successful. Text length:', fullText.length);
+        return fullText;
+      } else {
+        throw new Error('PDF contains no extractable text content');
+      }
+    } catch (error) {
+      console.error('Client-side PDF extraction failed:', error);
+      throw new Error(`Failed to extract PDF text: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
