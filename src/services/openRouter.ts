@@ -15,19 +15,25 @@ export class OpenRouterService {
 
     const prompt = this.createPrompt(text, quizType, questionCount);
 
+    // Choose model based on question count
+    const model = questionCount > 25 ? 'anthropic/claude-3.5-sonnet' : 'gpt-oss-20b';
+    const maxTokens = questionCount > 25 ? 16000 : 8000;
+    
+    console.log('OpenRouter: Starting API request to:', this.API_URL);
+    console.log('OpenRouter: API Key configured:', !!this.API_KEY);
+    console.log('OpenRouter: Selected model:', model, 'for', questionCount, 'questions');
+    console.log('OpenRouter: Max tokens:', maxTokens);
+    console.log('OpenRouter: Request payload size:', JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: '...' },
+        { role: 'user', content: prompt.substring(0, 100) + '...' }
+      ],
+      temperature: 0.5,
+      max_tokens: maxTokens,
+    }).length, 'characters');
+    
     try {
-      console.log('OpenRouter: Starting API request to:', this.API_URL);
-      console.log('OpenRouter: API Key configured:', !!this.API_KEY);
-      console.log('OpenRouter: Request payload size:', JSON.stringify({
-        model: 'gpt-oss-20b',
-        messages: [
-          { role: 'system', content: '...' },
-          { role: 'user', content: prompt.substring(0, 100) + '...' }
-        ],
-        temperature: 0.5,
-        max_tokens: 4000,
-      }).length, 'characters');
-      
       const response = await fetch(this.API_URL, {
         method: 'POST',
         headers: {
@@ -37,7 +43,7 @@ export class OpenRouterService {
           'X-Title': 'Test Buddy Quiz Generator',
         },
         body: JSON.stringify({
-          model: 'gpt-oss-20b',
+          model: model,
           messages: [
             {
               role: 'system',
@@ -49,7 +55,7 @@ export class OpenRouterService {
             }
           ],
           temperature: 0.5,
-          max_tokens: 4000,
+          max_tokens: maxTokens,
         }),
       });
 
@@ -353,9 +359,9 @@ Requirements:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-oss-20b',
+          model: 'gpt-oss-20b', // Use free model for validation
           messages: [{ role: 'user', content: 'Hello' }],
-          max_tokens: 10,
+          max_tokens: 100,
         }),
       });
 
