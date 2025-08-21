@@ -11,7 +11,7 @@ interface TestHistoryProps {
   onRetakeQuiz?: (test: TestHistoryType) => void;
 }
 
-export default function TestHistory({ userId, onViewTest }: TestHistoryProps) {
+export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHistoryProps) {
   const [tests, setTests] = useState<TestHistoryType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
