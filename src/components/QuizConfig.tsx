@@ -61,16 +61,20 @@ export default function QuizConfig({ onConfigSubmit, loading = false }: QuizConf
         {/* Test Name */}
         <div>
           <label htmlFor="testName" className="block text-sm font-medium text-gray-700 mb-2">
-            Test Name (Optional)
+            Test Name
           </label>
           <input
             type="text"
             id="testName"
             value={testName}
             onChange={(e) => setTestName(e.target.value)}
-            placeholder="Enter a name for your test"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            placeholder="Enter a name for your test (e.g., 'Software Security Quiz')"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-base"
+            autoFocus
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Leave blank to use default name based on quiz type
+          </p>
         </div>
 
         {/* Quiz Type Selection */}
@@ -123,7 +127,7 @@ export default function QuizConfig({ onConfigSubmit, loading = false }: QuizConf
               type="range"
               id="questionCount"
               min="5"
-              max="15"
+              max="50"
               value={questionCount}
               onChange={(e) => setQuestionCount(parseInt(e.target.value))}
               className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
@@ -137,7 +141,7 @@ export default function QuizConfig({ onConfigSubmit, loading = false }: QuizConf
           </div>
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>5 questions</span>
-            <span>15 questions</span>
+            <span>50 questions</span>
           </div>
         </div>
 

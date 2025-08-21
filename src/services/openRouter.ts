@@ -37,7 +37,7 @@ export class OpenRouterService {
             }
           ],
           temperature: 0.5,
-          max_tokens: 2000,
+          max_tokens: 4000,
         }),
       });
 
@@ -63,12 +63,13 @@ export class OpenRouterService {
     const basePrompt = `Based on the following text content, generate ${questionCount} ${quizType === 'Mixed' ? 'mixed-type' : quizType} questions.
 
 Content:
-${text.substring(0, 4000)} ${text.length > 4000 ? '...' : ''}
+${text.substring(0, 6000)} ${text.length > 6000 ? '...' : ''}
 
 Requirements:
 - Generate exactly ${questionCount} questions
 - Each question should test understanding of the content
 - Include explanations for answers
+- For larger question counts (15+), ensure variety in topics covered
 - Format the response as a JSON array with the following structure:
 
 [
