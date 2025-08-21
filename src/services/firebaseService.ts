@@ -107,12 +107,24 @@ export class FirebaseService {
         completedAt: testHistory.completedAt ? Timestamp.fromDate(testHistory.completedAt) : null,
       };
 
+      console.log('Attempting to save test history for user:', testHistory.userId);
       const docRef = await addDoc(collection(db, 'testHistory'), testHistoryData);
+      console.log('Test history saved successfully with ID:', docRef.id);
       return docRef.id;
     } catch (error: any) {
       console.error('Firestore save error:', error);
-      // Don't throw error for test history - it's not critical for quiz functionality
-      return 'saved-offline';
+      
+      // Try to provide more specific error information
+      if (error.code === 'permission-denied') {
+        console.error('Permission denied - check Firestore rules');
+        throw new Error('Permission denied - unable to save test history');
+      } else if (error.code === 'unavailable') {
+        console.error('Firestore unavailable - network issue');
+        throw new Error('Network error - unable to save test history');
+      } else {
+        console.error('Unknown Firestore error:', error.code, error.message);
+        throw new Error('Failed to save test history: ' + error.message);
+      }
     }
   }
 
@@ -220,5 +232,20 @@ export class FirebaseService {
       email: firebaseUser.email || '',
       displayName: firebaseUser.displayName || undefined,
     };
+  }
+
+  // Test Firestore connectivity
+  static async testFirestoreConnection(): Promise<boolean> {
+    try {
+      const testDoc = await addDoc(collection(db, 'test'), {
+        test: true,
+        timestamp: Timestamp.now(),
+      });
+      await deleteDoc(doc(db, 'test', testDoc.id));
+      return true;
+    } catch (error) {
+      console.error('Firestore connection test failed:', error);
+      return false;
+    }
   }
 } 

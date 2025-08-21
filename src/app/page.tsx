@@ -33,6 +33,15 @@ export default function Home() {
       setUser(user);
       setAppState(user ? 'upload' : 'auth');
       setAuthLoading(false);
+      
+      // Test Firestore connection when user is authenticated
+      if (user) {
+        FirebaseService.testFirestoreConnection().then(isConnected => {
+          if (!isConnected) {
+            console.warn('Firestore connection test failed - test history may not save');
+          }
+        });
+      }
     });
 
     return () => unsubscribe();
@@ -123,10 +132,12 @@ export default function Home() {
         completedAt: new Date(),
       };
 
-      await FirebaseService.saveTestHistory(testHistory);
+      const savedId = await FirebaseService.saveTestHistory(testHistory);
+      console.log('Test history saved successfully with ID:', savedId);
     } catch (error: any) {
       console.error('Failed to save test history:', error);
-      // Don't show error to user as the quiz is complete
+      // Show a non-intrusive message to the user
+      setError('Quiz completed successfully! Note: Test history may not have been saved due to a connection issue.');
     }
   };
 
