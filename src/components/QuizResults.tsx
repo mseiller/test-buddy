@@ -229,7 +229,7 @@ export default function QuizResults({
           {percentage >= 91 && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <h3 className="text-green-800 font-semibold mb-1">Excellent Work! 🎉</h3>
-              <p className="text-green-700">Outstanding performance! You've mastered this material.</p>
+              <p className="text-green-700">Outstanding performance! You&apos;ve mastered this material.</p>
             </div>
           )}
           {percentage >= 81 && percentage < 91 && (
@@ -241,7 +241,7 @@ export default function QuizResults({
           {percentage >= 71 && percentage < 81 && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <h3 className="text-yellow-800 font-semibold mb-1">Keep Practicing 📚</h3>
-              <p className="text-yellow-700">You're on the right track. Study the material and try again.</p>
+              <p className="text-yellow-700">You&apos;re on the right track. Study the material and try again.</p>
             </div>
           )}
           {percentage >= 61 && percentage < 71 && (

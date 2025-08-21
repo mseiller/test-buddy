@@ -11,7 +11,7 @@ interface QuizConfigProps {
   originalTestName?: string;
 }
 
-export default function QuizConfig({ onConfigSubmit, loading = false }: QuizConfigProps) {
+export default function QuizConfig({ onConfigSubmit, loading = false, isRetake = false, originalTestName }: QuizConfigProps) {
   const [quizType, setQuizType] = useState<QuizType>('MCQ');
   const [questionCount, setQuestionCount] = useState(5);
   const [testName, setTestName] = useState('');
