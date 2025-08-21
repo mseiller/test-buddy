@@ -88,8 +88,8 @@ export class FileProcessor {
       // Import pdfjs-dist dynamically to avoid SSR issues
       const pdfjsLib = await import('pdfjs-dist');
       
-      // Disable worker to avoid CDN issues - use synchronous parsing
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+      // Set worker source to a valid URL that should work
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@5.4.54/build/pdf.worker.min.js';
       
       // Read the file as ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
