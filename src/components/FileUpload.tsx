@@ -30,16 +30,31 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
     e.preventDefault();
     setDragOver(false);
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFile(files[0]);
+    
+    if (files.length === 0) {
+      return;
     }
+    
+    if (files.length > 1) {
+      onError('Please upload only one file at a time. Multiple files are not supported.');
+      return;
+    }
+    
+    handleFile(files[0]);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFile(files[0]);
+    if (!files || files.length === 0) {
+      return;
     }
+    
+    if (files.length > 1) {
+      onError('Please upload only one file at a time. Multiple files are not supported.');
+      return;
+    }
+    
+    handleFile(files[0]);
   };
 
   const handleFile = async (file: File) => {
@@ -147,7 +162,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
                 Upload a file to create a quiz
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Drag and drop your file here, or click to browse
+                Drag and drop a single file here, or click to browse
               </p>
               
               <button
@@ -170,6 +185,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
                 <p className="mb-1">Supported formats:</p>
                 <p>{getSupportedFormats().join(', ')}</p>
                 <p className="mt-1">Maximum file size: 10MB</p>
+                <p className="mt-1 text-indigo-600">Note: Only one file at a time</p>
               </div>
             </>
           )}
