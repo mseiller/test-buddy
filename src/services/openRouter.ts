@@ -237,10 +237,70 @@ Requirements:
       // Try to extract partial JSON if possible
       try {
         console.log('OpenRouter: Attempting to extract partial JSON...');
+        
+        // Look for complete question objects in the content
+        const questionMatches = content.match(/\{[^}]*"id"[^}]*"type"[^}]*"question"[^}]*\}/g);
+        
+        if (questionMatches && questionMatches.length > 0) {
+          console.log('OpenRouter: Found', questionMatches.length, 'potential question objects');
+          
+          const validQuestions = [];
+          
+          for (let i = 0; i < questionMatches.length; i++) {
+            try {
+              const questionJson = questionMatches[i];
+              console.log('OpenRouter: Attempting to parse question', i + 1, ':', questionJson.substring(0, 100) + '...');
+              
+              // Clean the question JSON
+              let cleanedQuestion = questionJson
+                .replace(/,\s*([}\]])/g, '$1')
+                .replace(/\n/g, ' ')
+                .replace(/\r/g, ' ')
+                .replace(/\t/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+              
+              // Try to complete the JSON if it's cut off
+              if (!cleanedQuestion.endsWith('}')) {
+                // Find the last complete property
+                const lastCompleteMatch = cleanedQuestion.match(/"[^"]*"\s*:\s*"[^"]*"$/);
+                if (lastCompleteMatch) {
+                  cleanedQuestion += '}';
+                }
+              }
+              
+              const question = JSON.parse(cleanedQuestion);
+              
+              // Validate the question has required fields
+              if (question.id && question.type && question.question) {
+                validQuestions.push({
+                  id: question.id,
+                  type: question.type,
+                  question: question.question,
+                  options: question.options || undefined,
+                  correctAnswer: question.correctAnswer,
+                  explanation: question.explanation || 'No explanation provided',
+                  points: question.points || 1,
+                });
+                console.log('OpenRouter: Successfully parsed question', i + 1);
+              }
+            } catch (questionError) {
+              console.error('OpenRouter: Failed to parse question', i + 1, ':', questionError);
+              // Continue with next question
+            }
+          }
+          
+          if (validQuestions.length > 0) {
+            console.log('OpenRouter: Successfully extracted', validQuestions.length, 'valid questions from partial JSON');
+            return validQuestions;
+          }
+        }
+        
+        // Fallback: try to find any JSON array structure
         const partialMatch = content.match(/\[[\s\S]*?\]/);
         if (partialMatch) {
           const partialJson = partialMatch[0];
-          console.log('OpenRouter: Found partial JSON, attempting to fix...');
+          console.log('OpenRouter: Found partial JSON array, attempting to fix...');
           
           // Try to fix the partial JSON
           const fixedJson = partialJson
