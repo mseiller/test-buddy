@@ -148,6 +148,9 @@ Requirements:
 
   private static parseQuizResponse(content: string): Question[] {
     try {
+      console.log('OpenRouter: Starting JSON parsing of response...');
+      console.log('OpenRouter: Content length:', content.length);
+      
       // Clean the content to extract JSON - try multiple approaches
       let jsonString = '';
       
@@ -155,16 +158,19 @@ Requirements:
       const markdownMatch = content.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
       if (markdownMatch) {
         jsonString = markdownMatch[1];
+        console.log('OpenRouter: Found JSON in markdown code block');
       } else {
         // Try to find JSON array in the content
         const jsonMatch = content.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           jsonString = jsonMatch[0];
+          console.log('OpenRouter: Found JSON array in content');
         } else {
           // If no array found, try to find JSON object and wrap it
           const objectMatch = content.match(/\{[\s\S]*\}/);
           if (objectMatch) {
             jsonString = `[${objectMatch[0]}]`;
+            console.log('OpenRouter: Found JSON object, wrapped in array');
           } else {
             throw new Error('No valid JSON found in response');
           }
@@ -172,6 +178,7 @@ Requirements:
       }
 
       // Try to fix common JSON issues
+      console.log('OpenRouter: Cleaning JSON string...');
       jsonString = jsonString
         .replace(/,\s*}/g, '}') // Remove trailing commas
         .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
@@ -183,7 +190,20 @@ Requirements:
         .replace(/```\s*/g, '') // Remove any remaining markdown
         .trim();
 
-      console.log('Attempting to parse JSON:', jsonString.substring(0, 200) + '...');
+      // Additional JSON fixes for common AI mistakes
+      jsonString = jsonString
+        .replace(/([^\\])"/g, '$1"') // Fix unescaped quotes (but not escaped ones)
+        .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas before } or ]
+        .replace(/([a-zA-Z0-9])\s*:\s*"/g, '$1": "') // Fix spacing around colons
+        .replace(/"\s*,\s*([a-zA-Z0-9])/g, '", "$1') // Fix spacing around commas
+        .replace(/\n/g, ' ') // Remove all newlines
+        .replace(/\r/g, ' ') // Remove carriage returns
+        .replace(/\t/g, ' ') // Remove tabs
+        .replace(/\s+/g, ' ') // Normalize all whitespace
+        .trim();
+
+      console.log('OpenRouter: Attempting to parse cleaned JSON...');
+      console.log('OpenRouter: JSON preview (first 300 chars):', jsonString.substring(0, 300) + '...');
       
       const questions = JSON.parse(jsonString);
       
@@ -191,6 +211,8 @@ Requirements:
       if (!Array.isArray(questions)) {
         throw new Error('Response is not an array of questions');
       }
+      
+      console.log('OpenRouter: Successfully parsed JSON, found', questions.length, 'questions');
       
       // Validate and format questions
       return questions.map((q: any, index: number) => {
@@ -209,10 +231,45 @@ Requirements:
         };
       });
     } catch (error) {
-      console.error('Failed to parse quiz response:', error);
-      console.error('Raw content:', content.substring(0, 500) + '...');
+      console.error('OpenRouter: Failed to parse quiz response:', error);
+      console.error('OpenRouter: Raw content (first 1000 chars):', content.substring(0, 1000) + '...');
       
-      // Return a fallback question if parsing fails
+      // Try to extract partial JSON if possible
+      try {
+        console.log('OpenRouter: Attempting to extract partial JSON...');
+        const partialMatch = content.match(/\[[\s\S]*?\]/);
+        if (partialMatch) {
+          const partialJson = partialMatch[0];
+          console.log('OpenRouter: Found partial JSON, attempting to fix...');
+          
+          // Try to fix the partial JSON
+          const fixedJson = partialJson
+            .replace(/,\s*([}\]])/g, '$1')
+            .replace(/\n/g, ' ')
+            .replace(/\r/g, ' ')
+            .replace(/\t/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          const questions = JSON.parse(fixedJson);
+          if (Array.isArray(questions) && questions.length > 0) {
+            console.log('OpenRouter: Successfully parsed partial JSON with', questions.length, 'questions');
+            return questions.map((q: any, index: number) => ({
+              id: q.id || `q${index + 1}`,
+              type: q.type || 'MCQ',
+              question: q.question || `Question ${index + 1}`,
+              options: q.options || undefined,
+              correctAnswer: q.correctAnswer,
+              explanation: q.explanation || 'No explanation provided',
+              points: q.points || 1,
+            }));
+          }
+        }
+      } catch (partialError) {
+        console.error('OpenRouter: Partial JSON parsing also failed:', partialError);
+      }
+      
+      // Return a fallback question if all parsing fails
       return [{
         id: 'q1',
         type: 'MCQ',
