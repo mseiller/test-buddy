@@ -29,14 +29,14 @@ export class OpenRouterService {
           messages: [
             {
               role: 'system',
-              content: 'You are an expert quiz generator. Generate high-quality questions based on the provided content. Always respond with valid JSON format.'
+              content: 'You are an expert quiz generator. Generate high-quality questions based on the provided content. IMPORTANT: You must respond with ONLY valid JSON format. Do not include any text before or after the JSON array. Ensure all JSON is properly formatted with correct syntax.'
             },
             {
               role: 'user',
               content: prompt
             }
           ],
-          temperature: 0.7,
+          temperature: 0.5,
           max_tokens: 2000,
         }),
       });
@@ -120,27 +120,72 @@ Requirements:
 
   private static parseQuizResponse(content: string): Question[] {
     try {
-      // Clean the content to extract JSON
+      // Clean the content to extract JSON - try multiple approaches
+      let jsonString = '';
+      
+      // First, try to find JSON array in the content
       const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        throw new Error('No valid JSON found in response');
+      if (jsonMatch) {
+        jsonString = jsonMatch[0];
+      } else {
+        // If no array found, try to find JSON object and wrap it
+        const objectMatch = content.match(/\{[\s\S]*\}/);
+        if (objectMatch) {
+          jsonString = `[${objectMatch[0]}]`;
+        } else {
+          throw new Error('No valid JSON found in response');
+        }
       }
 
-      const questions = JSON.parse(jsonMatch[0]);
+      // Try to fix common JSON issues
+      jsonString = jsonString
+        .replace(/,\s*}/g, '}') // Remove trailing commas
+        .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
+        .replace(/\\"/g, '"') // Fix escaped quotes
+        .replace(/\\n/g, ' ') // Replace newlines with spaces
+        .replace(/\\t/g, ' ') // Replace tabs with spaces
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+
+      console.log('Attempting to parse JSON:', jsonString.substring(0, 200) + '...');
+      
+      const questions = JSON.parse(jsonString);
+      
+      // Ensure questions is an array
+      if (!Array.isArray(questions)) {
+        throw new Error('Response is not an array of questions');
+      }
       
       // Validate and format questions
-      return questions.map((q: any, index: number) => ({
-        id: q.id || `q${index + 1}`,
-        type: q.type || 'MCQ',
-        question: q.question || '',
-        options: q.options || undefined,
-        correctAnswer: q.correctAnswer,
-        explanation: q.explanation || 'No explanation provided',
-        points: q.points || 1,
-      }));
+      return questions.map((q: any, index: number) => {
+        if (!q || typeof q !== 'object') {
+          throw new Error(`Invalid question format at index ${index}`);
+        }
+        
+        return {
+          id: q.id || `q${index + 1}`,
+          type: q.type || 'MCQ',
+          question: q.question || `Question ${index + 1}`,
+          options: q.options || undefined,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation || 'No explanation provided',
+          points: q.points || 1,
+        };
+      });
     } catch (error) {
       console.error('Failed to parse quiz response:', error);
-      throw new Error('Invalid response format from AI service');
+      console.error('Raw content:', content.substring(0, 500) + '...');
+      
+      // Return a fallback question if parsing fails
+      return [{
+        id: 'q1',
+        type: 'MCQ',
+        question: 'There was an issue generating questions. Please try again with a different document or quiz type.',
+        options: ['Try again', 'Use a different document', 'Change quiz type', 'Contact support'],
+        correctAnswer: 0,
+        explanation: 'The AI service encountered an error while generating questions. Please try again.',
+        points: 1,
+      }];
     }
   }
 
