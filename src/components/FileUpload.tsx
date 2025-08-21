@@ -18,20 +18,29 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOver(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOver(false);
+    e.stopPropagation();
+    // Only set dragOver to false if we're leaving the main container
+    if (e.currentTarget === e.target) {
+      setDragOver(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOver(false);
+    
     const files = Array.from(e.dataTransfer.files);
+    console.log('Files dropped:', files.map(f => f.name));
     
     if (files.length === 0) {
+      console.log('No files in drop event');
       return;
     }
     
@@ -144,15 +153,14 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
   }
 
   return (
-    <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-8">
-      <div
-        className={`relative ${
-          dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'
-        } transition-all duration-200 ease-in-out`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
+    <div 
+      className={`bg-white rounded-lg border-2 border-dashed p-8 transition-all duration-200 ease-in-out ${
+        dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
         <div className="text-center">
           {processing ? (
             <div className="flex flex-col items-center">
@@ -190,19 +198,18 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
               <div className="mt-4 text-xs text-gray-500">
                 <p className="mb-1">Supported formats:</p>
                 <p>{getSupportedFormats().join(', ')}</p>
-                <p className="mt-1">Maximum file size: 10MB</p>
+                <p className="mt-1">Maximum file size: 15MB</p>
                 <p className="mt-1 text-indigo-600">Note: Multiple files will be combined</p>
               </div>
             </>
           )}
         </div>
-      </div>
       
       {dragOver && (
-        <div className="absolute inset-0 bg-indigo-50 bg-opacity-75 flex items-center justify-center rounded-lg">
+        <div className="absolute inset-0 bg-indigo-50 bg-opacity-75 flex items-center justify-center rounded-lg pointer-events-none">
           <div className="text-center">
             <Upload className="mx-auto h-8 w-8 text-indigo-600 mb-2" />
-            <p className="text-sm font-medium text-indigo-600">Drop your file here</p>
+            <p className="text-sm font-medium text-indigo-600">Drop your files here</p>
           </div>
         </div>
       )}

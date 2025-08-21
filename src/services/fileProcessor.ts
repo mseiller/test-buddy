@@ -141,6 +141,6 @@ export class FileProcessor {
   }
 
   static getMaxFileSize(): number {
-    return 10 * 1024 * 1024; // 10MB
+    return 15 * 1024 * 1024; // 15MB
   }
 } 

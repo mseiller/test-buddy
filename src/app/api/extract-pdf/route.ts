@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check file size
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    if (file.size > 15 * 1024 * 1024) { // 15MB limit
       console.error('File too large:', file.size);
-      return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
+      return NextResponse.json({ error: 'File too large (max 15MB)' }, { status: 400 });
     }
 
     try {
