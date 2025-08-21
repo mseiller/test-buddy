@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { FileProcessor } from '@/services/fileProcessor';
+import { FileProcessorNew } from '@/services/fileProcessorNew';
 import { FileUpload as FileUploadType } from '@/types';
 
 interface FileUploadProps {
@@ -59,13 +59,13 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
   const handleMultipleFiles = async (files: File[]) => {
     // Validate all files
     for (const file of files) {
-      if (!FileProcessor.validateFileType(file.name)) {
+      if (!FileProcessorNew.validateFileType(file.name)) {
         onError(`Unsupported file type: ${file.name}. Please upload .txt, .pdf, .doc, .docx, .csv, .xls, or .xlsx files.`);
         return;
       }
 
-      if (file.size > FileProcessor.getMaxFileSize()) {
-        onError(`File too large: ${file.name}. Please upload files smaller than 10MB.`);
+      if (file.size > FileProcessorNew.getMaxFileSize()) {
+                  onError(`File too large: ${file.name}. Please upload files smaller than 15MB.`);
         return;
       }
     }
@@ -76,7 +76,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
       const fileNames: string[] = [];
 
       for (const file of files) {
-        const extractedText = await FileProcessor.extractTextFromFile(file);
+        const extractedText = await FileProcessorNew.extractTextFromFile(file);
         
         if (extractedText.trim()) {
           combinedText += `\n\n--- ${file.name} ---\n\n${extractedText}`;
