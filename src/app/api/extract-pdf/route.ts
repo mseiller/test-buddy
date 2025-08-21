@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Set up PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,8 +31,8 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Dynamic import to avoid bundling issues
-      console.log('Importing pdf-parse...');
+      // Try pdf-parse first
+      console.log('Trying pdf-parse...');
       const pdf = (await import('pdf-parse')).default;
 
       // Convert file to buffer
@@ -37,8 +41,8 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(bytes);
       console.log('Buffer created, size:', buffer.length);
 
-      // Extract text from PDF
-      console.log('Extracting text from PDF...');
+      // Extract text from PDF using pdf-parse
+      console.log('Extracting text from PDF with pdf-parse...');
       const pdfData = await pdf(buffer);
       
       console.log('PDF extraction completed. Pages:', pdfData.numpages, 'Text length:', pdfData.text?.length || 0);
@@ -58,11 +62,68 @@ export async function POST(request: NextRequest) {
         info: pdfData.info 
       });
     } catch (pdfError) {
-      console.error('PDF parsing error:', pdfError);
-      return NextResponse.json(
-        { error: 'Failed to parse PDF. The file might be corrupted or password-protected.' },
-        { status: 500 }
-      );
+      console.error('pdf-parse failed, trying PDF.js...', pdfError);
+      
+      try {
+        // Fallback to PDF.js
+        console.log('Trying PDF.js extraction...');
+        const bytes = await file.arrayBuffer();
+        
+        // Load PDF with PDF.js
+        const loadingTask = pdfjsLib.getDocument({ data: bytes });
+        const pdfDocument = await loadingTask.promise;
+        
+        console.log('PDF.js loaded document, pages:', pdfDocument.numPages);
+        
+        let extractedText = '';
+        let totalPages = pdfDocument.numPages;
+        
+        // Extract text from each page
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+          console.log(`Extracting text from page ${pageNum}...`);
+          const page = await pdfDocument.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ');
+          
+          extractedText += `\n--- Page ${pageNum} ---\n${pageText}\n`;
+        }
+        
+        console.log('PDF.js extraction completed. Text length:', extractedText.length);
+        
+        if (!extractedText.trim()) {
+          console.warn('PDF.js found no text content');
+          return NextResponse.json({ 
+            error: 'No text content found in PDF. The file might be image-based or contain only scanned pages.',
+            pages: totalPages,
+            method: 'pdfjs'
+          }, { status: 422 });
+        }
+        
+        return NextResponse.json({ 
+          text: extractedText,
+          pages: totalPages,
+          method: 'pdfjs'
+        });
+        
+      } catch (pdfjsError) {
+        console.error('PDF.js also failed:', pdfjsError);
+        
+        // Check if it's a password-protected PDF
+        if (pdfjsError.message && pdfjsError.message.includes('password')) {
+          return NextResponse.json(
+            { error: 'This PDF is password-protected. Please remove the password and try again.' },
+            { status: 403 }
+          );
+        }
+        
+        return NextResponse.json(
+          { error: 'Failed to extract text from PDF. The file might be corrupted, password-protected, or in an unsupported format.' },
+          { status: 500 }
+        );
+      }
     }
   } catch (error) {
     console.error('PDF extraction API error:', error);
