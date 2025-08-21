@@ -88,9 +88,8 @@ export class FileProcessor {
       // Import pdfjs-dist dynamically to avoid SSR issues
       const pdfjsLib = await import('pdfjs-dist');
       
-      // Set up the worker
-      const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+      // Disable worker to avoid import issues
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
       
       // Read the file as ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
