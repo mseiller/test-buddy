@@ -2,7 +2,12 @@
   "functions": {
     "src/app/api/extract-pdf/route.ts": {
       "maxDuration": 30,
-      "memory": 3008
+      "memory": 1024
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=1024"
     }
   }
 }

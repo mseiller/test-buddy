@@ -1,7 +1,29 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Optimize for Vercel deployment
+  experimental: {
+    // Reduce memory usage during build
+    optimizePackageImports: ['lucide-react'],
+  },
+  // Reduce bundle size
+  swcMinify: true,
+  // Optimize images
+  images: {
+    unoptimized: true,
+  },
+  // Reduce memory usage
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
