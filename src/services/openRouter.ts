@@ -15,9 +15,9 @@ export class OpenRouterService {
 
     const prompt = this.createPrompt(text, quizType, questionCount);
 
-    // Choose model based on question count
-    const model = questionCount > 25 ? 'anthropic/claude-3.5-sonnet' : 'gpt-oss-20b';
-    const maxTokens = questionCount > 25 ? 16000 : 8000;
+    // Use the free gpt-oss-20b model for all question counts
+    const model = 'gpt-oss-20b';
+    const maxTokens = 8000; // Increased token limit for the free model
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
     console.log('OpenRouter: API Key configured:', !!this.API_KEY);
