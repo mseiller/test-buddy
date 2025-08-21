@@ -40,22 +40,39 @@ export class FileProcessor {
   }
 
   private static async extractFromPdf(file: File): Promise<string> {
-    // For client-side PDF processing, we'll use a different approach
-    // Since pdf-parse doesn't work in browser, we'll create an API endpoint
-    const formData = new FormData();
-    formData.append('file', file);
+    console.log('Starting PDF extraction for file:', file.name, 'Size:', file.size);
     
-    const response = await fetch('/api/extract-pdf', {
-      method: 'POST',
-      body: formData,
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to extract PDF text');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      console.log('Sending PDF to API endpoint...');
+      const response = await fetch('/api/extract-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      console.log('PDF API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('PDF API error response:', errorText);
+        throw new Error(`Failed to extract PDF text: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('PDF extraction successful. Pages:', result.pages, 'Text length:', result.text?.length || 0);
+      
+      if (!result.text || result.text.trim().length === 0) {
+        console.warn('PDF extracted but contains no text content');
+        throw new Error('No text content found in PDF. The file might be image-based or corrupted.');
+      }
+      
+      return result.text;
+    } catch (error) {
+      console.error('PDF extraction failed:', error);
+      throw new Error(`PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    const result = await response.json();
-    return result.text;
   }
 
   private static async extractFromDoc(file: File): Promise<string> {
