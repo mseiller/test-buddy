@@ -2,6 +2,8 @@ import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 
 export class FileProcessor {
+  // Version to force cache invalidation
+  private static VERSION = 'v2.0.0-' + Date.now();
   static async extractTextFromFile(file: File): Promise<string> {
     const fileType = this.getFileType(file.name);
     
@@ -45,7 +47,7 @@ export class FileProcessor {
     // For files larger than 4MB, show a helpful error message
     if (file.size > 4 * 1024 * 1024) {
       console.log('File is larger than 4MB, cannot process due to Vercel limits');
-      throw new Error('PDF file is too large (over 4MB). Due to platform limitations, we can only process PDFs up to 4MB. Please try compressing your PDF or splitting it into smaller files.');
+      throw new Error('PDF file is too large (over 4MB). Due to platform limitations, we can only process PDFs up to 4MB. Please try compressing your PDF or splitting it into smaller files. CACHE_BUST: ' + Date.now());
     }
     
     try {
