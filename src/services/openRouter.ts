@@ -29,7 +29,7 @@ export class OpenRouterService {
           messages: [
             {
               role: 'system',
-              content: 'You are an expert quiz generator. Generate high-quality questions based on the provided content. IMPORTANT: You must respond with ONLY valid JSON format. Do not include any text before or after the JSON array. Ensure all JSON is properly formatted with correct syntax.'
+              content: 'You are an expert quiz generator. Generate high-quality questions based on the provided content. CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks (```json). Do NOT include any text before or after the JSON. Start directly with [ and end with ]. Ensure all JSON is properly formatted with correct syntax.'
             },
             {
               role: 'user',
@@ -123,17 +123,23 @@ Requirements:
       // Clean the content to extract JSON - try multiple approaches
       let jsonString = '';
       
-      // First, try to find JSON array in the content
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        jsonString = jsonMatch[0];
+      // First, try to extract JSON from markdown code blocks
+      const markdownMatch = content.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
+      if (markdownMatch) {
+        jsonString = markdownMatch[1];
       } else {
-        // If no array found, try to find JSON object and wrap it
-        const objectMatch = content.match(/\{[\s\S]*\}/);
-        if (objectMatch) {
-          jsonString = `[${objectMatch[0]}]`;
+        // Try to find JSON array in the content
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[0];
         } else {
-          throw new Error('No valid JSON found in response');
+          // If no array found, try to find JSON object and wrap it
+          const objectMatch = content.match(/\{[\s\S]*\}/);
+          if (objectMatch) {
+            jsonString = `[${objectMatch[0]}]`;
+          } else {
+            throw new Error('No valid JSON found in response');
+          }
         }
       }
 
@@ -145,6 +151,8 @@ Requirements:
         .replace(/\\n/g, ' ') // Replace newlines with spaces
         .replace(/\\t/g, ' ') // Replace tabs with spaces
         .replace(/\s+/g, ' ') // Normalize whitespace
+        .replace(/```json\s*/g, '') // Remove any remaining markdown
+        .replace(/```\s*/g, '') // Remove any remaining markdown
         .trim();
 
       console.log('Attempting to parse JSON:', jsonString.substring(0, 200) + '...');
