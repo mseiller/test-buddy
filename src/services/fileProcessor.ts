@@ -89,7 +89,7 @@ export class FileProcessor {
       const pdfjsLib = await import('pdfjs-dist');
       
       // Disable worker to avoid CDN issues - use synchronous parsing
-      pdfjsLib.GlobalWorkerOptions.workerSrc = false;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
       
       // Read the file as ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
