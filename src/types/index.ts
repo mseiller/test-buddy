@@ -9,8 +9,8 @@ export interface TestHistory {
   userId: string;
   testName: string;
   fileName: string;
-  fileType: string;
-  extractedText: string; // Store the extracted text for retaking
+  fileType?: string; // Optional for backward compatibility
+  extractedText?: string; // Optional for backward compatibility
   quizType: QuizType;
   questions: Question[];
   answers: UserAnswer[];

@@ -193,12 +193,19 @@ export default function Home() {
   };
 
   const handleRetakeFromHistory = (test: TestHistoryType) => {
+    // Check if we have the extracted text for retaking
+    if (!test.extractedText || test.extractedText.trim() === '') {
+      setError('This test cannot be retaken because the original file content was not saved. Please upload the file again to retake.');
+      setAppState('upload');
+      return;
+    }
+
     // Create a file upload object from the stored test data
     const fileUpload: FileUploadType = {
       file: new File([test.extractedText], test.fileName), // Create file with stored text
       extractedText: test.extractedText,
       fileName: test.fileName,
-      fileType: test.fileType
+      fileType: test.fileType || test.fileName.split('.').pop() || 'txt'
     };
     
     setUploadedFile(fileUpload);

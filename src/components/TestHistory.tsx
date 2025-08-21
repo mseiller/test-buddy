@@ -194,7 +194,7 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
                   </div>
 
                   <div className="flex items-center space-x-2 ml-4">
-                    {onRetakeQuiz && (
+                    {onRetakeQuiz && test.extractedText && test.extractedText.trim() !== '' && (
                       <button
                         onClick={() => onRetakeQuiz(test)}
                         className="p-2 text-gray-400 hover:text-green-600 transition-colors"

@@ -146,6 +146,8 @@ export class FirebaseService {
           userId: data.userId,
           testName: data.testName,
           fileName: data.fileName,
+          fileType: data.fileType || data.fileName.split('.').pop() || 'txt', // Default from filename
+          extractedText: data.extractedText || '', // Default to empty string for existing data
           quizType: data.quizType,
           questions: data.questions,
           answers: data.answers,
@@ -206,6 +208,8 @@ export class FirebaseService {
         userId: data.userId,
         testName: data.testName,
         fileName: data.fileName,
+        fileType: data.fileType || data.fileName.split('.').pop() || 'txt', // Default from filename
+        extractedText: data.extractedText || '', // Default to empty string for existing data
         quizType: data.quizType,
         questions: data.questions,
         answers: data.answers,
