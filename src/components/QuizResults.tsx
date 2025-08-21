@@ -22,7 +22,8 @@ export default function QuizResults({
   timeTaken, 
   testName, 
   onRetakeQuiz, 
-  onGoHome 
+  onGoHome,
+  onNewQuizFromFile
 }: QuizResultsProps) {
   const [showReview, setShowReview] = useState(false);
   
