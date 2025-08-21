@@ -36,23 +36,26 @@ export default function QuizResults({
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
+    if (score >= 91) return 'text-green-600';
+    if (score >= 81) return 'text-blue-600';
+    if (score >= 71) return 'text-yellow-600';
+    if (score >= 61) return 'text-orange-600';
     return 'text-red-600';
   };
 
   const getScoreIcon = (score: number) => {
-    if (score >= 80) return <Trophy className="h-8 w-8 text-yellow-500" />;
-    if (score >= 60) return <CheckCircle className="h-8 w-8 text-yellow-500" />;
+    if (score >= 91) return <Trophy className="h-8 w-8 text-yellow-500" />;
+    if (score >= 81) return <CheckCircle className="h-8 w-8 text-blue-500" />;
+    if (score >= 71) return <CheckCircle className="h-8 w-8 text-yellow-500" />;
+    if (score >= 61) return <Book className="h-8 w-8 text-orange-500" />;
     return <XCircle className="h-8 w-8 text-red-500" />;
   };
 
   const getGrade = (score: number) => {
-    if (score >= 90) return 'A+';
-    if (score >= 80) return 'A';
-    if (score >= 70) return 'B';
-    if (score >= 60) return 'C';
-    if (score >= 50) return 'D';
+    if (score >= 91) return 'A';
+    if (score >= 81) return 'B';
+    if (score >= 71) return 'C';
+    if (score >= 61) return 'D';
     return 'F';
   };
 
@@ -222,25 +225,31 @@ export default function QuizResults({
 
         {/* Performance Message */}
         <div className="mb-8">
-          {percentage >= 90 && (
+          {percentage >= 91 && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <h3 className="text-green-800 font-semibold mb-1">Excellent Work! 🎉</h3>
               <p className="text-green-700">Outstanding performance! You've mastered this material.</p>
             </div>
           )}
-          {percentage >= 70 && percentage < 90 && (
+          {percentage >= 81 && percentage < 91 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="text-blue-800 font-semibold mb-1">Good Job! 👍</h3>
               <p className="text-blue-700">Solid understanding. Review the explanations to improve further.</p>
             </div>
           )}
-          {percentage >= 50 && percentage < 70 && (
+          {percentage >= 71 && percentage < 81 && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <h3 className="text-yellow-800 font-semibold mb-1">Keep Practicing 📚</h3>
               <p className="text-yellow-700">You're on the right track. Study the material and try again.</p>
             </div>
           )}
-          {percentage < 50 && (
+          {percentage >= 61 && percentage < 71 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <h3 className="text-orange-800 font-semibold mb-1">Need Improvement 📝</h3>
+              <p className="text-orange-700">Focus on the areas you missed and review the material.</p>
+            </div>
+          )}
+          {percentage <= 60 && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <h3 className="text-red-800 font-semibold mb-1">Need More Study 📖</h3>
               <p className="text-red-700">Review the material thoroughly before retaking the quiz.</p>
