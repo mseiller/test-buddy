@@ -15,8 +15,8 @@ export class OpenRouterService {
 
     const prompt = this.createPrompt(text, quizType, questionCount);
 
-    // Use the free gpt-oss-20b model for all question counts
-    const model = 'gpt-oss-20b';
+    // Use the free gpt-oss-20b:free model for all question counts
+    const model = 'gpt-oss-20b:free';
     const maxTokens = 8000; // Increased token limit for the free model
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
@@ -359,7 +359,7 @@ Requirements:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-oss-20b', // Use free model for validation
+          model: 'gpt-oss-20b:free', // Use free model for validation
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 100,
         }),
