@@ -114,12 +114,25 @@ export class FileProcessorNew {
           const result = await mammoth.extractRawText({ arrayBuffer });
           console.log('NEW DOCX PROCESSOR - DOCX extraction successful. Text length:', result.value?.length || 0);
           
-          if (!result.value || result.value.trim().length === 0) {
-            console.warn('NEW DOCX PROCESSOR - DOCX extracted but contains no text content');
+          // Debug: Show the first 200 characters of extracted text
+          if (result.value) {
+            console.log('NEW DOCX PROCESSOR - First 200 chars of extracted text:', result.value.substring(0, 200));
+            console.log('NEW DOCX PROCESSOR - Trimmed text length:', result.value.trim().length);
+          }
+          
+          if (!result.value) {
+            console.warn('NEW DOCX PROCESSOR - DOCX extraction returned null/undefined');
             throw new Error('No text content found in DOCX file. The file might be corrupted or contain only images.');
           }
           
-          resolve(result.value);
+          const trimmedText = result.value.trim();
+          if (trimmedText.length === 0) {
+            console.warn('NEW DOCX PROCESSOR - DOCX extracted but contains only whitespace');
+            throw new Error('No text content found in DOCX file. The file might be corrupted or contain only images.');
+          }
+          
+          console.log('NEW DOCX PROCESSOR - Successfully extracted text, length:', trimmedText.length);
+          resolve(trimmedText);
         } catch (error) {
           console.error('NEW DOCX PROCESSOR - DOCX extraction failed:', error);
           reject(error);
