@@ -157,12 +157,8 @@ export default function Home() {
     setScore(calculatedScore);
     setTimeTaken(timeTaken);
     
-    // If incomplete, go to home instead of results
-    if (isIncomplete) {
-      setAppState('home');
-    } else {
-      setAppState('results');
-    }
+    // If incomplete, go to results to show the partial score
+    setAppState('results');
 
     // Save to Firebase
     try {
@@ -275,6 +271,18 @@ export default function Home() {
     setScore(test.score || 0);
     setTimeTaken(0); // We don't store time taken for historical tests
     setTestName(test.testName);
+    
+    // Set up uploadedFile so "New Questions" can work
+    if (test.extractedText && test.extractedText.trim() !== '') {
+      const fileUpload: FileUploadType = {
+        file: new File([test.extractedText], test.fileName),
+        extractedText: test.extractedText,
+        fileName: test.fileName,
+        fileType: test.fileType || test.fileName.split('.').pop() || 'txt'
+      };
+      setUploadedFile(fileUpload);
+    }
+    
     setAppState('results');
   };
 
@@ -545,6 +553,8 @@ export default function Home() {
             testName={testName}
             onQuizComplete={handleQuizComplete}
             onGoBack={handleGoBack}
+            onGoToFolders={() => setAppState('folders')}
+            isRetake={isRetaking}
           />
         )}
 

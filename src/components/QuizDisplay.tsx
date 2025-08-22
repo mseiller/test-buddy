@@ -9,9 +9,11 @@ interface QuizDisplayProps {
   testName: string;
   onQuizComplete: (answers: UserAnswer[], timeTaken: number, isIncomplete?: boolean) => void;
   onGoBack: () => void;
+  onGoToFolders?: () => void;
+  isRetake?: boolean;
 }
 
-export default function QuizDisplay({ questions, testName, onQuizComplete, onGoBack }: QuizDisplayProps) {
+export default function QuizDisplay({ questions, testName, onQuizComplete, onGoBack, onGoToFolders, isRetake = false }: QuizDisplayProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [startTime] = useState(Date.now());
@@ -468,6 +470,14 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
         >
           ← Back to Setup
         </button>
+        {isRetake && onGoToFolders && (
+          <button
+            onClick={onGoToFolders}
+            className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
+          >
+            ← Back to Folders
+          </button>
+        )}
         <button
           onClick={handleSaveIncomplete}
           className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
