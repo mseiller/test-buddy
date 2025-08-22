@@ -27,6 +27,7 @@ export default function FolderManager({
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderDescription, setNewFolderDescription] = useState('');
   const [newFolderColor, setNewFolderColor] = useState('#3B82F6');
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   useEffect(() => {
     loadFolders();
@@ -40,9 +41,25 @@ export default function FolderManager({
     }
   }, [selectedFolder, userId]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdownId]);
+
   const loadFolders = async () => {
     try {
+      console.log('Loading folders for user:', userId);
       const userFolders = await FirebaseService.getUserFolders(userId);
+      console.log('Loaded folders:', userFolders);
       setFolders(userFolders);
     } catch (error) {
       console.error('Failed to load folders:', error);
@@ -80,7 +97,10 @@ export default function FolderManager({
         newFolderColor
       );
       
+      console.log('Created new folder:', newFolder);
+      console.log('Previous folders:', folders);
       setFolders([newFolder, ...folders]);
+      console.log('Updated folders state');
       setNewFolderName('');
       setNewFolderDescription('');
       setNewFolderColor('#3B82F6');
@@ -237,39 +257,50 @@ export default function FolderManager({
               </button>
               
               <div className="relative">
-                <button className="p-1 hover:bg-gray-200 rounded">
+                <button 
+                  className="p-1 hover:bg-gray-200 rounded"
+                  onClick={() => setOpenDropdownId(openDropdownId === test.id ? null : test.id)}
+                >
                   <MoreHorizontal className="h-4 w-4 text-gray-500" />
                 </button>
                 
                 {/* Move to folder dropdown */}
-                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10">
-                  <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
-                    Move to folder
-                  </div>
-                  <button
-                    onClick={() => handleMoveTestToFolder(test.id, null)}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
-                      !test.folderId ? 'text-indigo-600 font-medium' : 'text-gray-700'
-                    }`}
-                  >
-                    Unorganized
-                  </button>
-                  {folders.map((folder) => (
+                {openDropdownId === test.id && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10">
+                    <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
+                      Move to folder
+                    </div>
                     <button
-                      key={folder.id}
-                      onClick={() => handleMoveTestToFolder(test.id, folder.id)}
-                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2 ${
-                        test.folderId === folder.id ? 'text-indigo-600 font-medium' : 'text-gray-700'
+                      onClick={() => {
+                        handleMoveTestToFolder(test.id, null);
+                        setOpenDropdownId(null);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                        !test.folderId ? 'text-indigo-600 font-medium' : 'text-gray-700'
                       }`}
                     >
-                      <div 
-                        className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: folder.color }}
-                      />
-                      <span>{folder.name}</span>
+                      Unorganized
                     </button>
-                  ))}
-                </div>
+                    {folders.map((folder) => (
+                      <button
+                        key={folder.id}
+                        onClick={() => {
+                          handleMoveTestToFolder(test.id, folder.id);
+                          setOpenDropdownId(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2 ${
+                          test.folderId === folder.id ? 'text-indigo-600 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: folder.color }}
+                        />
+                        <span>{folder.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

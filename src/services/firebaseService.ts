@@ -256,6 +256,7 @@ export class FirebaseService {
   // Folder management methods
   static async createFolder(userId: string, name: string, description?: string, color?: string): Promise<Folder> {
     try {
+      console.log('Creating folder in Firestore:', { userId, name, description, color });
       const folderData = {
         userId,
         name,
@@ -265,14 +266,21 @@ export class FirebaseService {
         updatedAt: Timestamp.now(),
       };
 
+      console.log('Folder data to save:', folderData);
       const docRef = await addDoc(collection(db, 'folders'), folderData);
-      return {
+      console.log('Folder created with ID:', docRef.id);
+      
+      const result = {
         id: docRef.id,
         ...folderData,
         createdAt: folderData.createdAt.toDate(),
         updatedAt: folderData.updatedAt.toDate(),
       };
+      
+      console.log('Returning folder result:', result);
+      return result;
     } catch (error: any) {
+      console.error('Error creating folder:', error);
       throw new Error(error.message || 'Failed to create folder');
     }
   }
