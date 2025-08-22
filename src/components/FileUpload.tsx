@@ -8,9 +8,10 @@ import { FileUpload as FileUploadType } from '@/types';
 interface FileUploadProps {
   onFileProcessed: (fileUpload: FileUploadType) => void;
   onError: (error: string) => void;
+  selectedFolder?: { id: string; name: string; color?: string } | null;
 }
 
-export default function FileUpload({ onFileProcessed, onError }: FileUploadProps) {
+export default function FileUpload({ onFileProcessed, onError, selectedFolder }: FileUploadProps) {
   const [dragOver, setDragOver] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
@@ -153,14 +154,30 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
   }
 
   return (
-    <div 
-      className={`bg-white rounded-lg border-2 border-dashed p-8 transition-all duration-200 ease-in-out ${
-        dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'
-      }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
+    <>
+      {/* Show selected folder if any */}
+      {selectedFolder && (
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div 
+              className="w-4 h-4 rounded-full" 
+              style={{ backgroundColor: selectedFolder.color || '#3B82F6' }}
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Creating test in folder: <span className="font-semibold">{selectedFolder.name}</span>
+            </span>
+          </div>
+        </div>
+      )}
+
+      <div 
+        className={`bg-white rounded-lg border-2 border-dashed p-8 transition-all duration-200 ease-in-out ${
+          dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <div className="text-center">
           {processing ? (
             <div className="flex flex-col items-center">
@@ -213,6 +230,7 @@ export default function FileUpload({ onFileProcessed, onError }: FileUploadProps
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 } 

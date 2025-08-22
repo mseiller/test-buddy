@@ -51,6 +51,28 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
+  // Handle URL parameters for folder selection
+  useEffect(() => {
+    if (user && appState === 'home') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const folderId = urlParams.get('folder');
+      
+      if (folderId) {
+        // Load the folder and navigate to upload
+        FirebaseService.getFolderById(folderId).then(folder => {
+          if (folder && folder.userId === user.uid) {
+            setSelectedFolder(folder);
+            setAppState('upload');
+            // Clean up URL
+            window.history.replaceState({}, '', '/');
+          }
+        }).catch(error => {
+          console.error('Failed to load folder:', error);
+        });
+      }
+    }
+  }, [user, appState]);
+
   const handleAuthSuccess = (user: User) => {
     setUser(user);
     setAppState('home');
@@ -143,6 +165,7 @@ export default function Home() {
         score: calculatedScore,
         createdAt: new Date(),
         completedAt: new Date(),
+        folderId: selectedFolder?.id, // Include folder ID if test is created within a folder
       };
 
       const savedId = await FirebaseService.saveTestHistory(testHistory);
@@ -432,6 +455,7 @@ export default function Home() {
             <FileUpload 
               onFileProcessed={handleFileProcessed}
               onError={handleFileError}
+              selectedFolder={selectedFolder}
             />
           </div>
         )}

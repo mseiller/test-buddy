@@ -12,6 +12,7 @@ import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
   doc,
   updateDoc,
   deleteDoc,
@@ -254,6 +255,28 @@ export class FirebaseService {
   }
 
   // Folder management methods
+  static async getFolderById(folderId: string): Promise<Folder | null> {
+    try {
+      const folderDoc = await getDoc(doc(db, 'folders', folderId));
+      if (folderDoc.exists()) {
+        const data = folderDoc.data();
+        return {
+          id: folderDoc.id,
+          userId: data.userId,
+          name: data.name,
+          description: data.description,
+          color: data.color,
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate(),
+        };
+      }
+      return null;
+    } catch (error: any) {
+      console.error('Error getting folder by ID:', error);
+      return null;
+    }
+  }
+
   static async createFolder(userId: string, name: string, description?: string, color?: string): Promise<Folder> {
     try {
       console.log('Creating folder in Firestore:', { userId, name, description, color });

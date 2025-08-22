@@ -243,24 +243,77 @@ export default function FolderManager({
             All Tests
           </button>
           {folders.map((folder) => (
-            <button
-              key={folder.id}
-              onClick={() => onFolderSelect(folder)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 ${
-                selectedFolder?.id === folder.id 
-                  ? 'bg-gray-100 text-gray-900' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: folder.color }}
-              />
-              <span>{folder.name}</span>
-            </button>
+            <div key={folder.id} className="flex items-center space-x-2">
+              <button
+                onClick={() => onFolderSelect(folder)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 ${
+                  selectedFolder?.id === folder.id 
+                    ? 'bg-gray-100 text-gray-900' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: folder.color }}
+                />
+                <span>{folder.name}</span>
+              </button>
+              
+              {/* Folder actions dropdown */}
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenDropdownId(openDropdownId === `folder-${folder.id}` ? null : `folder-${folder.id}`);
+                  }}
+                  className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700"
+                >
+                  <MoreHorizontal className="h-3 w-3" />
+                </button>
+                
+                {openDropdownId === `folder-${folder.id}` && (
+                  <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[150px] z-10">
+                    <button
+                      onClick={() => {
+                        startEditFolder(folder);
+                        setOpenDropdownId(null);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-gray-700"
+                    >
+                      Edit Folder
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleDeleteFolder(folder.id);
+                        setOpenDropdownId(null);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-red-600"
+                    >
+                      Delete Folder
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       </div>
+
+      {/* Create Test Button - shown when a folder is selected */}
+      {selectedFolder && (
+        <div className="mb-4">
+          <button
+            onClick={() => {
+              // Navigate to upload page with folder pre-selected
+              window.location.href = '/?folder=' + selectedFolder.id;
+            }}
+            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Test in {selectedFolder.name}</span>
+          </button>
+        </div>
+      )}
 
       {/* Test List */}
       <div className="space-y-3">
