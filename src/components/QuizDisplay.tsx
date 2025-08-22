@@ -16,7 +16,9 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [startTime] = useState(Date.now());
   const [showResults, setShowResults] = useState(false);
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
+  const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set());
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewQuestions, setReviewQuestions] = useState<string[]>([]);
   
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
@@ -45,26 +47,68 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
     ));
   };
 
-  const toggleQuestionFlag = () => {
-    setFlaggedQuestions(prev => {
+  const toggleMarkForReview = () => {
+    const questionId = currentQuestion.id;
+    setMarkedForReview(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(currentQuestionIndex)) {
-        newSet.delete(currentQuestionIndex);
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId);
       } else {
-        newSet.add(currentQuestionIndex);
+        newSet.add(questionId);
       }
       return newSet;
     });
   };
 
+  const startReview = () => {
+    const reviewList = Array.from(markedForReview);
+    if (reviewList.length > 0) {
+      setReviewQuestions(reviewList);
+      setIsReviewing(true);
+      // Go to first review question
+      const firstReviewIndex = questions.findIndex(q => q.id === reviewList[0]);
+      if (firstReviewIndex !== -1) {
+        setCurrentQuestionIndex(firstReviewIndex);
+      }
+    } else {
+      // No questions marked for review, finish quiz
+      handleFinishQuiz();
+    }
+  };
+
+  const exitReview = () => {
+    setIsReviewing(false);
+    setReviewQuestions([]);
+  };
+
   const goToNext = () => {
-    if (!isLastQuestion) {
+    if (isReviewing) {
+      const currentReviewIndex = reviewQuestions.indexOf(currentQuestion.id);
+      const nextReviewIndex = currentReviewIndex + 1;
+      if (nextReviewIndex < reviewQuestions.length) {
+        const nextQuestionId = reviewQuestions[nextReviewIndex];
+        const nextQuestionIndex = questions.findIndex(q => q.id === nextQuestionId);
+        if (nextQuestionIndex !== -1) {
+          setCurrentQuestionIndex(nextQuestionIndex);
+        }
+      }
+    } else if (!isLastQuestion) {
       setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
   const goToPrevious = () => {
-    if (!isFirstQuestion) {
+    if (isReviewing) {
+      const currentReviewIndex = reviewQuestions.indexOf(currentQuestion.id);
+      const prevReviewIndex = currentReviewIndex - 1;
+      if (prevReviewIndex >= 0) {
+        const prevQuestionId = reviewQuestions[prevReviewIndex];
+        const prevQuestionIndex = questions.findIndex(q => q.id === prevQuestionId);
+        if (prevQuestionIndex !== -1) {
+          setCurrentQuestionIndex(prevQuestionIndex);
+        }
+      }
+    } else if (!isFirstQuestion) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
@@ -198,16 +242,26 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
               <span>{getAnsweredCount()}/{totalQuestions} answered</span>
             </div>
             <button
-              onClick={toggleQuestionFlag}
+              onClick={toggleMarkForReview}
               className={`p-2 rounded-lg transition-colors ${
-                flaggedQuestions.has(currentQuestionIndex)
+                markedForReview.has(currentQuestion.id)
                   ? 'bg-yellow-100 text-yellow-600'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
-              title="Flag question for review"
+              title="Mark for review"
             >
               <Flag className="h-4 w-4" />
             </button>
+            {markedForReview.size > 0 && !isReviewing && (
+              <div className="text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+                {markedForReview.size} marked for review
+              </div>
+            )}
+            {isReviewing && (
+              <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                Review Mode ({reviewQuestions.indexOf(currentQuestion.id) + 1}/{reviewQuestions.length})
+              </div>
+            )}
           </div>
         </div>
 
@@ -226,25 +280,31 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
           <div className="bg-white rounded-lg shadow-md p-4 sticky top-6">
             <h3 className="font-medium text-gray-900 mb-3">Questions</h3>
             <div className="grid grid-cols-5 lg:grid-cols-3 gap-2">
-              {questions.map((_, index) => {
+              {questions.map((question, index) => {
                 const isAnswered = answers[index]?.answer !== '';
-                const isFlagged = flaggedQuestions.has(index);
+                const isMarked = markedForReview.has(question.id);
                 const isCurrent = index === currentQuestionIndex;
+                const isInReviewList = isReviewing && reviewQuestions.includes(question.id);
                 
                 return (
                   <button
                     key={index}
                     onClick={() => goToQuestion(index)}
+                    disabled={isReviewing && !isInReviewList}
                     className={`w-10 h-10 rounded-lg text-sm font-medium transition-all relative ${
                       isCurrent
                         ? 'bg-indigo-600 text-white'
                         : isAnswered
                         ? 'bg-green-100 text-green-700 hover:bg-green-200'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    } ${
+                      isReviewing && !isInReviewList 
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : ''
                     }`}
                   >
                     {index + 1}
-                    {isFlagged && (
+                    {isMarked && (
                       <Flag className="h-3 w-3 absolute -top-1 -right-1 text-yellow-500" />
                     )}
                   </button>
@@ -278,7 +338,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
             <div className="flex items-center justify-between">
               <button
                 onClick={goToPrevious}
-                disabled={isFirstQuestion}
+                disabled={isReviewing ? reviewQuestions.indexOf(currentQuestion.id) === 0 : isFirstQuestion}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -286,21 +346,60 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
               </button>
 
               <div className="flex space-x-3">
-                {isLastQuestion ? (
-                  <button
-                    onClick={handleFinishQuiz}
-                    className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                  >
-                    Finish Quiz
-                  </button>
+                {isReviewing ? (
+                  <>
+                    <button
+                      onClick={exitReview}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg transition-colors"
+                    >
+                      Exit Review
+                    </button>
+                    {reviewQuestions.indexOf(currentQuestion.id) === reviewQuestions.length - 1 ? (
+                      <button
+                        onClick={handleFinishQuiz}
+                        className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                      >
+                        Finish Quiz
+                      </button>
+                    ) : (
+                      <button
+                        onClick={goToNext}
+                        className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                      >
+                        <span>Next Review</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    )}
+                  </>
                 ) : (
-                  <button
-                    onClick={goToNext}
-                    className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                  >
-                    <span>Next</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
+                  <>
+                    {isLastQuestion ? (
+                      <>
+                        {markedForReview.size > 0 && (
+                          <button
+                            onClick={startReview}
+                            className="bg-yellow-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
+                          >
+                            Review Marked ({markedForReview.size})
+                          </button>
+                        )}
+                        <button
+                          onClick={handleFinishQuiz}
+                          className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                        >
+                          Finish Quiz
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={goToNext}
+                        className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                      >
+                        <span>Next</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>

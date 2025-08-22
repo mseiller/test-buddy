@@ -4,21 +4,6 @@ export interface User {
   displayName?: string;
 }
 
-export interface TestHistory {
-  id: string;
-  userId: string;
-  testName: string;
-  fileName: string;
-  fileType?: string; // Optional for backward compatibility
-  extractedText?: string; // Optional for backward compatibility
-  quizType: QuizType;
-  questions: Question[];
-  answers: UserAnswer[];
-  score?: number;
-  createdAt: Date;
-  completedAt?: Date;
-}
-
 export type QuizType = 'MCQ' | 'Fill-in-the-blank' | 'Essay' | 'Mixed';
 
 export interface Question {
@@ -36,6 +21,7 @@ export interface UserAnswer {
   answer: string | number;
   isCorrect?: boolean;
   timeSpent?: number;
+  markedForReview?: boolean; // Track if question is marked for review
 }
 
 export interface FileUpload {
@@ -83,4 +69,12 @@ export interface QuizGenerationRequest {
   text: string;
   quizType: QuizType;
   questionCount: number;
+}
+
+export interface QuizState {
+  currentQuestion: number;
+  answers: UserAnswer[];
+  markedForReview: Set<string>; // Set of question IDs marked for review
+  isReviewing: boolean; // Whether user is in review mode
+  reviewQuestions: string[]; // List of question IDs to review
 } 

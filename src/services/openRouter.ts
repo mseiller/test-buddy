@@ -13,26 +13,26 @@ export class OpenRouterService {
       throw new Error('OpenRouter API key is not configured');
     }
 
-    // Adjust token limits and warn about question count limits
-    let maxTokens = 8000;
+    // Adjust token limits with the new high-capacity model
+    let maxTokens = 16000; // Start with 16k as requested
     let adjustedQuestionCount = questionCount;
     
-    if (questionCount > 40) {
-      console.warn(`OpenRouter: Requested ${questionCount} questions, but free model is limited to ~40 questions. Adjusting to 40.`);
-      adjustedQuestionCount = 40;
-      maxTokens = 8000;
+    if (questionCount > 100) {
+      console.warn(`OpenRouter: Requested ${questionCount} questions, but capping at 100 for optimal performance.`);
+      adjustedQuestionCount = 100;
+      maxTokens = 32000; // Use higher tokens for very large requests
+    } else if (questionCount > 50) {
+      maxTokens = 24000;
     } else if (questionCount > 25) {
-      maxTokens = 8000;
-    } else if (questionCount > 10) {
-      maxTokens = 6000;
+      maxTokens = 16000;
     } else {
-      maxTokens = 4000;
+      maxTokens = 8000;
     }
 
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
 
-    // Use the free gpt-oss-20b:free model for all question counts
-    const model = 'gpt-oss-20b:free';
+    // Use the new qwen/qwen3-coder:free model with 64k token capacity
+    const model = 'qwen/qwen3-coder:free';
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
     console.log('OpenRouter: API Key configured:', !!this.API_KEY);
@@ -374,7 +374,7 @@ Requirements:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-oss-20b:free', // Use free model for validation
+          model: 'qwen/qwen3-coder:free', // Use new free model for validation
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 100,
         }),
