@@ -62,6 +62,12 @@ export default function Home() {
             {/* Quick Actions */}
             <div className="flex-1 p-4 space-y-2">
               <button
+                onClick={() => router.push('/dashboard')}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                🏠 Dashboard
+              </button>
+              <button
                 onClick={() => router.push('/upload')}
                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
               >

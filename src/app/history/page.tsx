@@ -74,7 +74,7 @@ export default function HistoryPage() {
           <div className="mb-8">
             <div className="flex items-center mb-4">
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push('/')}
                 className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Folder, TestDoc } from '@/types';
 import { getFolder } from '@/server/db/folders';
@@ -14,6 +14,7 @@ import { Search, Filter, Upload as UploadIcon } from 'lucide-react';
 export default function FolderPage() {
   const { folderId } = useParams();
   const { user } = useAuth();
+  const router = useRouter();
   const [folder, setFolder] = useState<Folder | null>(null);
   const [tests, setTests] = useState<TestDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,23 +109,31 @@ export default function FolderPage() {
             </div>
           ) : (
             <>
-              {/* Header */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900">{folder.name}</h1>
-                    <p className="text-gray-600">
-                      {tests.length} test{tests.length !== 1 ? 's' : ''} • Created {new Date(folder.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowUpload(true)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                  >
-                    <UploadIcon className="h-4 w-4 mr-2" />
-                    Upload Test
-                  </button>
-                </div>
+                        {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">{folder.name}</h1>
+                <p className="text-gray-600">
+                  {tests.length} test{tests.length !== 1 ? 's' : ''} • Created {new Date(folder.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => router.push('/')}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  🏠 Home
+                </button>
+                <button
+                  onClick={() => setShowUpload(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  <UploadIcon className="h-4 w-4 mr-2" />
+                  Upload Test
+                </button>
+              </div>
+            </div>
 
                 {/* Search and Filters */}
                 <div className="flex flex-col sm:flex-row gap-4">

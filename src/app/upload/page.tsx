@@ -22,9 +22,15 @@ export default function UploadPage() {
 
   const handleFileProcessed = (fileUpload: any) => {
     console.log('File processed:', fileUpload);
-    // TODO: Create test document and add to selected folder
-    // For now, redirect to the old quiz flow
-    router.push('/quiz');
+    // Store the file upload data and redirect to quiz generation
+    if (selectedFolderId) {
+      // Store in localStorage for now (we'll implement proper state management later)
+      localStorage.setItem('tempFileUpload', JSON.stringify({
+        ...fileUpload,
+        folderId: selectedFolderId
+      }));
+      router.push('/quiz');
+    }
   };
 
   const handleFileError = (error: string) => {
@@ -51,7 +57,7 @@ export default function UploadPage() {
           <div className="mb-8">
             <div className="flex items-center mb-4">
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push('/')}
                 className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />
