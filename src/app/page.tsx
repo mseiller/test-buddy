@@ -130,8 +130,8 @@ export default function Home() {
       );
       
       // Check if fewer questions were generated than requested
-      if (generatedQuestions.length < questionCount && questionCount > 100) {
-        setError(`Generated ${generatedQuestions.length} questions (reduced from ${questionCount} due to model limitations). The free model works best with 100 or fewer questions.`);
+      if (generatedQuestions.length < questionCount && questionCount > 50) {
+        setError(`Generated ${generatedQuestions.length} questions (reduced from ${questionCount} due to model limitations). The free model works best with 50 or fewer questions.`);
       }
       
       setQuestions(generatedQuestions);

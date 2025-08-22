@@ -17,18 +17,16 @@ export class OpenRouterService {
     let maxTokens = 16000; // Start with 16k as requested
     let adjustedQuestionCount = questionCount;
     
-    if (questionCount > 100) {
-      console.warn(`OpenRouter: Requested ${questionCount} questions, but capping at 100 for optimal performance.`);
-      adjustedQuestionCount = 100;
-      maxTokens = 16000; // Reduced from 32k to prevent timeouts
-    } else if (questionCount > 75) {
-      maxTokens = 16000; // Reduced from 24k
-    } else if (questionCount > 50) {
-      maxTokens = 12000; // Reduced from 16k  
+    if (questionCount > 50) {
+      console.warn(`OpenRouter: Requested ${questionCount} questions, but the free model works best with 50 or fewer questions. Adjusting to 50.`);
+      adjustedQuestionCount = 50;
+      maxTokens = 8000;
     } else if (questionCount > 25) {
-      maxTokens = 8000;   // Reduced from 16k
+      maxTokens = 6000;
+    } else if (questionCount > 15) {
+      maxTokens = 4000;
     } else {
-      maxTokens = 6000;   // Reduced from 8k
+      maxTokens = 3000;
     }
 
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
@@ -128,6 +126,7 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
 
       const data = await response.json();
       console.log('OpenRouter: Response data structure:', Object.keys(data));
+      console.log('OpenRouter: Full response data:', data);
       
       // Check for API errors in response
       if (data.error) {
@@ -136,6 +135,7 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
       }
       
       const content = data.choices[0]?.message?.content;
+      console.log('OpenRouter: Content from API:', content ? `${content.length} characters` : 'NO CONTENT');
 
       if (!content || content.trim() === '') {
         console.error('OpenRouter: No content in response data:', data);
