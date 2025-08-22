@@ -55,14 +55,27 @@ export default function FolderManager({
     };
   }, [openDropdownId]);
 
+  // Debug: Log folders state changes
+  useEffect(() => {
+    console.log('Folders state changed to:', folders);
+    console.log('Number of folders:', folders.length);
+  }, [folders]);
+
   const loadFolders = async () => {
     try {
       console.log('Loading folders for user:', userId);
       const userFolders = await FirebaseService.getUserFolders(userId);
       console.log('Loaded folders:', userFolders);
+      console.log('Setting folders state with:', userFolders);
       setFolders(userFolders);
+      
+      // Verify state was set
+      setTimeout(() => {
+        console.log('Current folders state after setState:', folders);
+      }, 100);
     } catch (error) {
       console.error('Failed to load folders:', error);
+      console.error('Error details:', error);
     }
   };
 
@@ -190,13 +203,30 @@ export default function FolderManager({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Organize Your Tests</h2>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New Folder</span>
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={async () => {
+              console.log('Testing folder creation...');
+              try {
+                const testFolder = await FirebaseService.createFolder(userId, 'Test Folder', 'Test description', '#FF0000');
+                console.log('Test folder created:', testFolder);
+                await loadFolders(); // Reload folders
+              } catch (error) {
+                console.error('Test folder creation failed:', error);
+              }
+            }}
+            className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <span>Test Create</span>
+          </button>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>New Folder</span>
+          </button>
+        </div>
       </div>
 
       {/* Folder List */}
