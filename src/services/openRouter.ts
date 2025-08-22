@@ -31,8 +31,8 @@ export class OpenRouterService {
 
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
 
-    // Use the new qwen/qwen3-coder:free model with 64k token capacity
-    const model = 'qwen/qwen3-coder:free';
+    // Use the z-ai/glm-4.5-air:free model
+    const model = 'z-ai/glm-4.5-air:free';
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
     console.log('OpenRouter: API Key configured:', !!this.API_KEY);
@@ -374,7 +374,7 @@ Requirements:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'qwen/qwen3-coder:free', // Use new free model for validation
+          model: 'z-ai/glm-4.5-air:free', // Use new free model for validation
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 100,
         }),
