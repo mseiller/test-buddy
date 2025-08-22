@@ -20,19 +20,19 @@ export class OpenRouterService {
     if (questionCount > 50) {
       console.warn(`OpenRouter: Requested ${questionCount} questions, but the free model works best with 50 or fewer questions. Adjusting to 50.`);
       adjustedQuestionCount = 50;
-      maxTokens = 8000;
+      maxTokens = 10000; // Slightly higher for Llama model
     } else if (questionCount > 25) {
-      maxTokens = 6000;
+      maxTokens = 8000;  // Increased for better generation
     } else if (questionCount > 15) {
-      maxTokens = 4000;
+      maxTokens = 6000;  // Increased
     } else {
-      maxTokens = 3000;
+      maxTokens = 4000;  // Increased
     }
 
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
 
-    // Use the z-ai/glm-4.5-air:free model
-    const model = 'z-ai/glm-4.5-air:free';
+    // Use the meta-llama/llama-3.2-3b-instruct:free model
+    const model = 'meta-llama/llama-3.2-3b-instruct:free';
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
     console.log('OpenRouter: API Key configured:', !!this.API_KEY);
@@ -409,7 +409,7 @@ Requirements:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'z-ai/glm-4.5-air:free', // Use new free model for validation
+          model: 'meta-llama/llama-3.2-3b-instruct:free', // Use new free model for validation
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 100,
         }),
