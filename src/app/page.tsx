@@ -30,6 +30,8 @@ export default function Home() {
   const [isRetaking, setIsRetaking] = useState(false);
   const [retakeTestName, setRetakeTestName] = useState('');
   const [selectedFolder, setSelectedFolder] = useState<Folder | null | undefined>(undefined);
+  const [showFolderSelection, setShowFolderSelection] = useState(false);
+  const [availableFolders, setAvailableFolders] = useState<Folder[]>([]);
 
   // Check authentication state on mount
   useEffect(() => {
@@ -100,6 +102,8 @@ export default function Home() {
     setIsRetaking(false);
     setRetakeTestName('');
     setSelectedFolder(undefined);
+    setShowFolderSelection(false);
+    setAvailableFolders([]);
   };
 
   const handleFileProcessed = (fileUpload: FileUploadType) => {
@@ -143,7 +147,7 @@ export default function Home() {
     }
   };
 
-  const handleQuizComplete = async (userAnswers: UserAnswer[], timeTaken: number) => {
+  const handleQuizComplete = async (userAnswers: UserAnswer[], timeTaken: number, isIncomplete?: boolean) => {
     if (!user || !uploadedFile) return;
 
     const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
@@ -152,16 +156,23 @@ export default function Home() {
     setAnswers(userAnswers);
     setScore(calculatedScore);
     setTimeTaken(timeTaken);
-    setAppState('results');
+    
+    // If incomplete, go to home instead of results
+    if (isIncomplete) {
+      setAppState('home');
+    } else {
+      setAppState('results');
+    }
 
     // Save to Firebase
     try {
       console.log('Saving test with folderId:', selectedFolder?.id);
       console.log('Selected folder:', selectedFolder);
+      console.log('Is incomplete test:', isIncomplete);
       
       const testHistory: Omit<TestHistoryType, 'id'> = {
         userId: user.uid,
-        testName,
+        testName: isIncomplete ? `${testName} (In Progress)` : testName,
         fileName: uploadedFile.fileName,
         fileType: uploadedFile.fileType,
         extractedText: uploadedFile.extractedText, // Store for retaking
@@ -172,16 +183,23 @@ export default function Home() {
         answers: userAnswers,
         score: calculatedScore,
         createdAt: new Date(),
-        completedAt: new Date(),
+        completedAt: isIncomplete ? undefined : new Date(), // Don't set completedAt for incomplete tests
         folderId: selectedFolder?.id, // Include folder ID if test is created within a folder
       };
 
       const savedId = await FirebaseService.saveTestHistory(testHistory);
       console.log('Test history saved successfully with ID:', savedId);
+      
+      if (isIncomplete) {
+        setError('Progress saved! You can continue this test later from your history.');
+      }
     } catch (error: any) {
       console.error('Failed to save test history:', error);
       // Show a non-intrusive message to the user
-      setError('Quiz completed successfully! Note: Test history may not have been saved due to a connection issue.');
+      const message = isIncomplete 
+        ? 'Progress saved locally but may not have been saved to the cloud due to a connection issue.'
+        : 'Quiz completed successfully! Note: Test history may not have been saved due to a connection issue.';
+      setError(message);
     }
   };
 
@@ -197,12 +215,36 @@ export default function Home() {
     setAnswers([]);
     setScore(0);
     setTimeTaken(0);
+    setQuestions([]); // Clear previous questions
+    setIsRetaking(false); // Reset retake state
+    setRetakeTestName(''); // Clear retake test name
     setAppState('config');
   };
 
   const handleGoHome = () => {
     resetAppState();
     setAppState('home');
+  };
+
+  const loadUserFolders = async () => {
+    if (!user) return;
+    try {
+      const folders = await FirebaseService.getUserFolders(user.uid);
+      setAvailableFolders(folders);
+    } catch (error) {
+      console.error('Failed to load folders:', error);
+    }
+  };
+
+  const handleCreateNewQuiz = async () => {
+    await loadUserFolders();
+    setShowFolderSelection(true);
+  };
+
+  const handleFolderSelectionComplete = (folder: Folder | null) => {
+    setSelectedFolder(folder);
+    setShowFolderSelection(false);
+    setAppState('upload');
   };
 
   const handleGoBack = () => {
@@ -378,7 +420,7 @@ export default function Home() {
                     Upload a document and let AI generate personalized quiz questions for you
                   </p>
                   <button
-                    onClick={() => setAppState('upload')}
+                    onClick={handleCreateNewQuiz}
                     className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
                   >
                     Start Creating
@@ -472,11 +514,11 @@ export default function Home() {
           <div className="max-w-2xl mx-auto px-6">
             <div className="flex items-center justify-between mb-6">
               <button
-                onClick={() => setAppState('upload')}
+                onClick={handleGoHome}
                 className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <HomeIcon className="h-4 w-4" />
-                <span>Back to Upload</span>
+                <span>Back to Home</span>
               </button>
             </div>
             
@@ -580,6 +622,86 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* Folder Selection Modal */}
+      {showFolderSelection && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Where to create your new test?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Choose where to organize your new quiz
+            </p>
+
+            <div className="space-y-3">
+              {/* No Folder Option */}
+              <button
+                onClick={() => handleFolderSelectionComplete(null)}
+                className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 rounded-full bg-gray-400"></div>
+                  <div>
+                    <div className="font-medium text-gray-900">No Folder</div>
+                    <div className="text-sm text-gray-500">Create test without organizing in a folder</div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Existing Folders */}
+              {availableFolders.map((folder) => (
+                <button
+                  key={folder.id}
+                  onClick={() => handleFolderSelectionComplete(folder)}
+                  className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: folder.color || '#3B82F6' }}
+                    ></div>
+                    <div>
+                      <div className="font-medium text-gray-900">{folder.name}</div>
+                      {folder.description && (
+                        <div className="text-sm text-gray-500">{folder.description}</div>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))}
+
+              {/* Create New Folder Option */}
+              <button
+                onClick={() => {
+                  setShowFolderSelection(false);
+                  setAppState('folders');
+                }}
+                className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">+</span>
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">Create New Folder</div>
+                    <div className="text-sm text-gray-500">Organize your tests in a new folder</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowFolderSelection(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 py-6 mt-12">

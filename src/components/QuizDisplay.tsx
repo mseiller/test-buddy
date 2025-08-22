@@ -7,7 +7,7 @@ import { Question, UserAnswer } from '@/types';
 interface QuizDisplayProps {
   questions: Question[];
   testName: string;
-  onQuizComplete: (answers: UserAnswer[], timeTaken: number) => void;
+  onQuizComplete: (answers: UserAnswer[], timeTaken: number, isIncomplete?: boolean) => void;
   onGoBack: () => void;
 }
 
@@ -144,6 +144,12 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
     const timeTaken = Date.now() - startTime;
     const { scoredAnswers } = calculateScore(answers);
     onQuizComplete(scoredAnswers, timeTaken);
+  };
+
+  const handleSaveIncomplete = () => {
+    const timeTaken = Date.now() - startTime;
+    const { scoredAnswers } = calculateScore(answers);
+    onQuizComplete(scoredAnswers, timeTaken, true); // Pass true to indicate incomplete
   };
 
   const renderQuestion = () => {
@@ -454,13 +460,19 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
         </div>
       </div>
 
-      {/* Back Button */}
-      <div className="mt-6 text-center">
+      {/* Action Buttons */}
+      <div className="mt-6 flex justify-center space-x-4">
         <button
           onClick={onGoBack}
           className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
         >
           ← Back to Setup
+        </button>
+        <button
+          onClick={handleSaveIncomplete}
+          className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
+        >
+          Save Progress & Exit
         </button>
       </div>
     </div>
