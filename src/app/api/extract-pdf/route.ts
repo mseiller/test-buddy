@@ -50,19 +50,10 @@ export async function POST(request: NextRequest) {
         const mod = await import('pdf-parse');
         pdf = mod.default ?? mod;
         console.log('pdf-parse imported successfully');
-        
-        // Test if the library is working by checking if it's a function
-        if (typeof pdf !== 'function') {
-          throw new Error('pdf-parse import is not a function');
-        }
       } catch (e) {
-        console.error('Failed to import or validate pdf-parse:', e);
+        console.error('Failed to import pdf-parse:', e);
         return NextResponse.json(
-          { 
-            error: 'PDF processing library not available or corrupted', 
-            originalError: String(e),
-            suggestion: 'This may be a bundling issue. Check server logs for more details.'
-          },
+          { error: 'PDF processing library not available', originalError: String(e) },
           { status: 500 }
         );
       }

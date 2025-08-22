@@ -1,7 +1,7 @@
-import * as pdfjsLib from 'pdfjs-dist';
+import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 
 // Bundle the worker locally instead of using CDN
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 export interface ClientPdfResult {
   text: string;
@@ -17,7 +17,7 @@ export async function extractPdfText(file: File): Promise<ClientPdfResult> {
     const arrayBuffer = await file.arrayBuffer();
     
     // Load the PDF document
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const loadingTask = getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
     
     console.log('PDF loaded, pages:', pdf.numPages);
@@ -63,7 +63,7 @@ export async function isPdfSupported(): Promise<boolean> {
   try {
     // Test if pdfjs-dist is working
     const testArray = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // PDF header
-    const loadingTask = pdfjsLib.getDocument({ data: testArray });
+    const loadingTask = getDocument({ data: testArray });
     await loadingTask.promise;
     return true;
   } catch {

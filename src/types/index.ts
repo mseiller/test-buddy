@@ -4,36 +4,6 @@ export interface User {
   displayName?: string;
 }
 
-export interface Folder {
-  id: string;
-  name: string;
-  color?: string;
-  createdAt: number;
-  updatedAt: number;
-  testCount: number;
-}
-
-export interface TestDoc {
-  id: string;
-  folderId: string;
-  name: string;
-  sourceFile?: {
-    name: string;
-    size: number;
-    type: string;
-    storagePath?: string;
-  };
-  meta?: {
-    pages?: number;
-    extractionMs?: number;
-    hasOcr?: boolean;
-  };
-  tags?: string[];
-  questionsIndexReady?: boolean;
-  createdAt: number;
-  updatedAt: number;
-}
-
 export interface TestHistory {
   id: string;
   userId: string;
