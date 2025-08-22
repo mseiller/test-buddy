@@ -151,6 +151,9 @@ export default function Home() {
 
     // Save to Firebase
     try {
+      console.log('Saving test with folderId:', selectedFolder?.id);
+      console.log('Selected folder:', selectedFolder);
+      
       const testHistory: Omit<TestHistoryType, 'id'> = {
         userId: user.uid,
         testName,

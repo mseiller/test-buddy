@@ -45,6 +45,7 @@ export default function FolderManager({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (openDropdownId) {
+        console.log('Click outside detected, closing dropdown:', openDropdownId);
         setOpenDropdownId(null);
       }
     };
@@ -161,27 +162,51 @@ export default function FolderManager({
     }
 
     try {
+      console.log('Deleting folder:', folderId);
+      
+      // First, move all tests in this folder to unorganized
+      const testsInFolder = tests.filter(test => test.folderId === folderId);
+      console.log('Moving', testsInFolder.length, 'tests to unorganized');
+      
+      for (const test of testsInFolder) {
+        await FirebaseService.moveTestToFolder(test.id, null);
+      }
+      
+      // Then delete the folder
       await FirebaseService.deleteFolder(folderId);
+      console.log('Folder deleted successfully');
+      
+      // Update local state
       setFolders(folders.filter(f => f.id !== folderId));
+      setTests(tests.map(test => 
+        test.folderId === folderId ? { ...test, folderId: undefined } : test
+      ));
       
       if (selectedFolder?.id === folderId) {
         onFolderSelect(null);
       }
+      
+      console.log('Local state updated after folder deletion');
     } catch (error: any) {
       console.error('Failed to delete folder:', error);
+      alert('Failed to delete folder. Please try again.');
     }
   };
 
   const handleMoveTestToFolder = async (testId: string, folderId: string | null) => {
     try {
+      console.log('Moving test', testId, 'to folder', folderId);
       await FirebaseService.moveTestToFolder(testId, folderId);
+      console.log('Test moved successfully');
       
       // Update local state
       setTests(tests.map(test => 
         test.id === testId ? { ...test, folderId: folderId || undefined } : test
       ));
+      console.log('Local state updated for test move');
     } catch (error: any) {
       console.error('Failed to move test:', error);
+      alert('Failed to move test. Please try again.');
     }
   };
 
@@ -342,7 +367,11 @@ export default function FolderManager({
               <div className="relative">
                 <button 
                   className="p-1 hover:bg-gray-200 rounded"
-                  onClick={() => setOpenDropdownId(openDropdownId === test.id ? null : test.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('Test dropdown clicked, current openDropdownId:', openDropdownId, 'test.id:', test.id);
+                    setOpenDropdownId(openDropdownId === test.id ? null : test.id);
+                  }}
                 >
                   <MoreHorizontal className="h-4 w-4 text-gray-500" />
                 </button>
