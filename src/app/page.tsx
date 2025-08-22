@@ -5,11 +5,18 @@ import { useRouter } from 'next/navigation';
 import { User } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
 import AuthForm from '@/components/AuthForm';
+import FileUpload from '@/components/FileUpload';
+import QuizConfig from '@/components/QuizConfig';
+import QuizDisplay from '@/components/QuizDisplay';
 import { BookOpen, Zap, Shield, Users, FolderIcon } from 'lucide-react';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [appState, setAppState] = useState<'auth' | 'upload' | 'config' | 'quiz'>('auth');
+  const [uploadedFile, setUploadedFile] = useState<any>(null);
+  const [testName, setTestName] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   // Check authentication state on mount
@@ -24,7 +31,44 @@ export default function Home() {
 
   const handleAuthSuccess = (user: User) => {
     setUser(user);
+    setAppState('upload');
   };
+
+  const handleFileProcessed = (fileUpload: any) => {
+    console.log('handleFileProcessed called with:', fileUpload);
+    setUploadedFile(fileUpload);
+    // Prefill test name from filename
+    setTestName(fileUpload.fileName.replace(/\.\w+$/, ''));
+    setAppState('config');
+    setError(null);
+  };
+
+  const handleQuizComplete = async (testHistory: any) => {
+    try {
+      await FirebaseService.saveTestHistory(testHistory);
+      console.log('Test history saved successfully');
+      // Reset state and go back to upload
+      setAppState('upload');
+      setUploadedFile(null);
+      setTestName('');
+    } catch (e: any) {
+      console.error('Failed to save test history', e);
+      setError(e?.message ?? 'Failed to save test history');
+    }
+  };
+
+  // Debug global state
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__tb = {
+        uploadedFile,
+        appState,
+        user,
+        testName,
+        error
+      };
+    }
+  }, [uploadedFile, appState, user, testName, error]);
 
   if (authLoading) {
     return (
@@ -34,9 +78,8 @@ export default function Home() {
     );
   }
 
-  // If user is authenticated, show dashboard content directly
+  // If user is authenticated, show the appropriate interface based on app state
   if (user) {
-    // Show dashboard content inline to avoid routing issues
     return (
       <div className="flex h-screen bg-gray-50">
         {/* Sidebar */}
@@ -68,7 +111,7 @@ export default function Home() {
                 🏠 Dashboard
               </button>
               <button
-                onClick={() => router.push('/upload')}
+                onClick={() => setAppState('upload')}
                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
               >
                 📁 Upload Test
@@ -98,35 +141,81 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Main content */}
+        {/* Main content - Dynamic based on app state */}
         <div className="flex-1 overflow-auto">
           <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome back, {user.displayName || 'User'}!
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Get started by creating a folder or uploading a test
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
-              >
-                <FolderIcon className="h-12 w-12 text-indigo-500 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Create Folder</h3>
-                <p className="text-gray-600">Organize your tests into folders by subject or class</p>
-              </button>
-              
-              <button
-                onClick={() => router.push('/upload')}
-                className="p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
-              >
-                <BookOpen className="h-12 w-12 text-green-500 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Test</h3>
-                <p className="text-gray-600">Upload a document and generate a new quiz</p>
-              </button>
+            {/* Debug Info */}
+            <div className="mb-4 p-3 bg-gray-100 rounded-md text-sm">
+              <div>App State: {appState}</div>
+              <div>File: {uploadedFile ? uploadedFile.fileName : 'none'}</div>
+              <div>Error: {error || 'none'}</div>
             </div>
+
+            {/* Upload State */}
+            {appState === 'upload' && (
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Welcome back, {user.displayName || 'User'}!
+                </h1>
+                <p className="text-gray-600 mb-8">
+                  Get started by creating a folder or uploading a test
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+                  >
+                    <FolderIcon className="h-12 w-12 text-indigo-500 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Create Folder</h3>
+                    <p className="text-gray-600">Organize your tests into folders by subject or class</p>
+                  </button>
+                  
+                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                    <BookOpen className="h-12 w-12 text-green-500 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Test</h3>
+                    <p className="text-gray-600 mb-4">Upload a document and generate a new quiz</p>
+                    <FileUpload 
+                      onFileProcessed={handleFileProcessed} 
+                      onError={(error) => setError(error)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Config State */}
+            {appState === 'config' && uploadedFile && (
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Configure Quiz</h1>
+                <p className="text-gray-600 mb-8">
+                  Set up your quiz for: {uploadedFile.fileName}
+                </p>
+                <QuizConfig 
+                  onConfigSubmit={(quizType, questionCount, testName) => {
+                    setTestName(testName);
+                    setAppState('quiz');
+                  }}
+                  loading={false}
+                />
+              </div>
+            )}
+
+            {/* Quiz State */}
+            {appState === 'quiz' && uploadedFile && (
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz: {testName}</h1>
+                <QuizDisplay 
+                  questions={[]} // TODO: Generate questions from uploadedFile
+                  testName={testName}
+                  onQuizComplete={(answers, timeTaken) => {
+                    // TODO: Process quiz completion
+                    console.log('Quiz completed:', { answers, timeTaken });
+                  }}
+                  onGoBack={() => setAppState('config')}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
