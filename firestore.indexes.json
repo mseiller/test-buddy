@@ -62,6 +62,15 @@
         { "fieldPath": "userId", "mode": "ASCENDING" },
         { "fieldPath": "createdAt", "mode": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "testHistory",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "folderId", "mode": "ASCENDING" },
+        { "fieldPath": "userId", "mode": "ASCENDING" },
+        { "fieldPath": "createdAt", "mode": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
