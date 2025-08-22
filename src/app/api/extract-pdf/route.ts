@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'nodejs';
+export const maxDuration = 30; // seconds
+
 export async function POST(request: NextRequest) {
   try {
     console.log('PDF extraction API called');
@@ -42,14 +45,17 @@ export async function POST(request: NextRequest) {
 
       // Try to import and use pdf-parse with error handling
       console.log('Importing pdf-parse...');
-      let pdf;
+      let pdf: any;
       try {
-        const pdfModule = await import('pdf-parse');
-        pdf = pdfModule.default;
+        const mod = await import('pdf-parse');
+        pdf = mod.default ?? mod;
         console.log('pdf-parse imported successfully');
-      } catch (importError) {
-        console.error('Failed to import pdf-parse:', importError);
-        throw new Error('PDF processing library not available');
+      } catch (e) {
+        console.error('Failed to import pdf-parse:', e);
+        return NextResponse.json(
+          { error: 'PDF processing library not available', originalError: String(e) },
+          { status: 500 }
+        );
       }
 
       // Extract text from PDF using pdf-parse with minimal configuration

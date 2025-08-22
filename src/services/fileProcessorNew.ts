@@ -64,7 +64,19 @@ export class FileProcessorNew {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('NEW PDF PROCESSOR - PDF API error response:', errorText);
-        throw new Error(`Failed to extract PDF text: ${response.status} ${response.statusText}`);
+        
+        // If server fails, try client-side fallback
+        console.log('NEW PDF PROCESSOR - Server failed, trying client-side fallback...');
+        try {
+          const { extractPdfText } = await import('@/lib/clientPdfExtract');
+          console.log('NEW PDF PROCESSOR - Client-side fallback starting...');
+          const clientResult = await extractPdfText(file);
+          console.log('NEW PDF PROCESSOR - Client-side fallback successful. Text length:', clientResult.text.length);
+          return clientResult.text;
+        } catch (clientError) {
+          console.error('NEW PDF PROCESSOR - Client-side fallback also failed:', clientError);
+          throw new Error(`PDF extraction failed on both server and client: ${clientError instanceof Error ? clientError.message : 'Unknown error'}`);
+        }
       }
       
       const result = await response.json();
