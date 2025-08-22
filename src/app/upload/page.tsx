@@ -14,7 +14,6 @@ export default function UploadPage() {
   const router = useRouter();
   const [selectedFolderId, setSelectedFolderId] = useState<string>('');
   const [showFolderSelect, setShowFolderSelect] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
   if (!user) {
     router.push('/');
@@ -22,33 +21,20 @@ export default function UploadPage() {
   }
 
   const handleFileProcessed = (fileUpload: any) => {
-    if (isUploading) {
-      console.log('Upload already in progress, ignoring duplicate call');
-      return;
-    }
-    
     console.log('File processed:', fileUpload);
     console.log('Selected folder ID:', selectedFolderId);
     
-    setIsUploading(true);
-    
-    // Store the file upload data and redirect to quiz generation
     if (selectedFolderId) {
-      console.log('Storing file data and redirecting to quiz...');
-      // Store in localStorage for now (we'll implement proper state management later)
+      // Store the file upload data and redirect to quiz generation
       localStorage.setItem('tempFileUpload', JSON.stringify({
         ...fileUpload,
-        folderId: selectedFolderId === 'general' ? null : selectedFolderId
+        folderId: selectedFolderId
       }));
       
-      // Store in localStorage and redirect to home page for quiz generation
-      setTimeout(() => {
-        router.push('/');
-      }, 100);
+      // Redirect to quiz page
+      router.push('/quiz');
     } else {
       console.error('No folder selected!');
-      setIsUploading(false);
-      // Show error to user
       alert('Please select a folder first before uploading.');
     }
   };
@@ -77,7 +63,7 @@ export default function UploadPage() {
           <div className="mb-8">
             <div className="flex items-center mb-4">
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/dashboard')}
                 className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -89,13 +75,6 @@ export default function UploadPage() {
             </p>
           </div>
 
-          {/* Debug Info */}
-          <div className="mb-4 p-3 bg-gray-100 rounded-md text-sm">
-            <div>Debug: {folders.length} folders available</div>
-            <div>Selected folder: {selectedFolderId || 'none'}</div>
-            <div>User: {user?.email}</div>
-          </div>
-
           {/* Folder Selection */}
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Select Destination Folder</h2>
@@ -103,23 +82,12 @@ export default function UploadPage() {
               <div className="text-center py-8 bg-gray-50 rounded-lg">
                 <FolderIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">No folders created yet</p>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => router.push('/dashboard')}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                  >
-                    Create Your First Folder
-                  </button>
-                  <div className="text-sm text-gray-500">
-                    Or upload without a folder (will be saved to general history)
-                  </div>
-                  <button
-                    onClick={() => setSelectedFolderId('general')}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                  >
-                    Upload Without Folder
-                  </button>
-                </div>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  Create Your First Folder
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -154,16 +122,7 @@ export default function UploadPage() {
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Upload to: {folders.find(f => f.id === selectedFolderId)?.name}
               </h3>
-              {isUploading && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                    <span className="text-sm text-blue-700">Processing upload...</span>
-                  </div>
-                </div>
-              )}
               <FileUpload
-                key={`upload-${selectedFolderId}`}
                 onFileProcessed={handleFileProcessed}
                 onError={handleFileError}
               />

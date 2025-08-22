@@ -38,12 +38,9 @@ export default function HistoryPage() {
   }, [user]);
 
   if (!user) {
-    console.log('History page: No user, redirecting to home');
     router.push('/');
     return null;
   }
-
-  console.log('History page: User authenticated, loading tests...');
 
   const handleViewTest = (test: TestHistoryType) => {
     // TODO: Implement test review functionality
@@ -77,7 +74,7 @@ export default function HistoryPage() {
           <div className="mb-8">
             <div className="flex items-center mb-4">
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/dashboard')}
                 className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />

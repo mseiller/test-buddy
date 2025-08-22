@@ -5,21 +5,22 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useFolders } from '@/hooks/useFolders';
 import { FolderList } from '@/components/FolderList';
-import { OpenRouterService } from '@/services/openRouter';
-import { FirebaseService } from '@/services/firebaseService';
-import { FileUpload as FileUploadType, Question, UserAnswer, QuizType } from '@/types';
+import FileUpload from '@/components/FileUpload';
 import QuizConfig from '@/components/QuizConfig';
 import QuizDisplay from '@/components/QuizDisplay';
 import QuizResults from '@/components/QuizResults';
-import { ArrowLeft, BookOpen, AlertCircle } from 'lucide-react';
+import { OpenRouterService } from '@/services/openRouter';
+import { FirebaseService } from '@/services/firebaseService';
+import { FileUpload as FileUploadType, Question, UserAnswer, QuizType } from '@/types';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 
-type QuizState = 'config' | 'quiz' | 'results';
+type QuizState = 'upload' | 'config' | 'quiz' | 'results';
 
 export default function QuizPage() {
   const { user } = useAuth();
   const { folders } = useFolders();
   const router = useRouter();
-  const [quizState, setQuizState] = useState<QuizState>('config');
+  const [quizState, setQuizState] = useState<QuizState>('upload');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
@@ -28,46 +29,45 @@ export default function QuizPage() {
   const [timeTaken, setTimeTaken] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selectedFolderId, setSelectedFolderId] = useState<string>('');
 
-  // Load file upload data from localStorage
+  // Check for stored file data from upload page
   useEffect(() => {
-    if (user) {
-      console.log('Quiz page: Checking localStorage for file data...');
-      const storedData = localStorage.getItem('tempFileUpload');
-      console.log('Quiz page: Stored data found:', storedData ? 'yes' : 'no');
-      
-      if (storedData) {
-        try {
-          const data = JSON.parse(storedData);
-          console.log('Quiz page: Parsed data:', data);
-          setUploadedFile(data);
-          setSelectedFolderId(data.folderId);
-          // Clear the stored data
-          localStorage.removeItem('tempFileUpload');
-          console.log('Quiz page: File data loaded successfully');
-        } catch (err) {
-          console.error('Failed to parse stored file data:', err);
-          setError('Failed to load uploaded file data');
-        }
-      } else {
-        console.log('Quiz page: No stored file data found');
+    const storedFileData = localStorage.getItem('tempFileUpload');
+    if (storedFileData) {
+      try {
+        const fileData = JSON.parse(storedFileData);
+        setUploadedFile(fileData);
+        setTestName(fileData.fileName.replace(/\.\w+$/, ''));
+        setQuizState('config');
+        // Clear the stored data
+        localStorage.removeItem('tempFileUpload');
+      } catch (error) {
+        console.error('Failed to parse stored file data:', error);
       }
     }
-  }, [user]);
+  }, []);
 
   if (!user) {
     router.push('/');
     return null;
   }
 
-  // If no file data, redirect to upload
-  if (!uploadedFile) {
-    router.push('/upload');
-    return null;
-  }
+  const handleFileProcessed = (fileUpload: FileUploadType) => {
+    console.log('File processed:', fileUpload);
+    setUploadedFile(fileUpload);
+    setTestName(fileUpload.fileName.replace(/\.\w+$/, ''));
+    setQuizState('config');
+    setError('');
+  };
+
+  const handleFileError = (error: string) => {
+    console.error('File error:', error);
+    setError(error);
+  };
 
   const handleConfigSubmit = async (quizType: QuizType, questionCount: number, name: string) => {
+    if (!uploadedFile) return;
+
     setLoading(true);
     setError('');
     setTestName(name);
@@ -101,7 +101,7 @@ export default function QuizPage() {
 
     // Save to Firebase
     try {
-      const testHistory: any = {
+      const testHistory = {
         userId: user.uid,
         testName,
         fileName: uploadedFile.fileName,
@@ -115,20 +115,13 @@ export default function QuizPage() {
         score: calculatedScore,
         createdAt: new Date(),
         completedAt: new Date(),
-        folderId: selectedFolderId, // Add folder association
       };
 
-      const savedId = await FirebaseService.saveTestHistory(testHistory);
-      console.log('Test history saved successfully with ID:', savedId);
-
-      // Update folder test count if we have a folder
-      if (selectedFolderId) {
-        // TODO: Update folder test count
-        console.log('Test saved to folder:', selectedFolderId);
-      }
+      await FirebaseService.saveTestHistory(testHistory);
+      console.log('Test history saved successfully');
     } catch (error: any) {
       console.error('Failed to save test history:', error);
-      setError('Quiz completed successfully! Note: Test history may not have been saved due to a connection issue.');
+      setError('Quiz completed but failed to save to history');
     }
   };
 
@@ -153,7 +146,7 @@ export default function QuizPage() {
   const handleGoBack = () => {
     switch (quizState) {
       case 'config':
-        router.push('/upload');
+        setQuizState('upload');
         break;
       case 'quiz':
         setQuizState('config');
@@ -161,15 +154,9 @@ export default function QuizPage() {
       case 'results':
         setQuizState('quiz');
         break;
+      default:
+        router.push('/');
     }
-  };
-
-  const getFolderName = () => {
-    if (selectedFolderId) {
-      const folder = folders.find(f => f.id === selectedFolderId);
-      return folder?.name || 'Unknown Folder';
-    }
-    return 'No Folder';
   };
 
   return (
@@ -186,15 +173,23 @@ export default function QuizPage() {
           <div className="mb-8">
             <div className="flex items-center mb-4">
               <button
-                onClick={() => router.push('/')}
+                onClick={handleGoHome}
                 className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <h1 className="text-3xl font-bold text-gray-900">Create Quiz</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {quizState === 'upload' && 'Upload Document'}
+                {quizState === 'config' && 'Configure Quiz'}
+                {quizState === 'quiz' && `Quiz: ${testName}`}
+                {quizState === 'results' && 'Quiz Results'}
+              </h1>
             </div>
             <p className="text-gray-600">
-              File: <strong>{uploadedFile.fileName}</strong> • Folder: <strong>{getFolderName()}</strong>
+              {quizState === 'upload' && 'Upload a document to generate a quiz'}
+              {quizState === 'config' && `Configure your quiz for: ${uploadedFile?.fileName}`}
+              {quizState === 'quiz' && 'Answer the questions below'}
+              {quizState === 'results' && 'Review your results'}
             </p>
           </div>
 
@@ -202,7 +197,6 @@ export default function QuizPage() {
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
               <div className="flex">
-                <AlertCircle className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-red-700">
                   {error}
                   <button
@@ -216,48 +210,49 @@ export default function QuizPage() {
             </div>
           )}
 
-          {/* Quiz States */}
-          {quizState === 'config' && (
+          {/* Content based on state */}
+          {quizState === 'upload' && (
             <div className="max-w-2xl">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Configure Your Quiz
-                </h2>
-                <p className="text-gray-600">
-                  File processed: <strong>{uploadedFile.fileName}</strong>
-                </p>
-              </div>
-              <QuizConfig 
+              <FileUpload
+                onFileProcessed={handleFileProcessed}
+                onError={handleFileError}
+              />
+            </div>
+          )}
+
+          {quizState === 'config' && uploadedFile && (
+            <div className="max-w-2xl">
+              <QuizConfig
                 onConfigSubmit={handleConfigSubmit}
                 loading={loading}
-                isRetake={false}
-                originalTestName=""
               />
             </div>
           )}
 
           {quizState === 'quiz' && questions.length > 0 && (
-            <QuizDisplay
-              questions={questions}
-              testName={testName}
-              onQuizComplete={handleQuizComplete}
-              onGoBack={handleGoBack}
-            />
+            <div className="max-w-4xl">
+              <QuizDisplay
+                questions={questions}
+                testName={testName}
+                onQuizComplete={handleQuizComplete}
+                onGoBack={handleGoBack}
+              />
+            </div>
           )}
 
           {quizState === 'results' && (
-            <QuizResults
-              questions={questions}
-              answers={answers}
-              score={score}
-              timeTaken={timeTaken}
-              testName={testName}
-              onRetakeQuiz={handleRetakeQuiz}
-              onGoHome={handleGoHome}
-              onNewQuizFromFile={handleNewQuizFromFile}
-              isHistoricalReview={false}
-              onBackToHistory={() => router.push('/history')}
-            />
+            <div className="max-w-4xl">
+              <QuizResults
+                questions={questions}
+                answers={answers}
+                score={score}
+                timeTaken={timeTaken}
+                testName={testName}
+                onRetakeQuiz={handleRetakeQuiz}
+                onGoHome={handleGoHome}
+                onNewQuizFromFile={handleNewQuizFromFile}
+              />
+            </div>
           )}
         </div>
       </div>

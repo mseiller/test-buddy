@@ -207,12 +207,6 @@ export default function DashboardHome() {
             </div>
             <div className="mt-4 flex space-x-3">
               <button
-                onClick={() => router.push('/')}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                🏠 Home
-              </button>
-              <button
                 onClick={() => router.push('/upload')}
                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
