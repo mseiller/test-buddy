@@ -38,7 +38,7 @@ export default function UploadPage() {
       // Store in localStorage for now (we'll implement proper state management later)
       localStorage.setItem('tempFileUpload', JSON.stringify({
         ...fileUpload,
-        folderId: selectedFolderId
+        folderId: selectedFolderId === 'general' ? null : selectedFolderId
       }));
       
       // Force the redirect
@@ -89,6 +89,13 @@ export default function UploadPage() {
             </p>
           </div>
 
+          {/* Debug Info */}
+          <div className="mb-4 p-3 bg-gray-100 rounded-md text-sm">
+            <div>Debug: {folders.length} folders available</div>
+            <div>Selected folder: {selectedFolderId || 'none'}</div>
+            <div>User: {user?.email}</div>
+          </div>
+
           {/* Folder Selection */}
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Select Destination Folder</h2>
@@ -96,12 +103,23 @@ export default function UploadPage() {
               <div className="text-center py-8 bg-gray-50 rounded-lg">
                 <FolderIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">No folders created yet</p>
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                >
-                  Create Your First Folder
-                </button>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  >
+                    Create Your First Folder
+                  </button>
+                  <div className="text-sm text-gray-500">
+                    Or upload without a folder (will be saved to general history)
+                  </div>
+                  <button
+                    onClick={() => setSelectedFolderId('general')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  >
+                    Upload Without Folder
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

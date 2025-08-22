@@ -38,9 +38,12 @@ export default function HistoryPage() {
   }, [user]);
 
   if (!user) {
+    console.log('History page: No user, redirecting to home');
     router.push('/');
     return null;
   }
+
+  console.log('History page: User authenticated, loading tests...');
 
   const handleViewTest = (test: TestHistoryType) => {
     // TODO: Implement test review functionality
