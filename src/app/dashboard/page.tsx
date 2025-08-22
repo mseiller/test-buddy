@@ -5,12 +5,35 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useFolders } from '@/hooks/useFolders';
 import { FolderList } from '@/components/FolderList';
-import { FolderIcon, Plus, BookOpen, TrendingUp } from 'lucide-react';
+import { FolderIcon, BookOpen, TrendingUp, History, Upload } from 'lucide-react';
+import { FirebaseService } from '@/services/firebaseService';
+import { TestHistory as TestHistoryType } from '@/types';
 
 export default function DashboardHome() {
   const { user, loading } = useAuth();
   const { folders } = useFolders();
   const router = useRouter();
+  const [existingTests, setExistingTests] = useState<TestHistoryType[]>([]);
+  const [loadingTests, setLoadingTests] = useState(true);
+
+  // Load existing test history when user is available
+  useEffect(() => {
+    if (user) {
+      const loadExistingTests = async () => {
+        try {
+          setLoadingTests(true);
+          const tests = await FirebaseService.getUserTestHistory(user.uid);
+          setExistingTests(tests);
+        } catch (error) {
+          console.error('Failed to load existing tests:', error);
+        } finally {
+          setLoadingTests(false);
+        }
+      };
+      
+      loadExistingTests();
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -123,6 +146,56 @@ export default function DashboardHome() {
             </div>
           )}
 
+          {/* Existing Tests Section */}
+          {existingTests.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Your Existing Tests</h2>
+                <span className="text-sm text-gray-500">{existingTests.length} test{existingTests.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="divide-y divide-gray-200">
+                  {existingTests.slice(0, 5).map((test, index) => (
+                    <div key={test.id || index} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-gray-900 truncate">{test.testName}</h3>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {test.fileName} • {test.quizType} • {test.score?.toFixed(1)}% • {new Date(test.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <button
+                            onClick={() => router.push(`/quiz/${test.id || index}`)}
+                            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                          >
+                            Review
+                          </button>
+                          <button
+                            onClick={() => router.push(`/retake/${test.id || index}`)}
+                            className="text-xs text-green-600 hover:text-green-800 font-medium"
+                          >
+                            Retake
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {existingTests.length > 5 && (
+                  <div className="px-4 py-3 bg-gray-50 text-center">
+                    <button
+                      onClick={() => router.push('/history')}
+                      className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      View all {existingTests.length} tests →
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Quick Actions */}
           <div className="bg-indigo-50 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-indigo-900 mb-3">Quick Start</h2>
@@ -131,6 +204,22 @@ export default function DashboardHome() {
               <p>• Upload PDFs, Word docs, or text files to generate quizzes</p>
               <p>• Use tags to organize tests within folders</p>
               <p>• Review your quiz history and retake tests anytime</p>
+            </div>
+            <div className="mt-4 flex space-x-3">
+              <button
+                onClick={() => router.push('/upload')}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload New File
+              </button>
+              <button
+                onClick={() => router.push('/history')}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <History className="h-4 w-4 mr-2" />
+                View All Tests
+              </button>
             </div>
           </div>
         </div>

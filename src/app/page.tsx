@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
 import AuthForm from '@/components/AuthForm';
-import { BookOpen, Zap, Shield, Users } from 'lucide-react';
+import { BookOpen, Zap, Shield, Users, FolderIcon } from 'lucide-react';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -34,12 +34,95 @@ export default function Home() {
     );
   }
 
-  // If user is authenticated, redirect to dashboard
+  // If user is authenticated, show dashboard content directly
   if (user) {
-    router.replace('/dashboard');
+    // Show dashboard content inline to avoid routing issues
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      <div className="flex h-screen bg-gray-50">
+        {/* Sidebar */}
+        <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+          <div className="h-full flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-gray-200">
+              <h1 className="text-lg font-semibold text-gray-900">Test Buddy</h1>
+              <p className="text-sm text-gray-500">Organize your tests</p>
+            </div>
+
+            {/* New Folder Button */}
+            <div className="p-4">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <FolderIcon className="h-4 w-4 mr-2" />
+                New Folder
+              </button>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex-1 p-4 space-y-2">
+              <button
+                onClick={() => router.push('/upload')}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                📁 Upload Test
+              </button>
+              <button
+                onClick={() => router.push('/history')}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                📊 View History
+              </button>
+            </div>
+
+            {/* User Info */}
+            <div className="p-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700">
+                  {user.displayName || user.email}
+                </span>
+                <button
+                  onClick={() => FirebaseService.signOut()}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Main content */}
+        <div className="flex-1 overflow-auto">
+          <div className="p-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome back, {user.displayName || 'User'}!
+            </h1>
+            <p className="text-gray-600 mb-8">
+              Get started by creating a folder or uploading a test
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+              >
+                <FolderIcon className="h-12 w-12 text-indigo-500 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Create Folder</h3>
+                <p className="text-gray-600">Organize your tests into folders by subject or class</p>
+              </button>
+              
+              <button
+                onClick={() => router.push('/upload')}
+                className="p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+              >
+                <BookOpen className="h-12 w-12 text-green-500 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Test</h3>
+                <p className="text-gray-600">Upload a document and generate a new quiz</p>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
