@@ -29,7 +29,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true);
   const [isRetaking, setIsRetaking] = useState(false);
   const [retakeTestName, setRetakeTestName] = useState('');
-  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null | undefined>(undefined);
 
   // Check authentication state on mount
   useEffect(() => {
@@ -99,7 +99,7 @@ export default function Home() {
     setError('');
     setIsRetaking(false);
     setRetakeTestName('');
-    setSelectedFolder(null);
+    setSelectedFolder(undefined);
   };
 
   const handleFileProcessed = (fileUpload: FileUploadType) => {

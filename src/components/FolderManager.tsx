@@ -8,7 +8,7 @@ import { Plus, Folder as FolderIcon, Edit, Trash2, MoreHorizontal, X } from 'luc
 interface FolderManagerProps {
   userId: string;
   onFolderSelect: (folder: Folder | null) => void;
-  selectedFolder: Folder | null;
+  selectedFolder: Folder | null | undefined;
   onTestSelect: (test: TestHistory) => void;
 }
 
@@ -36,10 +36,12 @@ export default function FolderManager({
   useEffect(() => {
     if (selectedFolder) {
       loadTestsInFolder(selectedFolder.id);
-    } else {
+    } else if (selectedFolder === null && folders.length > 0) {
+      // Only load all tests if "All Tests" was explicitly selected (selectedFolder is null but we have folders)
       loadAllTests();
     }
-  }, [selectedFolder, userId]);
+    // If selectedFolder is undefined, don't load any tests (initial state)
+  }, [selectedFolder, userId, folders.length]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -344,6 +346,20 @@ export default function FolderManager({
               </h4>
               <p className="text-xs text-gray-500">
                 {test.fileName} • {test.quizType} • {test.score !== undefined ? `${test.score}%` : 'Not completed'}
+                {!selectedFolder && test.folderId && (
+                  <span className="ml-2">
+                    • <span className="inline-flex items-center">
+                      <div 
+                        className="w-2 h-2 rounded-full mr-1" 
+                        style={{ backgroundColor: folders.find(f => f.id === test.folderId)?.color || '#3B82F6' }}
+                      />
+                      {folders.find(f => f.id === test.folderId)?.name || 'Unknown Folder'}
+                    </span>
+                  </span>
+                )}
+                {!selectedFolder && !test.folderId && (
+                  <span className="ml-2 text-gray-400">• Unorganized</span>
+                )}
               </p>
             </div>
             
@@ -410,9 +426,22 @@ export default function FolderManager({
           </div>
         ))}
         
-        {tests.length === 0 && (
+        {tests.length === 0 && selectedFolder !== undefined && (
           <div className="text-center py-8 text-gray-500">
             {selectedFolder ? 'No tests in this folder yet.' : 'No tests created yet.'}
+          </div>
+        )}
+        
+        {selectedFolder === undefined && (
+          <div className="text-center py-12 text-gray-500">
+            <div className="mb-4">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Select a View</h3>
+            <p className="text-sm">Choose &quot;All Tests&quot; to see all your tests, or select a specific folder to view tests in that folder.</p>
           </div>
         )}
       </div>
