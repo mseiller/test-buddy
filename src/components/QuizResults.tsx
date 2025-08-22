@@ -167,12 +167,14 @@ export default function QuizResults({
           >
             Back to Results
           </button>
-          <button
-            onClick={onRetakeQuiz}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Retake Quiz
-          </button>
+          {!isHistoricalReview && (
+            <button
+              onClick={onRetakeQuiz}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Retake Quiz
+            </button>
+          )}
         </div>
       </div>
     );
