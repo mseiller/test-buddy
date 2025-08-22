@@ -17,22 +17,24 @@ export class OpenRouterService {
     let maxTokens = 16000; // Start with 16k as requested
     let adjustedQuestionCount = questionCount;
     
-    if (questionCount > 25) {
-      console.warn(`OpenRouter: Requested ${questionCount} questions, but the 4k model works best with 25 or fewer questions. Adjusting to 25.`);
-      adjustedQuestionCount = 25;
-      maxTokens = 3500; // Conservative for 4k context model
-    } else if (questionCount > 15) {
-      maxTokens = 3000;
-    } else if (questionCount > 10) {
-      maxTokens = 2500;
+    if (questionCount > 100) {
+      console.warn(`OpenRouter: Requested ${questionCount} questions, but capping at 100 for optimal performance.`);
+      adjustedQuestionCount = 100;
+      maxTokens = 32000; // High limit for 131k context model
+    } else if (questionCount > 75) {
+      maxTokens = 28000;
+    } else if (questionCount > 50) {
+      maxTokens = 24000;
+    } else if (questionCount > 25) {
+      maxTokens = 20000;
     } else {
-      maxTokens = 2000;
+      maxTokens = 16000;
     }
 
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
 
-    // Use the microsoft/phi-3-mini-4k-instruct:free model
-    const model = 'microsoft/phi-3-mini-4k-instruct:free';
+    // Use the qwen/qwen3-235b-a22b:free model with 131k context
+    const model = 'qwen/qwen3-235b-a22b:free';
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
     console.log('OpenRouter: API Key configured:', !!this.API_KEY);
@@ -409,7 +411,7 @@ Requirements:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'microsoft/phi-3-mini-4k-instruct:free', // Use new free model for validation
+          model: 'qwen/qwen3-235b-a22b:free', // Use new free model for validation
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 100,
         }),
