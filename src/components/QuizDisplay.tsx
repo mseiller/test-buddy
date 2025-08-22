@@ -124,7 +124,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
       let isCorrect = false;
 
       if (question && question.type !== 'Essay') {
-        if (question.type === 'MCQ') {
+        if (question.type === 'MCQ' || question.type === 'True-False') {
           isCorrect = userAnswer.answer === question.correctAnswer;
         } else if (question.type === 'Fill-in-the-blank') {
           const userText = String(userAnswer.answer).toLowerCase().trim();
@@ -195,6 +195,41 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
               placeholder="Type your answer here..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
             />
+          </div>
+        );
+
+      case 'True-False':
+        return (
+          <div className="space-y-3">
+            {['True', 'False'].map((option, index) => (
+              <label
+                key={option}
+                className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  currentAnswer?.answer === index
+                    ? 'border-indigo-500 bg-indigo-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`question-${currentQuestion.id}`}
+                  value={index}
+                  checked={currentAnswer?.answer === index}
+                  onChange={() => updateAnswer(index)}
+                  className="sr-only"
+                />
+                <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                  currentAnswer?.answer === index
+                    ? 'border-indigo-500 bg-indigo-500'
+                    : 'border-gray-300'
+                }`}>
+                  {currentAnswer?.answer === index && (
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  )}
+                </div>
+                <span className="text-gray-900">{option}</span>
+              </label>
+            ))}
           </div>
         );
 

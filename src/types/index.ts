@@ -8,10 +8,10 @@ export type QuizType = 'MCQ' | 'Fill-in-the-blank' | 'Essay' | 'Mixed';
 
 export interface Question {
   id: string;
-  type: 'MCQ' | 'Fill-in-the-blank' | 'Essay';
+  type: 'MCQ' | 'Fill-in-the-blank' | 'Essay' | 'True-False';
   question: string;
   options?: string[]; // For MCQ
-  correctAnswer?: string | number; // For MCQ (index) or Fill-in-the-blank (text)
+  correctAnswer?: string | number | boolean; // For MCQ (index), Fill-in-the-blank (text), or True-False (boolean)
   explanation?: string;
   points: number;
 }

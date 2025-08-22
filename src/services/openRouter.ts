@@ -62,7 +62,48 @@ export class OpenRouterService {
           messages: [
             {
               role: 'system',
-              content: 'You are an expert quiz generator. Generate high-quality questions based on the provided content. CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks (```json). Do NOT include any text before or after the JSON. Start directly with [ and end with ]. Ensure all JSON is properly formatted with correct syntax.'
+              content: `You are Test Buddy, an AI exam generator. 
+Your job is to create dynamic practice tests from the provided study material. 
+
+Rules:
+1. Mix up question types:
+   - Multiple choice (4–5 options, with 1 correct answer).
+   - True/False.
+   - Fill-in-the-blank (with short answers).
+   - Short essay/analysis questions.
+   - Scenario-based questions (give a situation and ask what the learner should do).
+
+2. Always shuffle structure:
+   - Rephrase questions instead of repeating text directly.
+   - Vary difficulty: some questions easy recall, some requiring analysis.
+   - If possible, combine multiple concepts into one question.
+
+3. Provide correct answers and short explanations for each.
+
+4. Keep output JSON structured for easy parsing as an array:
+[
+  {
+    "id": "q1",
+    "type": "MCQ",
+    "question": "What does CIA in cybersecurity stand for?",
+    "options": ["Confidentiality, Integrity, Availability", "Control, Identity, Access", "Confidential, Internal, Audit", "Cybersecurity, Integrity, Authentication"],
+    "correctAnswer": 0,
+    "explanation": "CIA refers to the core triad of information security.",
+    "points": 1
+  },
+  {
+    "id": "q2", 
+    "type": "Essay",
+    "question": "A company's database was accidentally exposed. Analyze which principle of CIA is most impacted and propose three remediation steps.",
+    "correctAnswer": "Confidentiality is most impacted. Steps: 1) Immediate containment, 2) Impact assessment, 3) Notification procedures",
+    "explanation": "Unauthorized access affects confidentiality. Quick response minimizes damage.",
+    "points": 1
+  }
+]
+
+5. Be creative but accurate. The goal is to challenge the learner and prevent rote memorization.
+
+CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks. Do NOT include any text before or after the JSON. Start directly with [ and end with ]. Ensure all JSON is properly formatted with correct syntax.`
             },
             {
               role: 'user',
@@ -108,63 +149,39 @@ export class OpenRouterService {
   }
 
   private static createPrompt(text: string, quizType: QuizType, questionCount: number): string {
-    const basePrompt = `Based on the following text content, generate ${questionCount} ${quizType === 'Mixed' ? 'mixed-type' : quizType} questions.
-
-Content:
-${text.substring(0, 6000)} ${text.length > 6000 ? '...' : ''}
-
-Requirements:
-- Generate exactly ${questionCount} questions
-- Each question should test understanding of the content
-- Include explanations for answers
-- For larger question counts (15+), ensure variety in topics covered
-- Format the response as a JSON array with the following structure:
-
-[
-  {
-    "id": "q1",
-    "type": "MCQ" | "Fill-in-the-blank" | "Essay",
-    "question": "Question text",
-    "options": ["Option 1", "Option 2", "Option 3", "Option 4"], // Only for MCQ
-    "correctAnswer": 0 | "answer text", // Index for MCQ, text for Fill-in-the-blank
-    "explanation": "Explanation of the answer",
-    "points": 1
-  }
-]
-
-`;
-
+    let typeInstruction = '';
+    
     switch (quizType) {
       case 'MCQ':
-        return basePrompt + `
-- All questions should be multiple choice with 4 options each
-- correctAnswer should be the index (0-3) of the correct option
-- Make questions challenging but fair`;
-
+        typeInstruction = 'Focus primarily on multiple choice questions with 4-5 options each.';
+        break;
       case 'Fill-in-the-blank':
-        return basePrompt + `
-- All questions should be fill-in-the-blank format
-- Use underscores or brackets to indicate blanks: "The capital of France is _____"
-- correctAnswer should be the exact text that fills the blank
-- Accept reasonable variations in your explanations`;
-
+        typeInstruction = 'Focus primarily on fill-in-the-blank questions with clear, concise answers.';
+        break;
       case 'Essay':
-        return basePrompt + `
-- All questions should be essay questions requiring detailed answers
-- Questions should encourage critical thinking and analysis
-- No correctAnswer field needed for essay questions
-- Focus on "why" and "how" questions`;
-
+        typeInstruction = 'Focus primarily on essay questions that require analysis and critical thinking.';
+        break;
       case 'Mixed':
-        return basePrompt + `
-- Mix different question types (MCQ, Fill-in-the-blank, Essay)
-- Distribute evenly across question types
-- Vary the difficulty levels
-- Ensure good coverage of the content`;
-
+        typeInstruction = 'Create a balanced mix of question types: multiple choice, true/false, fill-in-the-blank, and essay questions. Vary the difficulty levels.';
+        break;
       default:
-        return basePrompt;
+        typeInstruction = 'Create a variety of question types appropriate for the content.';
     }
+
+    return `Generate exactly ${questionCount} dynamic practice questions from this study material.
+
+${typeInstruction}
+
+Study Material:
+${text.substring(0, 8000)}${text.length > 8000 ? '\n\n[Content truncated for length - focus on key concepts covered above]' : ''}
+
+Requirements:
+- Create ${questionCount} questions that test deep understanding, not just memorization
+- Rephrase concepts rather than copying text directly
+- Include scenario-based questions where appropriate
+- Vary difficulty from basic recall to analysis
+- Combine multiple concepts when possible
+- Provide clear explanations for all answers`;
   }
 
   private static parseQuizResponse(content: string): Question[] {
