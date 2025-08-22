@@ -145,7 +145,7 @@ export default function QuizConfig({ onConfigSubmit, loading = false, isRetake =
               type="range"
               id="questionCount"
               min="5"
-              max="50"
+              max="25"
               value={questionCount}
               onChange={(e) => setQuestionCount(parseInt(e.target.value))}
               className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
@@ -159,7 +159,7 @@ export default function QuizConfig({ onConfigSubmit, loading = false, isRetake =
           </div>
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>5 questions</span>
-            <span>50 questions</span>
+            <span>25 questions</span>
           </div>
         </div>
 

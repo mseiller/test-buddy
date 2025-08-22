@@ -17,22 +17,22 @@ export class OpenRouterService {
     let maxTokens = 16000; // Start with 16k as requested
     let adjustedQuestionCount = questionCount;
     
-    if (questionCount > 50) {
-      console.warn(`OpenRouter: Requested ${questionCount} questions, but the free model works best with 50 or fewer questions. Adjusting to 50.`);
-      adjustedQuestionCount = 50;
-      maxTokens = 10000; // Slightly higher for Llama model
-    } else if (questionCount > 25) {
-      maxTokens = 8000;  // Increased for better generation
+    if (questionCount > 25) {
+      console.warn(`OpenRouter: Requested ${questionCount} questions, but the 4k model works best with 25 or fewer questions. Adjusting to 25.`);
+      adjustedQuestionCount = 25;
+      maxTokens = 3500; // Conservative for 4k context model
     } else if (questionCount > 15) {
-      maxTokens = 6000;  // Increased
+      maxTokens = 3000;
+    } else if (questionCount > 10) {
+      maxTokens = 2500;
     } else {
-      maxTokens = 4000;  // Increased
+      maxTokens = 2000;
     }
 
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
 
-    // Use the meta-llama/llama-3.2-3b-instruct:free model
-    const model = 'meta-llama/llama-3.2-3b-instruct:free';
+    // Use the microsoft/phi-3-mini-4k-instruct:free model
+    const model = 'microsoft/phi-3-mini-4k-instruct:free';
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
     console.log('OpenRouter: API Key configured:', !!this.API_KEY);
@@ -409,7 +409,7 @@ Requirements:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.2-3b-instruct:free', // Use new free model for validation
+          model: 'microsoft/phi-3-mini-4k-instruct:free', // Use new free model for validation
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 100,
         }),
