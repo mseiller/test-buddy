@@ -129,6 +129,11 @@ export default function Home() {
         questionCount
       );
       
+      // Check if fewer questions were generated than requested
+      if (generatedQuestions.length < questionCount && questionCount > 40) {
+        setError(`Generated ${generatedQuestions.length} questions (reduced from ${questionCount} due to model limitations). The free model works best with 40 or fewer questions.`);
+      }
+      
       setQuestions(generatedQuestions);
       setAppState('quiz');
     } catch (error: any) {
