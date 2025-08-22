@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
     // Reduce memory usage during build
     optimizePackageImports: ['lucide-react'],
   },
+  // Ensure Next won't try to bundle pdf-parse internals into the serverless function
+  serverExternalPackages: ['pdf-parse'],
   // Optimize images
   images: {
     unoptimized: true,
