@@ -252,12 +252,24 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   };
 
   const getAnsweredCount = () => {
-    return answers.filter(a => a.answer !== '').length;
+    return answers.filter(a => {
+      // Handle different answer types
+      if (typeof a.answer === 'number') {
+        return true; // Numbers (including 0) are valid answers
+      }
+      return a.answer !== '';
+    }).length;
   };
 
   const isCurrentQuestionAnswered = () => {
     const current = getCurrentAnswer();
-    return current && current.answer !== '';
+    if (!current) return false;
+    
+    // Handle different answer types
+    if (typeof current.answer === 'number') {
+      return true; // Numbers (including 0) are valid answers
+    }
+    return current.answer !== '';
   };
 
   return (

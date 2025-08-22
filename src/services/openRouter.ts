@@ -20,13 +20,15 @@ export class OpenRouterService {
     if (questionCount > 100) {
       console.warn(`OpenRouter: Requested ${questionCount} questions, but capping at 100 for optimal performance.`);
       adjustedQuestionCount = 100;
-      maxTokens = 32000; // Use higher tokens for very large requests
+      maxTokens = 16000; // Reduced from 32k to prevent timeouts
+    } else if (questionCount > 75) {
+      maxTokens = 16000; // Reduced from 24k
     } else if (questionCount > 50) {
-      maxTokens = 24000;
+      maxTokens = 12000; // Reduced from 16k  
     } else if (questionCount > 25) {
-      maxTokens = 16000;
+      maxTokens = 8000;   // Reduced from 16k
     } else {
-      maxTokens = 8000;
+      maxTokens = 6000;   // Reduced from 8k
     }
 
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
@@ -126,11 +128,18 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
 
       const data = await response.json();
       console.log('OpenRouter: Response data structure:', Object.keys(data));
+      
+      // Check for API errors in response
+      if (data.error) {
+        console.error('OpenRouter: API returned error:', data.error);
+        throw new Error(`OpenRouter API error: ${data.error.message || data.error}`);
+      }
+      
       const content = data.choices[0]?.message?.content;
 
-      if (!content) {
+      if (!content || content.trim() === '') {
         console.error('OpenRouter: No content in response data:', data);
-        throw new Error('No content received from OpenRouter API');
+        throw new Error('No content received from OpenRouter API - possible timeout or generation limit exceeded');
       }
 
       console.log('OpenRouter: Content received, length:', content.length);
@@ -153,13 +162,13 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
     
     switch (quizType) {
       case 'MCQ':
-        typeInstruction = 'Focus primarily on multiple choice questions with 4-5 options each.';
+        typeInstruction = 'IMPORTANT: Create ONLY multiple choice questions with exactly 4-5 options each. Do NOT create any other question types.';
         break;
       case 'Fill-in-the-blank':
-        typeInstruction = 'Focus primarily on fill-in-the-blank questions with clear, concise answers.';
+        typeInstruction = 'IMPORTANT: Create ONLY fill-in-the-blank questions with clear, concise answers. Do NOT create any other question types.';
         break;
       case 'Essay':
-        typeInstruction = 'Focus primarily on essay questions that require analysis and critical thinking.';
+        typeInstruction = 'IMPORTANT: Create ONLY essay questions that require analysis and critical thinking. Do NOT create any other question types.';
         break;
       case 'Mixed':
         typeInstruction = 'Create a balanced mix of question types: multiple choice, true/false, fill-in-the-blank, and essay questions. Vary the difficulty levels.';
@@ -271,6 +280,15 @@ Requirements:
     } catch (error) {
       console.error('OpenRouter: Failed to parse quiz response:', error);
       console.error('OpenRouter: Raw content (first 1000 chars):', content.substring(0, 1000) + '...');
+      
+      // Check for common issues
+      if (error instanceof SyntaxError) {
+        if (error.message.includes('Unexpected end of JSON input')) {
+          console.error('OpenRouter: JSON was truncated - likely due to token limit or timeout');
+        } else if (error.message.includes('Unexpected token')) {
+          console.error('OpenRouter: JSON syntax error - AI may have added extra text');
+        }
+      }
       
       // Try to extract partial JSON if possible
       try {
