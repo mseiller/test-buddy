@@ -21,7 +21,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { TestHistory, User } from '@/types';
+import { TestHistory, User, Folder } from '@/types';
 
 export class FirebaseService {
   // Authentication methods
@@ -250,6 +250,136 @@ export class FirebaseService {
     } catch (error) {
       console.error('Firestore connection test failed:', error);
       return false;
+    }
+  }
+
+  // Folder management methods
+  static async createFolder(userId: string, name: string, description?: string, color?: string): Promise<Folder> {
+    try {
+      const folderData = {
+        userId,
+        name,
+        description: description || '',
+        color: color || '#3B82F6', // Default blue color
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      const docRef = await addDoc(collection(db, 'folders'), folderData);
+      return {
+        id: docRef.id,
+        ...folderData,
+        createdAt: folderData.createdAt.toDate(),
+        updatedAt: folderData.updatedAt.toDate(),
+      };
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to create folder');
+    }
+  }
+
+  static async getUserFolders(userId: string): Promise<Folder[]> {
+    try {
+      const foldersQuery = query(
+        collection(db, 'folders'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(foldersQuery);
+      const folders: Folder[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        folders.push({
+          id: doc.id,
+          userId: data.userId,
+          name: data.name,
+          description: data.description,
+          color: data.color,
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate(),
+        });
+      });
+
+      return folders;
+    } catch (error: any) {
+      console.error('Firestore fetch error:', error);
+      return [];
+    }
+  }
+
+  static async updateFolder(folderId: string, updates: Partial<Folder>): Promise<void> {
+    try {
+      const folderRef = doc(db, 'folders', folderId);
+      const updateData: any = { ...updates };
+
+      // Convert Date objects to Timestamps
+      if (updateData.createdAt) {
+        updateData.createdAt = Timestamp.fromDate(updateData.createdAt);
+      }
+      if (updateData.updatedAt) {
+        updateData.updatedAt = Timestamp.now(); // Always update the updatedAt timestamp
+      }
+
+      await updateDoc(folderRef, updateData);
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to update folder');
+    }
+  }
+
+  static async deleteFolder(folderId: string): Promise<void> {
+    try {
+      const folderRef = doc(db, 'folders', folderId);
+      await deleteDoc(folderRef);
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to delete folder');
+    }
+  }
+
+  static async moveTestToFolder(testId: string, folderId: string | null): Promise<void> {
+    try {
+      const testRef = doc(db, 'testHistory', testId);
+      await updateDoc(testRef, { folderId });
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to move test to folder');
+    }
+  }
+
+  static async getTestsInFolder(userId: string, folderId: string): Promise<TestHistory[]> {
+    try {
+      const testsQuery = query(
+        collection(db, 'testHistory'),
+        where('userId', '==', userId),
+        where('folderId', '==', folderId),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(testsQuery);
+      const tests: TestHistory[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        tests.push({
+          id: doc.id,
+          userId: data.userId,
+          testName: data.testName,
+          fileName: data.fileName,
+          fileType: data.fileType || data.fileName.split('.').pop() || 'txt',
+          extractedText: data.extractedText || '',
+          quizType: data.quizType,
+          questions: data.questions,
+          answers: data.answers,
+          score: data.score,
+          createdAt: data.createdAt.toDate(),
+          completedAt: data.completedAt ? data.completedAt.toDate() : undefined,
+          folderId: data.folderId,
+        });
+      });
+
+      return tests;
+    } catch (error: any) {
+      console.error('Firestore fetch error:', error);
+      return [];
     }
   }
 } 

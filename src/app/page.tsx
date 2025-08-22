@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, FileUpload as FileUploadType, Question, UserAnswer, TestHistory as TestHistoryType, QuizType } from '@/types';
+import { User, FileUpload as FileUploadType, Question, UserAnswer, TestHistory as TestHistoryType, QuizType, Folder } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
 import { OpenRouterService } from '@/services/openRouter';
 import AuthForm from '@/components/AuthForm';
@@ -10,9 +10,10 @@ import QuizConfig from '@/components/QuizConfig';
 import QuizDisplay from '@/components/QuizDisplay';
 import QuizResults from '@/components/QuizResults';
 import TestHistory from '@/components/TestHistory';
-import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen } from 'lucide-react';
+import FolderManager from '@/components/FolderManager';
+import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen, Folder as FolderIcon } from 'lucide-react';
 
-type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history';
+type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history' | 'folders';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -28,6 +29,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true);
   const [isRetaking, setIsRetaking] = useState(false);
   const [retakeTestName, setRetakeTestName] = useState('');
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
 
   // Check authentication state on mount
   useEffect(() => {
@@ -75,6 +77,7 @@ export default function Home() {
     setError('');
     setIsRetaking(false);
     setRetakeTestName('');
+    setSelectedFolder(null);
   };
 
   const handleFileProcessed = (fileUpload: FileUploadType) => {
@@ -275,6 +278,16 @@ export default function Home() {
                 </button>
               )}
               
+              {appState !== 'folders' && (
+                <button
+                  onClick={() => setAppState('folders')}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <FolderIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Folders</span>
+                </button>
+              )}
+              
               <button
                 onClick={handleSignOut}
                 className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -320,7 +333,7 @@ export default function Home() {
               </p>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {/* Upload Section */}
               <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow">
                 <div className="text-center">
@@ -359,6 +372,27 @@ export default function Home() {
                     className="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                   >
                     View History
+                  </button>
+                </div>
+              </div>
+
+              {/* Folders Section */}
+              <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FolderIcon className="h-8 w-8 text-purple-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    Organize Tests
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Create folders to organize your tests by topic, subject, or project
+                  </p>
+                  <button
+                    onClick={() => setAppState('folders')}
+                    className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    Manage Folders
                   </button>
                 </div>
               </div>
@@ -480,6 +514,36 @@ export default function Home() {
               userId={user.uid} 
               onViewTest={handleViewTest}
               onRetakeQuiz={handleRetakeFromHistory}
+            />
+          </div>
+        )}
+
+        {appState === 'folders' && user && (
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex items-center justify-between mb-8">
+              <button
+                onClick={() => setAppState('home')}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <HomeIcon className="h-4 w-4" />
+                <span>Back to Home</span>
+              </button>
+            </div>
+            
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Organize Your Tests
+              </h2>
+              <p className="text-lg text-gray-600">
+                Create folders to organize your tests by topic, subject, or project
+              </p>
+            </div>
+            
+            <FolderManager
+              userId={user.uid}
+              onFolderSelect={setSelectedFolder}
+              selectedFolder={selectedFolder}
+              onTestSelect={handleViewTest}
             />
           </div>
         )}

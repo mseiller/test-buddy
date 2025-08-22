@@ -45,6 +45,32 @@ export interface FileUpload {
   fileType: string;
 }
 
+export interface Folder {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  color?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TestHistory {
+  id: string;
+  userId: string;
+  testName: string;
+  fileName: string;
+  fileType?: string; // Optional for backward compatibility
+  extractedText?: string; // Optional for backward compatibility
+  quizType: QuizType;
+  questions: Question[];
+  answers: UserAnswer[];
+  score?: number;
+  createdAt: Date;
+  completedAt?: Date;
+  folderId?: string; // Optional: associate test with a folder
+}
+
 export interface OpenRouterResponse {
   choices: {
     message: {
