@@ -25,7 +25,8 @@ export default function QuizResults({
   testName, 
   onRetakeQuiz, 
   onGoHome,
-  onNewQuizFromFile
+  onNewQuizFromFile,
+  onBackToHistory
 }: QuizResultsProps) {
   const [showReview, setShowReview] = useState(false);
   
@@ -139,7 +140,7 @@ export default function QuizResults({
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-gray-900">
-              {isHistoricalReview ? 'Test Review' : 'Quiz Review'} - {testName}
+              Test Review - {testName}
             </h1>
             <button
               onClick={() => setShowReview(false)}
@@ -149,7 +150,7 @@ export default function QuizResults({
             </button>
           </div>
           <p className="text-gray-600">
-            {isHistoricalReview ? 'Review your completed test answers and explanations' : 'Review your answers and explanations for each question'}
+            Review your answers and explanations for each question
           </p>
         </div>
 
@@ -167,14 +168,6 @@ export default function QuizResults({
           >
             Back to Results
           </button>
-          {!isHistoricalReview && (
-            <button
-              onClick={onRetakeQuiz}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              Retake Quiz
-            </button>
-          )}
         </div>
       </div>
     );
@@ -277,29 +270,27 @@ export default function QuizResults({
             <span>Review Answers</span>
           </button>
           
-          {!isHistoricalReview && (
-            <>
-              <button
-                onClick={onRetakeQuiz}
-                className="flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                <RotateCcw className="h-4 w-4" />
-                <span>Retake Quiz</span>
-              </button>
-              
-              {onNewQuizFromFile && (
-                <button
-                  onClick={onNewQuizFromFile}
-                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Shuffle className="h-4 w-4" />
-                  <span>New Questions</span>
-                </button>
-              )}
-            </>
+          {onRetakeQuiz && (
+            <button
+              onClick={onRetakeQuiz}
+              className="flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>Retake Quiz</span>
+            </button>
           )}
           
-          {isHistoricalReview && onBackToHistory ? (
+          {onNewQuizFromFile && (
+            <button
+              onClick={onNewQuizFromFile}
+              className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Shuffle className="h-4 w-4" />
+              <span>New Questions</span>
+            </button>
+          )}
+          
+          {onBackToHistory ? (
             <button
               onClick={onBackToHistory}
               className="flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
