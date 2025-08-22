@@ -133,16 +133,16 @@ export default function Home() {
             {/* Quick Actions */}
             <div className="flex-1 p-4 space-y-2">
               <button
-                onClick={() => router.push('/dashboard')}
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-              >
-                🏠 Dashboard
-              </button>
-              <button
                 onClick={() => setAppState('upload')}
                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
               >
-                📁 Upload Test
+                🏠 Home
+              </button>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                📁 Dashboard
               </button>
               <button
                 onClick={() => router.push('/history')}
@@ -217,10 +217,20 @@ export default function Home() {
             {/* Config State */}
             {appState === 'config' && uploadedFile && (
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Configure Quiz</h1>
-                <p className="text-gray-600 mb-8">
-                  Set up your quiz for: {uploadedFile.fileName}
-                </p>
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Configure Quiz</h1>
+                    <p className="text-gray-600">
+                      Set up your quiz for: {uploadedFile.fileName}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setAppState('upload')}
+                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    ← Back to Home
+                  </button>
+                </div>
                 <QuizConfig 
                   onConfigSubmit={(quizType, questionCount, testName) => {
                     setTestName(testName);
@@ -234,7 +244,15 @@ export default function Home() {
             {/* Quiz State */}
             {appState === 'quiz' && uploadedFile && questions.length > 0 && (
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz: {testName}</h1>
+                <div className="flex items-center justify-between mb-8">
+                  <h1 className="text-3xl font-bold text-gray-900">Quiz: {testName}</h1>
+                  <button
+                    onClick={() => setAppState('config')}
+                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    ← Back to Config
+                  </button>
+                </div>
                 <QuizDisplay 
                   questions={questions}
                   testName={testName}

@@ -41,9 +41,9 @@ export default function UploadPage() {
         folderId: selectedFolderId === 'general' ? null : selectedFolderId
       }));
       
-      // Force the redirect
+      // Store in localStorage and redirect to home page for quiz generation
       setTimeout(() => {
-        router.push('/quiz');
+        router.push('/');
       }, 100);
     } else {
       console.error('No folder selected!');
