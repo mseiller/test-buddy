@@ -45,8 +45,15 @@ export default function FolderManager({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (openDropdownId) {
-        console.log('Click outside detected, closing dropdown:', openDropdownId);
-        setOpenDropdownId(null);
+        const target = event.target as HTMLElement;
+        // Check if the click is inside a dropdown or dropdown trigger
+        const isDropdownClick = target.closest('[data-dropdown-trigger]') || 
+                               target.closest('[data-dropdown-content]');
+        
+        if (!isDropdownClick) {
+          console.log('Click outside detected, closing dropdown:', openDropdownId);
+          setOpenDropdownId(null);
+        }
       }
     };
 
@@ -228,30 +235,13 @@ export default function FolderManager({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Organize Your Tests</h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={async () => {
-              console.log('Testing folder creation...');
-              try {
-                const testFolder = await FirebaseService.createFolder(userId, 'Test Folder', 'Test description', '#FF0000');
-                console.log('Test folder created:', testFolder);
-                await loadFolders(); // Reload folders
-              } catch (error) {
-                console.error('Test folder creation failed:', error);
-              }
-            }}
-            className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-          >
-            <span>Test Create</span>
-          </button>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>New Folder</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          <span>New Folder</span>
+        </button>
       </div>
 
       {/* Folder List */}
@@ -292,12 +282,13 @@ export default function FolderManager({
                     setOpenDropdownId(openDropdownId === `folder-${folder.id}` ? null : `folder-${folder.id}`);
                   }}
                   className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700"
+                  data-dropdown-trigger
                 >
                   <MoreHorizontal className="h-3 w-3" />
                 </button>
                 
                 {openDropdownId === `folder-${folder.id}` && (
-                  <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[150px] z-10">
+                  <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[150px] z-10" data-dropdown-content>
                     <button
                       onClick={() => {
                         startEditFolder(folder);
@@ -372,13 +363,14 @@ export default function FolderManager({
                     console.log('Test dropdown clicked, current openDropdownId:', openDropdownId, 'test.id:', test.id);
                     setOpenDropdownId(openDropdownId === test.id ? null : test.id);
                   }}
+                  data-dropdown-trigger
                 >
                   <MoreHorizontal className="h-4 w-4 text-gray-500" />
                 </button>
                 
                 {/* Move to folder dropdown */}
                 {openDropdownId === test.id && (
-                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10">
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10" data-dropdown-content>
                     <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
                       Move to folder
                     </div>
