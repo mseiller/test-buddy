@@ -12,7 +12,7 @@ import QuizResults from '@/components/QuizResults';
 import TestHistory from '@/components/TestHistory';
 import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen } from 'lucide-react';
 
-type AppState = 'auth' | 'upload' | 'config' | 'quiz' | 'results' | 'history';
+type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -33,7 +33,7 @@ export default function Home() {
   useEffect(() => {
     const unsubscribe = FirebaseService.onAuthStateChange((user) => {
       setUser(user);
-      setAppState(user ? 'upload' : 'auth');
+      setAppState(user ? 'home' : 'auth');
       setAuthLoading(false);
       
       // Test Firestore connection when user is authenticated
@@ -51,7 +51,7 @@ export default function Home() {
 
   const handleAuthSuccess = (user: User) => {
     setUser(user);
-    setAppState('upload');
+    setAppState('home');
   };
 
   const handleSignOut = async () => {
@@ -168,7 +168,7 @@ export default function Home() {
 
   const handleGoHome = () => {
     resetAppState();
-    setAppState('upload');
+    setAppState('home');
   };
 
   const handleGoBack = () => {
@@ -255,6 +255,16 @@ export default function Home() {
                 Welcome, {user.displayName || user.email}
               </span>
               
+              {appState !== 'home' && (
+                <button
+                  onClick={handleGoHome}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <HomeIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Home</span>
+                </button>
+              )}
+              
               {appState !== 'history' && (
                 <button
                   onClick={handleViewHistory}
@@ -262,16 +272,6 @@ export default function Home() {
                 >
                   <History className="h-4 w-4" />
                   <span className="hidden sm:inline">History</span>
-                </button>
-              )}
-              
-              {appState !== 'upload' && (
-                <button
-                  onClick={handleGoHome}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <HomeIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Home</span>
                 </button>
               )}
               
@@ -309,8 +309,84 @@ export default function Home() {
         )}
 
         {/* App States */}
+        {appState === 'home' && (
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold text-gray-900 mb-6">
+                Welcome to Test Buddy
+              </h1>
+              <p className="text-xl text-gray-600 mb-8">
+                AI-Powered Quiz Generation from Your Documents
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+              {/* Upload Section */}
+              <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BookOpen className="h-8 w-8 text-indigo-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    Create New Quiz
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Upload a document and let AI generate personalized quiz questions for you
+                  </p>
+                  <button
+                    onClick={() => setAppState('upload')}
+                    className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                  >
+                    Start Creating
+                  </button>
+                </div>
+              </div>
+
+              {/* History Section */}
+              <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <History className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    View History
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Review your previous quizzes, retake tests, or analyze your performance
+                  </p>
+                  <button
+                    onClick={handleViewHistory}
+                    className="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  >
+                    View History
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="mt-12 text-center">
+              <div className="inline-flex items-center space-x-6 text-sm text-gray-500">
+                <span>📚 Multiple file formats supported</span>
+                <span>🤖 AI-powered question generation</span>
+                <span>📊 Detailed performance analytics</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {appState === 'upload' && (
           <div className="max-w-2xl mx-auto px-6">
+            <div className="flex items-center justify-between mb-8">
+              <button
+                onClick={() => setAppState('home')}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <HomeIcon className="h-4 w-4" />
+                <span>Back to Home</span>
+              </button>
+            </div>
+            
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
                 Create Your Quiz
@@ -328,6 +404,16 @@ export default function Home() {
 
         {appState === 'config' && uploadedFile && (
           <div className="max-w-2xl mx-auto px-6">
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={() => setAppState('upload')}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <HomeIcon className="h-4 w-4" />
+                <span>Back to Upload</span>
+              </button>
+            </div>
+            
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Configure Your Quiz
@@ -370,11 +456,32 @@ export default function Home() {
         )}
 
         {appState === 'history' && user && (
-          <TestHistory 
-            userId={user.uid} 
-            onViewTest={handleViewTest}
-            onRetakeQuiz={handleRetakeFromHistory}
-          />
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="flex items-center justify-between mb-8">
+              <button
+                onClick={() => setAppState('home')}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <HomeIcon className="h-4 w-4" />
+                <span>Back to Home</span>
+              </button>
+            </div>
+            
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Test History
+              </h2>
+              <p className="text-lg text-gray-600">
+                Review your previous quizzes and performance
+              </p>
+            </div>
+            
+            <TestHistory 
+              userId={user.uid} 
+              onViewTest={handleViewTest}
+              onRetakeQuiz={handleRetakeFromHistory}
+            />
+          </div>
         )}
       </main>
 
