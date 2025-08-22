@@ -14,6 +14,7 @@ export default function UploadPage() {
   const router = useRouter();
   const [selectedFolderId, setSelectedFolderId] = useState<string>('');
   const [showFolderSelect, setShowFolderSelect] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   if (!user) {
     router.push('/');
@@ -21,15 +22,34 @@ export default function UploadPage() {
   }
 
   const handleFileProcessed = (fileUpload: any) => {
+    if (isUploading) {
+      console.log('Upload already in progress, ignoring duplicate call');
+      return;
+    }
+    
     console.log('File processed:', fileUpload);
+    console.log('Selected folder ID:', selectedFolderId);
+    
+    setIsUploading(true);
+    
     // Store the file upload data and redirect to quiz generation
     if (selectedFolderId) {
+      console.log('Storing file data and redirecting to quiz...');
       // Store in localStorage for now (we'll implement proper state management later)
       localStorage.setItem('tempFileUpload', JSON.stringify({
         ...fileUpload,
         folderId: selectedFolderId
       }));
-      router.push('/quiz');
+      
+      // Force the redirect
+      setTimeout(() => {
+        router.push('/quiz');
+      }, 100);
+    } else {
+      console.error('No folder selected!');
+      setIsUploading(false);
+      // Show error to user
+      alert('Please select a folder first before uploading.');
     }
   };
 
@@ -116,7 +136,16 @@ export default function UploadPage() {
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Upload to: {folders.find(f => f.id === selectedFolderId)?.name}
               </h3>
+              {isUploading && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    <span className="text-sm text-blue-700">Processing upload...</span>
+                  </div>
+                </div>
+              )}
               <FileUpload
+                key={`upload-${selectedFolderId}`}
                 onFileProcessed={handleFileProcessed}
                 onError={handleFileError}
               />

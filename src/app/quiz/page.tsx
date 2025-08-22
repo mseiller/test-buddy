@@ -33,18 +33,25 @@ export default function QuizPage() {
   // Load file upload data from localStorage
   useEffect(() => {
     if (user) {
+      console.log('Quiz page: Checking localStorage for file data...');
       const storedData = localStorage.getItem('tempFileUpload');
+      console.log('Quiz page: Stored data found:', storedData ? 'yes' : 'no');
+      
       if (storedData) {
         try {
           const data = JSON.parse(storedData);
+          console.log('Quiz page: Parsed data:', data);
           setUploadedFile(data);
           setSelectedFolderId(data.folderId);
           // Clear the stored data
           localStorage.removeItem('tempFileUpload');
+          console.log('Quiz page: File data loaded successfully');
         } catch (err) {
           console.error('Failed to parse stored file data:', err);
           setError('Failed to load uploaded file data');
         }
+      } else {
+        console.log('Quiz page: No stored file data found');
       }
     }
   }, [user]);
