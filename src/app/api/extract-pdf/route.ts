@@ -27,17 +27,32 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Try pdf-parse first
-      console.log('Trying pdf-parse...');
-      const pdf = (await import('pdf-parse')).default;
-
-      // Convert file to buffer
+      console.log('Starting PDF processing...');
+      
+      // Convert file to buffer first
       console.log('Converting file to buffer...');
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       console.log('Buffer created, size:', buffer.length);
 
-      // Extract text from PDF using pdf-parse
+      // Validate buffer
+      if (!buffer || buffer.length === 0) {
+        throw new Error('Invalid or empty file buffer');
+      }
+
+      // Try to import and use pdf-parse with error handling
+      console.log('Importing pdf-parse...');
+      let pdf;
+      try {
+        const pdfModule = await import('pdf-parse');
+        pdf = pdfModule.default;
+        console.log('pdf-parse imported successfully');
+      } catch (importError) {
+        console.error('Failed to import pdf-parse:', importError);
+        throw new Error('PDF processing library not available');
+      }
+
+      // Extract text from PDF using pdf-parse with minimal configuration
       console.log('Extracting text from PDF with pdf-parse...');
       const pdfData = await pdf(buffer);
       
