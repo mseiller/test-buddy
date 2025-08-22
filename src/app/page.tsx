@@ -192,6 +192,16 @@ export default function Home() {
     setAppState('history');
   };
 
+  const handleViewTest = (test: TestHistoryType) => {
+    // Set the test data for review
+    setQuestions(test.questions);
+    setAnswers(test.answers);
+    setScore(test.score || 0);
+    setTimeTaken(0); // We don't store time taken for historical tests
+    setTestName(test.testName);
+    setAppState('results');
+  };
+
   const handleRetakeFromHistory = (test: TestHistoryType) => {
     // Check if we have the extracted text for retaking
     if (!test.extractedText || test.extractedText.trim() === '') {
@@ -354,12 +364,15 @@ export default function Home() {
             onRetakeQuiz={handleRetakeQuiz}
             onGoHome={handleGoHome}
             onNewQuizFromFile={handleNewQuizFromFile}
+            isHistoricalReview={timeTaken === 0}
+            onBackToHistory={() => setAppState('history')}
           />
         )}
 
         {appState === 'history' && user && (
           <TestHistory 
             userId={user.uid} 
+            onViewTest={handleViewTest}
             onRetakeQuiz={handleRetakeFromHistory}
           />
         )}

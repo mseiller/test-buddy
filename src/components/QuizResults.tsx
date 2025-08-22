@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trophy, CheckCircle, XCircle, Clock, Book, RotateCcw, Home, Eye, Shuffle } from 'lucide-react';
+import { Trophy, CheckCircle, XCircle, Clock, Book, RotateCcw, Home, Eye, Shuffle, History } from 'lucide-react';
 import { Question, UserAnswer } from '@/types';
 
 interface QuizResultsProps {
@@ -13,6 +13,8 @@ interface QuizResultsProps {
   onRetakeQuiz: () => void;
   onGoHome: () => void;
   onNewQuizFromFile?: () => void;
+  isHistoricalReview?: boolean;
+  onBackToHistory?: () => void;
 }
 
 export default function QuizResults({ 
@@ -136,7 +138,9 @@ export default function QuizResults({
       <div className="max-w-4xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Quiz Review - {testName}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isHistoricalReview ? 'Test Review' : 'Quiz Review'} - {testName}
+            </h1>
             <button
               onClick={() => setShowReview(false)}
               className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
@@ -145,7 +149,7 @@ export default function QuizResults({
             </button>
           </div>
           <p className="text-gray-600">
-            Review your answers and explanations for each question
+            {isHistoricalReview ? 'Review your completed test answers and explanations' : 'Review your answers and explanations for each question'}
           </p>
         </div>
 
@@ -199,14 +203,16 @@ export default function QuizResults({
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center justify-center mb-2">
-              <Clock className="h-5 w-5 text-blue-600" />
+        <div className={`grid gap-4 mb-8 ${timeTaken > 0 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+          {timeTaken > 0 && (
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-center mb-2">
+                <Clock className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="text-sm text-gray-600">Time Taken</div>
+              <div className="text-xl font-semibold text-blue-600">{formatTime(timeTaken)}</div>
             </div>
-            <div className="text-sm text-gray-600">Time Taken</div>
-            <div className="text-xl font-semibold text-blue-600">{formatTime(timeTaken)}</div>
-          </div>
+          )}
           
           <div className="bg-green-50 rounded-lg p-4">
             <div className="flex items-center justify-center mb-2">
@@ -269,31 +275,45 @@ export default function QuizResults({
             <span>Review Answers</span>
           </button>
           
-          <button
-            onClick={onRetakeQuiz}
-            className="flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <RotateCcw className="h-4 w-4" />
-            <span>Retake Quiz</span>
-          </button>
-          
-          {onNewQuizFromFile && (
-            <button
-              onClick={onNewQuizFromFile}
-              className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Shuffle className="h-4 w-4" />
-              <span>New Questions</span>
-            </button>
+          {!isHistoricalReview && (
+            <>
+              <button
+                onClick={onRetakeQuiz}
+                className="flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>Retake Quiz</span>
+              </button>
+              
+              {onNewQuizFromFile && (
+                <button
+                  onClick={onNewQuizFromFile}
+                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Shuffle className="h-4 w-4" />
+                  <span>New Questions</span>
+                </button>
+              )}
+            </>
           )}
           
-          <button
-            onClick={onGoHome}
-            className="flex items-center justify-center space-x-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Home className="h-4 w-4" />
-            <span>New Quiz</span>
-          </button>
+          {isHistoricalReview && onBackToHistory ? (
+            <button
+              onClick={onBackToHistory}
+              className="flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <History className="h-4 w-4" />
+              <span>Back to History</span>
+            </button>
+          ) : (
+            <button
+              onClick={onGoHome}
+              className="flex items-center justify-center space-x-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              <span>New Quiz</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

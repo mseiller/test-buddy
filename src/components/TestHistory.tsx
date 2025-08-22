@@ -7,7 +7,7 @@ import { FirebaseService } from '@/services/firebaseService';
 
 interface TestHistoryProps {
   userId: string;
-  onViewTest?: (testId: string) => void;
+  onViewTest?: (test: TestHistoryType) => void;
   onRetakeQuiz?: (test: TestHistoryType) => void;
 }
 
@@ -206,9 +206,9 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
                     
                     {onViewTest && (
                       <button
-                        onClick={() => onViewTest(test.id)}
+                        onClick={() => onViewTest(test)}
                         className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
-                        title="View test details"
+                        title="Review test answers and explanations"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
