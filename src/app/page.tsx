@@ -17,6 +17,8 @@ export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<any>(null);
   const [testName, setTestName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const router = useRouter();
 
   // Check authentication state on mount
@@ -43,6 +45,29 @@ export default function Home() {
     setError(null);
   };
 
+  const generateQuestions = async (fileUpload: any, quizType: string, questionCount: number) => {
+    setGeneratingQuestions(true);
+    try {
+      // For now, create placeholder questions
+      const placeholderQuestions = Array.from({ length: questionCount }, (_, i) => ({
+        id: `q${i + 1}`,
+        question: `Question ${i + 1} from ${fileUpload.fileName}`,
+        type: quizType === 'MCQ' ? 'MCQ' : 'Fill-in-the-blank',
+        options: quizType === 'MCQ' ? ['Option A', 'Option B', 'Option C', 'Option D'] : [],
+        correctAnswer: quizType === 'MCQ' ? 'Option A' : 'Sample answer',
+        explanation: `This is a sample question generated from your uploaded content.`
+      }));
+      
+      setQuestions(placeholderQuestions);
+      setAppState('quiz');
+    } catch (error) {
+      console.error('Failed to generate questions:', error);
+      setError('Failed to generate quiz questions. Please try again.');
+    } finally {
+      setGeneratingQuestions(false);
+    }
+  };
+
   const handleQuizComplete = async (testHistory: any) => {
     try {
       await FirebaseService.saveTestHistory(testHistory);
@@ -51,6 +76,7 @@ export default function Home() {
       setAppState('upload');
       setUploadedFile(null);
       setTestName('');
+      setQuestions([]);
     } catch (e: any) {
       console.error('Failed to save test history', e);
       setError(e?.message ?? 'Failed to save test history');
@@ -65,10 +91,12 @@ export default function Home() {
         appState,
         user,
         testName,
-        error
+        error,
+        questions,
+        generatingQuestions
       };
     }
-  }, [uploadedFile, appState, user, testName, error]);
+  }, [uploadedFile, appState, user, testName, error, questions, generatingQuestions]);
 
   if (authLoading) {
     return (
@@ -148,6 +176,8 @@ export default function Home() {
             <div className="mb-4 p-3 bg-gray-100 rounded-md text-sm">
               <div>App State: {appState}</div>
               <div>File: {uploadedFile ? uploadedFile.fileName : 'none'}</div>
+              <div>Questions: {questions.length}</div>
+              <div>Generating: {generatingQuestions ? 'yes' : 'no'}</div>
               <div>Error: {error || 'none'}</div>
             </div>
 
@@ -194,26 +224,53 @@ export default function Home() {
                 <QuizConfig 
                   onConfigSubmit={(quizType, questionCount, testName) => {
                     setTestName(testName);
-                    setAppState('quiz');
+                    generateQuestions(uploadedFile, quizType, questionCount);
                   }}
-                  loading={false}
+                  loading={generatingQuestions}
                 />
               </div>
             )}
 
             {/* Quiz State */}
-            {appState === 'quiz' && uploadedFile && (
+            {appState === 'quiz' && uploadedFile && questions.length > 0 && (
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz: {testName}</h1>
                 <QuizDisplay 
-                  questions={[]} // TODO: Generate questions from uploadedFile
+                  questions={questions}
                   testName={testName}
                   onQuizComplete={(answers, timeTaken) => {
-                    // TODO: Process quiz completion
                     console.log('Quiz completed:', { answers, timeTaken });
+                    // Create test history object
+                    const testHistory = {
+                      testName,
+                      fileName: uploadedFile.fileName,
+                      questions: questions.length,
+                      score: 0, // TODO: Calculate actual score
+                      timeTaken,
+                      createdAt: new Date().toISOString(),
+                      userId: user?.uid
+                    };
+                    handleQuizComplete(testHistory);
                   }}
                   onGoBack={() => setAppState('config')}
                 />
+              </div>
+            )}
+
+            {/* Quiz Loading State */}
+            {appState === 'quiz' && uploadedFile && questions.length === 0 && (
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz: {testName}</h1>
+                <div className="text-center py-12">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Generating Quiz Questions</h3>
+                  <p className="text-gray-500 mb-6">
+                    Creating questions from: {uploadedFile.fileName}
+                  </p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                  <p className="text-sm text-gray-400 mt-4">
+                    This may take a few moments...
+                  </p>
+                </div>
               </div>
             )}
           </div>
