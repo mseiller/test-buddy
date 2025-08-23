@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getUserMetrics, UserMetrics, migrateTestHistoryToResults, getUserFolders, MetricsFilters } from '@/services/metrics';
+import { getUserMetrics, UserMetrics, migrateTestHistoryToResults, getUserFolders, MetricsFilters, diagnoseAndFixFolderData } from '@/services/metrics';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface MetricsDashboardProps {
@@ -69,6 +69,16 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
     }
   };
 
+  const handleDiagnosis = async () => {
+    try {
+      const diagnosis = await diagnoseAndFixFolderData(userId);
+      alert(`Folder Diagnosis Complete!\n\nTotal Tests: ${diagnosis.totalTests}\nTests with Folders: ${diagnosis.testsWithFolders}\nTests without Folders: ${diagnosis.testsWithoutFolders}\nUnique Folder IDs: ${diagnosis.uniqueFolderIds.length}\nAvailable Folders: ${diagnosis.availableFolders.length}\n\nCheck console for detailed logs.`);
+    } catch (err) {
+      console.error('Diagnosis failed:', err);
+      alert('Diagnosis failed. Check console for details.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -104,15 +114,23 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Your Learning Analytics</h2>
           
-          {!migrationComplete && (
-            <button
-              onClick={handleMigration}
-              disabled={migrating}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {migrating ? 'Migrating...' : 'Include Past Tests'}
-            </button>
-          )}
+                           <div className="flex gap-2">
+                   {!migrationComplete && (
+                     <button
+                       onClick={handleMigration}
+                       disabled={migrating}
+                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                     >
+                       {migrating ? 'Migrating...' : 'Include Past Tests'}
+                     </button>
+                   )}
+                   <button
+                     onClick={handleDiagnosis}
+                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+                   >
+                     Debug Folders
+                   </button>
+                 </div>
         </div>
         
         {!migrationComplete && metrics && metrics.quizzesTaken > 0 && (
@@ -137,7 +155,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
                   ...prev, 
                   days: e.target.value === 'all' ? undefined : parseInt(e.target.value)
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="all">All Time</option>
                 <option value="1">Last 24 Hours</option>
@@ -160,7 +178,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
                   ...prev, 
                   folderId: e.target.value === 'all' ? undefined : e.target.value
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="all">All Folders</option>
                 <option value="">No Folder</option>

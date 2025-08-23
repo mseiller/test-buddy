@@ -75,7 +75,7 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
     console.log('Metrics Debug:', {
       totalItems: all.length,
       filters,
-      sampleFolderIds: all.slice(0, 5).map(item => ({ testName: item.testName, folderId: item.folderId })),
+      sampleFolderIds: all.slice(0, 8).map(item => ({ testName: item.testName, folderId: item.folderId })),
       allFolderIds: [...new Set(all.map(item => item.folderId))], // Unique folder IDs
       filteringFor: filters.folderId,
       matchingItems: filters.folderId !== undefined ? all.filter(item => {
@@ -84,7 +84,16 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
         } else {
           return item.folderId === filters.folderId;
         }
-      }).length : 'not filtering'
+      }).length : 'not filtering',
+      // Additional debugging for folder mismatch
+      testNamesWithFolderIds: all.map(item => ({ 
+        testName: item.testName, 
+        folderId: item.folderId,
+        folderIdType: typeof item.folderId,
+        isUndefined: item.folderId === undefined,
+        isNull: item.folderId === null,
+        isEmpty: item.folderId === ''
+      }))
     });
 
     // Apply time filter if specified
@@ -226,5 +235,59 @@ export async function getUserFolders(uid: string): Promise<Array<{id: string, na
   } catch (error) {
     console.error('Error fetching user folders:', error);
     return [];
+  }
+}
+
+// Temporary function to help diagnose and fix folder data inconsistency
+export async function diagnoseAndFixFolderData(uid: string): Promise<{
+  totalTests: number;
+  testsWithFolders: number;
+  testsWithoutFolders: number;
+  uniqueFolderIds: string[];
+  availableFolders: Array<{id: string, name: string}>;
+}> {
+  try {
+    // Get all test history
+    const testHistoryBase = collection(db, 'testHistory');
+    const snapHistory = await getDocs(
+      query(testHistoryBase, where('userId', '==', uid))
+    );
+    
+    const allTests = snapHistory.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    })) as any[];
+    
+    // Get available folders
+    const folders = await getUserFolders(uid);
+    
+    // Analyze the data
+    const testsWithFolders = allTests.filter(test => test.folderId && test.folderId !== '').length;
+    const testsWithoutFolders = allTests.filter(test => !test.folderId || test.folderId === '').length;
+    const uniqueFolderIds = [...new Set(allTests.map(test => test.folderId).filter(Boolean))];
+    
+    console.log('Folder Data Diagnosis:', {
+      totalTests: allTests.length,
+      testsWithFolders,
+      testsWithoutFolders,
+      uniqueFolderIds,
+      availableFolders: folders,
+      sampleTests: allTests.slice(0, 5).map(test => ({
+        testName: test.testName,
+        folderId: test.folderId,
+        folderIdType: typeof test.folderId
+      }))
+    });
+    
+    return {
+      totalTests: allTests.length,
+      testsWithFolders,
+      testsWithoutFolders,
+      uniqueFolderIds,
+      availableFolders: folders
+    };
+  } catch (error) {
+    console.error('Error diagnosing folder data:', error);
+    throw error;
   }
 }
