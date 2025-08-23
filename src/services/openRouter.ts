@@ -506,26 +506,42 @@ Remember: ONLY return the JSON object, nothing else.`;
 
   private static extractBalancedJson(text: string): string | null {
     // Find first '{' then walk to matching '}' with string-awareness
-    const s = text;
+    const s = text.trim();
     const start = s.indexOf('{');
     if (start < 0) return null;
+
+    console.log('OpenRouter: JSON extraction - start index:', start, 'text length:', s.length);
 
     let depth = 0, inStr = false, esc = false;
     for (let i = start; i < s.length; i++) {
       const ch = s[i];
       if (inStr) {
-        if (esc) { esc = false; continue; }
-        if (ch === '\\') { esc = true; continue; }
+        if (esc) { 
+          esc = false; 
+          continue; 
+        }
+        if (ch === '\\') { 
+          esc = true; 
+          continue; 
+        }
         if (ch === '"') inStr = false;
       } else {
-        if (ch === '"') inStr = true;
-        else if (ch === '{') depth++;
-        else if (ch === '}') {
+        if (ch === '"') {
+          inStr = true;
+        } else if (ch === '{') {
+          depth++;
+        } else if (ch === '}') {
           depth--;
-          if (depth === 0) return s.slice(start, i + 1);
+          if (depth === 0) {
+            const extracted = s.slice(start, i + 1);
+            console.log('OpenRouter: Successfully extracted JSON, length:', extracted.length);
+            return extracted;
+          }
         }
       }
     }
+    
+    console.log('OpenRouter: JSON extraction failed - final depth:', depth, 'inStr:', inStr);
     return null; // likely truncated
   }
 
@@ -539,8 +555,31 @@ Remember: ONLY return the JSON object, nothing else.`;
   private static safeParseFeedbackJSON(text: string): FeedbackSummary {
     console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
     
+    // First, try direct parsing if it looks like clean JSON
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') && trimmed.includes('"overall_assessment"')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        console.log('OpenRouter: Successfully parsed clean JSON directly');
+        return parsed;
+      } catch (error) {
+        console.log('OpenRouter: Direct parsing failed, trying extraction methods...', error);
+      }
+    }
+    
     let cleaned = this.stripReasoningAndFences(text);
     console.log('OpenRouter: After cleaning reasoning/fences:', cleaned.substring(0, 200) + '...');
+    
+    // Try direct parsing of cleaned text first
+    if (cleaned.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(cleaned.trim());
+        console.log('OpenRouter: Successfully parsed cleaned JSON directly');
+        return parsed;
+      } catch (error) {
+        console.log('OpenRouter: Cleaned direct parsing failed, trying balanced extraction...', error);
+      }
+    }
     
     let jsonString = this.extractBalancedJson(cleaned);
 
@@ -570,7 +609,7 @@ Remember: ONLY return the JSON object, nothing else.`;
 
     try {
       const parsed = JSON.parse(jsonString);
-      console.log('OpenRouter: Successfully parsed feedback JSON');
+      console.log('OpenRouter: Successfully parsed extracted JSON');
       return parsed;
     } catch (error) {
       console.warn('OpenRouter: JSON parse failed, trying repair...', error);
