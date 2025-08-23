@@ -435,6 +435,8 @@ Your job:
 3) Give 2–4 practical "Study Actions" for each Focus Area (actionable, 1–2 lines each).
 4) Keep it encouraging and concrete. No fluff.
 
+CRITICAL: You must respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use code fences or markdown. Do not include explanatory text.
+
 Output strictly in this JSON schema:
 
 {
@@ -456,7 +458,8 @@ Output strictly in this JSON schema:
 }
 
 If the context is insufficient, say so in "overall_assessment" and leave arrays empty.
-Never invent facts not in the provided context.`;
+Never invent facts not in the provided context.
+Remember: ONLY return the JSON object, nothing else.`;
   }
 
   // Build a compact, token-friendly context
@@ -534,29 +537,76 @@ Never invent facts not in the provided context.`;
       let text = data?.choices?.[0]?.message?.content ?? '';
       text = text.trim();
       
-      console.log('OpenRouter: Raw feedback response:', text.substring(0, 200) + '...');
+      console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
       
-      // Try to extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}$/);
-      const jsonString = jsonMatch ? jsonMatch[0] : text;
+      // Try multiple strategies to extract JSON
+      let jsonString = text;
+      
+      // Strategy 1: Remove code fences if present
+      if (text.includes('```json') || text.includes('```')) {
+        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+          jsonString = codeBlockMatch[1].trim();
+          console.log('OpenRouter: Extracted JSON from code block');
+        }
+      }
+      
+      // Strategy 2: Find JSON object boundaries
+      if (!jsonString.startsWith('{')) {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[0];
+          console.log('OpenRouter: Extracted JSON using regex match');
+        }
+      }
+      
+      // Strategy 3: Clean up common formatting issues
+      jsonString = jsonString
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .replace(/^\s*Here's the feedback:\s*/i, '')
+        .replace(/^\s*Response:\s*/i, '')
+        .trim();
+
+      console.log('OpenRouter: Cleaned JSON string:', jsonString.substring(0, 200) + '...');
 
       let parsed: FeedbackSummary;
       try {
         parsed = JSON.parse(jsonString);
         console.log('OpenRouter: Successfully parsed feedback JSON');
       } catch (parseError) {
-        console.warn('OpenRouter: Failed to parse feedback JSON, using fallback');
-        // Minimal fallback if the model returns non-JSON
-        parsed = {
-          overall_assessment: text.slice(0, 400) || 'Unable to generate detailed feedback at this time.',
-          strengths: [],
-          focus_areas: [],
-          suggested_next_quiz: { 
-            difficulty: 'mixed', 
-            question_mix: ['multiple_choice', 'scenario'], 
-            target_topics: [] 
-          }
-        };
+        console.warn('OpenRouter: Failed to parse feedback JSON, trying more aggressive cleaning...');
+        
+        // Try to fix common JSON issues
+        const fixedJson = jsonString
+          .replace(/,\s*}/g, '}')  // Remove trailing commas
+          .replace(/,\s*]/g, ']')  // Remove trailing commas in arrays
+          .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Fix unquoted keys
+          .replace(/:\s*'([^']*)'/g, ': "$1"')  // Fix single quotes
+          .replace(/\n/g, ' ')  // Remove newlines that might break JSON
+          .replace(/\t/g, ' ')  // Remove tabs
+          .replace(/\s+/g, ' '); // Normalize whitespace
+        
+        try {
+          parsed = JSON.parse(fixedJson);
+          console.log('OpenRouter: Successfully parsed feedback JSON after fixing');
+        } catch (secondError) {
+          console.error('OpenRouter: All JSON parsing attempts failed:', secondError);
+          console.error('OpenRouter: Original text:', text.substring(0, 500));
+          console.error('OpenRouter: Final attempt:', fixedJson.substring(0, 500));
+          
+          // Minimal fallback if the model returns non-JSON
+          parsed = {
+            overall_assessment: 'Unable to generate detailed feedback at this time. The AI response could not be processed properly.',
+            strengths: [],
+            focus_areas: [],
+            suggested_next_quiz: { 
+              difficulty: 'mixed', 
+              question_mix: ['multiple_choice', 'scenario'], 
+              target_topics: [] 
+            }
+          };
+        }
       }
       
       return parsed;

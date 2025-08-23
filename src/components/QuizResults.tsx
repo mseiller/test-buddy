@@ -296,11 +296,11 @@ export default function QuizResults({
             <button
               onClick={fetchFeedback}
               disabled={fbLoading}
-              className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-60 transition-colors"
-              title="Regenerate tips"
+              className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+              title="Generate AI study tips"
             >
               <RefreshCw className={`h-4 w-4 ${fbLoading ? 'animate-spin' : ''}`} />
-              <span>{fbLoading ? 'Generating...' : 'Regenerate'}</span>
+              <span>{fbLoading ? 'Generating...' : 'Generate'}</span>
             </button>
           </div>
 
