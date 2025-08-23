@@ -552,11 +552,87 @@ Remember: ONLY return the JSON object, nothing else.`;
       .replace(/[\u0000-\u001f]/g, ''); // stray control chars
   }
 
+  private static handleTruncatedJson(truncatedText: string): FeedbackSummary {
+    console.log('OpenRouter: Handling truncated JSON, length:', truncatedText.length);
+    
+    // Try to extract what we can from the truncated response
+    const partialData: Partial<FeedbackSummary> = {};
+    
+    try {
+      // Extract overall_assessment if present
+      const assessmentMatch = truncatedText.match(/"overall_assessment":\s*"([^"]+)"/);
+      if (assessmentMatch) {
+        partialData.overall_assessment = assessmentMatch[1];
+      }
+      
+      // Extract strengths array if present
+      const strengthsMatch = truncatedText.match(/"strengths":\s*\[([\s\S]*?)\]/);
+      if (strengthsMatch) {
+        try {
+          const strengthsStr = '[' + strengthsMatch[1] + ']';
+          partialData.strengths = JSON.parse(strengthsStr);
+        } catch {
+          // Extract individual strength strings
+          const strengthItems = truncatedText.match(/"strengths":\s*\[\s*"([^"]+)"/);
+          if (strengthItems) {
+            partialData.strengths = [strengthItems[1]];
+          }
+        }
+      }
+      
+      // Extract focus areas if present (even partial)
+      const focusAreasMatch = truncatedText.match(/"focus_areas":\s*\[([\s\S]*)/);
+      if (focusAreasMatch) {
+        // Try to extract at least the first focus area
+        const topicMatch = truncatedText.match(/"topic":\s*"([^"]+)"/);
+        const whyMatch = truncatedText.match(/"why":\s*"([^"]+)"/);
+        
+        if (topicMatch && whyMatch) {
+          partialData.focus_areas = [{
+            topic: topicMatch[1],
+            why: whyMatch[1],
+            examples: [],
+            study_actions: ["Review the fundamentals of " + topicMatch[1]]
+          }];
+        }
+      }
+      
+    } catch (error) {
+      console.log('OpenRouter: Error extracting from truncated JSON:', error);
+    }
+    
+    // Return a complete FeedbackSummary with extracted data + defaults
+    return {
+      overall_assessment: partialData.overall_assessment || 
+        'Response was truncated due to length. You performed well but the detailed analysis was cut off.',
+      strengths: partialData.strengths || [],
+      focus_areas: partialData.focus_areas || [{
+        topic: "Response Truncated",
+        why: "The AI feedback was too long and got cut off. Try regenerating for complete analysis.",
+        examples: [],
+        study_actions: ["Click 'Regenerate' to get the full feedback"]
+      }],
+      suggested_next_quiz: {
+        difficulty: 'mixed',
+        question_mix: ['multiple_choice', 'scenario'],
+        target_topics: []
+      }
+    };
+  }
+
   private static safeParseFeedbackJSON(text: string): FeedbackSummary {
     console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
     
-    // First, try direct parsing if it looks like clean JSON
+    // Check for truncation indicators
     const trimmed = text.trim();
+    const isTruncated = !trimmed.endsWith('}') || trimmed.split('{').length !== trimmed.split('}').length;
+    
+    if (isTruncated) {
+      console.log('OpenRouter: Detected truncated JSON response, attempting recovery...');
+      return this.handleTruncatedJson(trimmed);
+    }
+    
+    // First, try direct parsing if it looks like clean JSON
     if (trimmed.startsWith('{') && trimmed.includes('"overall_assessment"')) {
       try {
         const parsed = JSON.parse(trimmed);
@@ -564,6 +640,11 @@ Remember: ONLY return the JSON object, nothing else.`;
         return parsed;
       } catch (error) {
         console.log('OpenRouter: Direct parsing failed, trying extraction methods...', error);
+        // If direct parsing fails, it might still be truncated
+        if (error instanceof SyntaxError && error.message.includes('position')) {
+          console.log('OpenRouter: Syntax error suggests truncation, attempting recovery...');
+          return this.handleTruncatedJson(trimmed);
+        }
       }
     }
     
@@ -665,12 +746,12 @@ Remember: ONLY return the JSON object, nothing else.`;
           messages: [
             { 
               role: 'system', 
-              content: system + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text.' 
+              content: system + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text. Keep responses concise to avoid truncation.' 
             },
             { role: 'user', content: user }
           ],
           temperature: 0.5,
-          max_tokens: 1200
+          max_tokens: 2000  // Increased from 1200 to handle larger quizzes
           // Removed response_format as it may not be supported by this model
         })
       });
@@ -720,12 +801,12 @@ Remember: ONLY return the JSON object, nothing else.`;
           messages: [
             { 
               role: 'system', 
-              content: systemPrompt + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text.' 
+              content: systemPrompt + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text. Keep responses concise.' 
             },
             { role: 'user', content: userPrompt }
           ],
           temperature: 0.3,
-          max_tokens: 800
+          max_tokens: 1500  // Increased from 800
         })
       });
 
