@@ -424,16 +424,20 @@ Requirements:
   }
 
   static feedbackSystemPrompt(): string {
-    return `You are Test Buddy, an AI learning coach. You will receive:
+    return `You are Test Buddy, an expert AI learning coach. You will receive:
 - the quiz name,
 - overall score,
 - the list of questions with the user's answers, correctness, correct answers, and explanations.
 
 Your job:
-1) Identify the top 3–6 "Focus Areas" the learner should work on, combining similar mistakes under one topic.
-2) For each Focus Area, explain WHY it matters using the learner's own mistakes (be specific but concise).
-3) Give 2–4 practical "Study Actions" for each Focus Area (actionable, 1–2 lines each).
-4) Keep it encouraging and concrete. No fluff.
+1) Identify ALL significant knowledge gaps (typically 4–8 "Focus Areas") - analyze every incorrect answer and group by topic.
+2) For each Focus Area, provide comprehensive guidance:
+   - WHY this topic is critical (specific to their mistakes, 2-3 sentences)
+   - EXAMPLES of their specific errors from the quiz (be specific)
+   - 4–6 detailed "Study Actions" with concrete, actionable steps
+3) Be thorough and encouraging - learners want comprehensive feedback to improve effectively.
+4) Include multiple focus areas if the learner has diverse knowledge gaps across different topics.
+5) Make study actions specific and practical, not generic advice.
 
 CRITICAL: You must respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use code fences, markdown, or <think> tags. Do not include explanatory text or reasoning.
 
@@ -442,23 +446,31 @@ Your response must start with { and end with }. Nothing else.
 Output strictly in this JSON schema:
 
 {
-  "overall_assessment": "1–3 sentence summary of performance and trends.",
-  "strengths": ["short bullet", "short bullet"],
+  "overall_assessment": "2–4 sentence summary highlighting both strengths and areas for improvement.",
+  "strengths": ["specific strength from quiz performance", "another demonstrated strength", "third strength if applicable"],
   "focus_areas": [
     {
-      "topic": "short topic name",
-      "why": "1–2 sentence reason grounded in the user's errors",
-      "examples": ["quote or paraphrase 1 user mistake", "another if helpful"],
-      "study_actions": ["action 1", "action 2", "action 3"]
+      "topic": "Clear, specific topic name",
+      "why": "Why this is critical for their learning based on specific mistakes (2–3 sentences with context)",
+      "examples": ["specific incorrect answer from quiz", "another mistake example", "pattern of errors if applicable"],
+      "study_actions": [
+        "Review [specific concept] fundamentals and core principles",
+        "Practice [specific type] of problems or scenarios", 
+        "Study [particular method/approach] for this topic",
+        "Apply knowledge through [hands-on exercise or project]",
+        "Test understanding with [specific practice method]",
+        "Focus on [particular aspect] that was problematic"
+      ]
     }
   ],
   "suggested_next_quiz": {
-    "difficulty": "easy|mixed|hard (pick one)",
+    "difficulty": "easy|mixed|hard",
     "question_mix": ["multiple_choice","fill_blank","true_false","scenario"],
-    "target_topics": ["topic1","topic2"]
+    "target_topics": ["topic1","topic2","topic3"]
   }
 }
 
+Include ALL significant areas where improvement is needed - comprehensive feedback is more valuable than abbreviated summaries.
 If the context is insufficient, say so in "overall_assessment" and leave arrays empty.
 Never invent facts not in the provided context.
 Remember: ONLY return the JSON object, nothing else.`;
@@ -580,20 +592,39 @@ Remember: ONLY return the JSON object, nothing else.`;
         }
       }
       
-      // Extract focus areas if present (even partial)
+      // Extract focus areas if present (even partial) - try to get multiple areas
       const focusAreasMatch = truncatedText.match(/"focus_areas":\s*\[([\s\S]*)/);
       if (focusAreasMatch) {
-        // Try to extract at least the first focus area
-        const topicMatch = truncatedText.match(/"topic":\s*"([^"]+)"/);
-        const whyMatch = truncatedText.match(/"why":\s*"([^"]+)"/);
+        const focusAreas = [];
         
-        if (topicMatch && whyMatch) {
-          partialData.focus_areas = [{
-            topic: topicMatch[1],
-            why: whyMatch[1],
-            examples: [],
-            study_actions: ["Review the fundamentals of " + topicMatch[1]]
-          }];
+        // Extract all topic/why pairs from the truncated response
+        const topicMatches = truncatedText.match(/"topic":\s*"([^"]+)"/g);
+        const whyMatches = truncatedText.match(/"why":\s*"([^"]+)"/g);
+        
+        if (topicMatches && whyMatches) {
+          const minLength = Math.min(topicMatches.length, whyMatches.length);
+          
+          for (let i = 0; i < minLength; i++) {
+            const topic = topicMatches[i].match(/"topic":\s*"([^"]+)"/)?.[1];
+            const why = whyMatches[i].match(/"why":\s*"([^"]+)"/)?.[1];
+            
+            if (topic && why) {
+              focusAreas.push({
+                topic: topic,
+                why: why,
+                examples: [],
+                study_actions: [
+                  `Review the fundamentals of ${topic}`,
+                  `Practice problems related to ${topic}`,
+                  `Study key concepts and principles in ${topic}`
+                ]
+              });
+            }
+          }
+        }
+        
+        if (focusAreas.length > 0) {
+          partialData.focus_areas = focusAreas;
         }
       }
       
@@ -751,7 +782,7 @@ Remember: ONLY return the JSON object, nothing else.`;
             { role: 'user', content: user }
           ],
           temperature: 0.5,
-          max_tokens: 2000  // Increased from 1200 to handle larger quizzes
+          max_tokens: 3000  // Increased for comprehensive feedback with multiple focus areas
           // Removed response_format as it may not be supported by this model
         })
       });
@@ -806,7 +837,7 @@ Remember: ONLY return the JSON object, nothing else.`;
             { role: 'user', content: userPrompt }
           ],
           temperature: 0.3,
-          max_tokens: 1500  // Increased from 800
+          max_tokens: 2500  // Increased for comprehensive feedback
         })
       });
 
