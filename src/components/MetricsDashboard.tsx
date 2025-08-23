@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getUserMetrics, UserMetrics, migrateTestHistoryToResults } from '@/services/metrics';
+import { getUserMetrics, UserMetrics, migrateTestHistoryToResults, getUserFolders, MetricsFilters } from '@/services/metrics';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface MetricsDashboardProps {
@@ -13,13 +13,28 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [migrating, setMigrating] = useState(false);
   const [migrationComplete, setMigrationComplete] = useState(false);
+  const [folders, setFolders] = useState<Array<{id: string, name: string, color?: string}>>([]);
+  const [filters, setFilters] = useState<MetricsFilters>({});
 
+  // Load folders on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const folderData = await getUserFolders(userId);
+        setFolders(folderData);
+      } catch (err) {
+        console.error('Error loading folders:', err);
+      }
+    })();
+  }, [userId]);
+
+  // Load metrics when filters change
   useEffect(() => {
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getUserMetrics(userId);
+        const data = await getUserMetrics(userId, filters);
         setMetrics(data);
       } catch (err) {
         console.error('Error loading metrics:', err);
@@ -28,7 +43,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
         setLoading(false);
       }
     })();
-  }, [userId]);
+  }, [userId, filters]);
 
   const handleMigration = async () => {
     setMigrating(true);
@@ -37,7 +52,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
       setMigrationComplete(true);
       
       // Reload metrics after migration
-      const data = await getUserMetrics(userId);
+      const data = await getUserMetrics(userId, filters);
       setMetrics(data);
       
       if (migratedCount > 0) {
@@ -107,12 +122,71 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
             </div>
           </div>
         )}
+
+        {/* Filter Controls */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Time Period
+              </label>
+              <select
+                value={filters.days || 'all'}
+                onChange={(e) => setFilters(prev => ({ 
+                  ...prev, 
+                  days: e.target.value === 'all' ? undefined : parseInt(e.target.value)
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Time</option>
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="90">Last 3 Months</option>
+                <option value="180">Last 6 Months</option>
+                <option value="365">Last Year</option>
+              </select>
+            </div>
+            
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Folder
+              </label>
+              <select
+                value={filters.folderId || 'all'}
+                onChange={(e) => setFilters(prev => ({ 
+                  ...prev, 
+                  folderId: e.target.value === 'all' ? undefined : e.target.value
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Folders</option>
+                <option value="">No Folder</option>
+                {folders.map(folder => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {(filters.days || filters.folderId) && (
+              <div className="flex items-end">
+                <button
+                  onClick={() => setFilters({})}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <KpiCard 
-            title="Total Quizzes" 
-            value={metrics.quizzesTaken.toString()}
-            subtitle={`${metrics.quizzesTaken30} in last 30 days`}
+            title={filters.days ? `Quizzes (${getTimePeriodLabel(filters.days)})` : "Total Quizzes"} 
+            value={metrics.quizzesTakenInPeriod.toString()}
+            subtitle={filters.days ? `${metrics.quizzesTaken} total all time` : `${metrics.quizzesTakenInPeriod} in filtered period`}
           />
           <KpiCard 
             title="Average Score" 
@@ -120,22 +194,29 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
             subtitle={`${metrics.avgLast5}% last 5 quizzes`}
           />
           <KpiCard 
-            title="Retake Improvement" 
-            value={`${metrics.retakeDelta >= 0 ? '+' : ''}${metrics.retakeDelta} pts`}
-            subtitle="Average improvement"
+            title="Retakes" 
+            value={metrics.totalRetakes.toString()}
+            subtitle={metrics.retakeCount > 0 ? `${metrics.retakeDelta >= 0 ? '+' : ''}${metrics.retakeDelta} pts avg improvement` : 'No retakes in period'}
             valueColor={metrics.retakeDelta >= 0 ? 'text-green-600' : 'text-red-600'}
           />
           <KpiCard 
             title="Recent Trend" 
             value={chartData.length > 1 ? getTrendDirection(chartData) : '—'}
-            subtitle="Last 10 quizzes"
+            subtitle={`Last ${Math.min(chartData.length, 10)} quizzes`}
           />
         </div>
       </div>
 
       {chartData.length > 1 && (
         <div className="bg-white rounded-lg shadow p-6">
-          <div className="font-medium text-gray-900 mb-4">Score Trend (Last 10 Quizzes)</div>
+          <div className="font-medium text-gray-900 mb-4">
+            Score Trend ({filters.days ? getTimePeriodLabel(filters.days) : 'Last 10 Quizzes'})
+            {filters.folderId && (
+              <span className="text-sm text-gray-500 ml-2">
+                • {folders.find(f => f.id === filters.folderId)?.name || 'Selected Folder'}
+              </span>
+            )}
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
@@ -215,4 +296,15 @@ function getTrendDirection(data: Array<{ score: number }>): string {
   if (diff > 5) return '📈 Improving';
   if (diff < -5) return '📉 Declining';
   return '➡️ Stable';
+}
+
+function getTimePeriodLabel(days: number): string {
+  switch (days) {
+    case 7: return 'Last 7 Days';
+    case 30: return 'Last 30 Days';
+    case 90: return 'Last 3 Months';
+    case 180: return 'Last 6 Months';
+    case 365: return 'Last Year';
+    default: return `Last ${days} Days`;
+  }
 }

@@ -7,14 +7,21 @@ const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
 
 export interface UserMetrics {
   quizzesTaken: number;
-  quizzesTaken30: number;
+  quizzesTakenInPeriod: number;
   avgScore: number;
   avgLast5: number;
   trend: Array<{ t: Date; score: number }>;
   retakeDelta: number;
+  retakeCount: number;
+  totalRetakes: number;
 }
 
-export async function getUserMetrics(uid: string): Promise<UserMetrics> {
+export interface MetricsFilters {
+  days?: number; // undefined = all time
+  folderId?: string; // undefined = all folders
+}
+
+export async function getUserMetrics(uid: string, filters: MetricsFilters = {}): Promise<UserMetrics> {
   try {
     // Get data from both new results collection and legacy testHistory collection
     const resultsBase = collection(db, `users/${uid}/results`);
@@ -44,7 +51,7 @@ export async function getUserMetrics(uid: string): Promise<UserMetrics> {
     }) as any[];
 
     // Combine and sort all data by creation date
-    const all = [...resultsData, ...historyData]
+    let all = [...resultsData, ...historyData]
       .filter(item => item.score != null && !isNaN(item.score)) // Only include completed tests with scores
       .sort((a, b) => {
         const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt);
@@ -53,36 +60,51 @@ export async function getUserMetrics(uid: string): Promise<UserMetrics> {
       })
       .slice(0, 500); // Limit total results
 
-    // Filter for last 30 days from combined data
-    const thirtyDaysAgo = daysAgo(30);
-    const last30 = all.filter(item => {
-      const itemDate = item.createdAt?.toDate?.() || new Date(item.createdAt);
-      return itemDate >= thirtyDaysAgo;
-    });
+    // Apply folder filter if specified
+    if (filters.folderId) {
+      all = all.filter(item => item.folderId === filters.folderId);
+    }
 
-    // Derive metrics
-    const quizzesTaken = all.length;
-    const quizzesTaken30 = last30.length;
+    // Apply time filter if specified
+    let filteredByTime = all;
+    if (filters.days) {
+      const cutoffDate = daysAgo(filters.days);
+      filteredByTime = all.filter(item => {
+        const itemDate = item.createdAt?.toDate?.() || new Date(item.createdAt);
+        return itemDate >= cutoffDate;
+      });
+    }
 
-    const scores = all.map(r => Number(r.score)).filter(x => !isNaN(x));
+    // Derive metrics from filtered data
+    const quizzesTaken = all.length; // Total (unfiltered)
+    const quizzesTakenInPeriod = filteredByTime.length; // Filtered by time/folder
+
+    const scores = filteredByTime.map(r => Number(r.score)).filter(x => !isNaN(x));
     const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
     const last5 = scores.slice(0, 5);
     const avgLast5 = last5.length ? Math.round(last5.reduce((a, b) => a + b, 0) / last5.length) : 0;
 
-    const trend = all.slice(0, 10).map(r => ({
+    const trend = filteredByTime.slice(0, 10).map(r => ({
       t: r.createdAt?.toDate?.() ?? now(),
       score: r.score
     })).reverse(); // oldest → newest for charts
 
-    // Retake delta: for results with retakeOf, compare to their originals
+    // Retake analysis: for results with retakeOf, compare to their originals
     const originals = new Map(all.map(r => [r.id, r]));
     const deltas: number[] = [];
-    for (const r of all) {
-      if (r.retakeOf && originals.has(r.retakeOf)) {
-        const orig = originals.get(r.retakeOf);
-        if (orig?.score != null && r.score != null) {
-          deltas.push(r.score - orig.score);
+    let retakeCount = 0;
+    let totalRetakes = 0;
+
+    for (const r of filteredByTime) {
+      if (r.retakeOf) {
+        totalRetakes++;
+        if (originals.has(r.retakeOf)) {
+          const orig = originals.get(r.retakeOf);
+          if (orig?.score != null && r.score != null) {
+            deltas.push(r.score - orig.score);
+            retakeCount++;
+          }
         }
       }
     }
@@ -90,11 +112,13 @@ export async function getUserMetrics(uid: string): Promise<UserMetrics> {
 
     return {
       quizzesTaken,
-      quizzesTaken30,
+      quizzesTakenInPeriod,
       avgScore: avg,
       avgLast5,
       trend,
       retakeDelta,
+      retakeCount,
+      totalRetakes,
     };
   } catch (error) {
     console.error('Error fetching user metrics:', error);
@@ -164,4 +188,21 @@ function inferQuizType(legacyType: string): string {
   if (type.includes('mixed')) return 'mixed';
   
   return 'mixed';
+}
+
+// Get available folders for filter dropdown
+export async function getUserFolders(uid: string): Promise<Array<{id: string, name: string, color?: string}>> {
+  try {
+    const foldersRef = collection(db, `users/${uid}/folders`);
+    const snapshot = await getDocs(query(foldersRef, orderBy('name')));
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name,
+      color: doc.data().color
+    }));
+  } catch (error) {
+    console.error('Error fetching user folders:', error);
+    return [];
+  }
 }
