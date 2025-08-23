@@ -164,6 +164,43 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
     }
   };
 
+  const handleFullDiagnosis = async () => {
+    try {
+      console.log('=== FULL DATA DIAGNOSIS ===');
+      
+      // Check new collection
+      const { getAllTests, getTestsInFolder } = await import('@/services/tests');
+      const allNewTests = await getAllTests(userId);
+      console.log(`New Collection (/users/${userId}/tests):`, allNewTests.length, 'tests');
+      allNewTests.forEach(test => {
+        console.log(`  - ${test.testName}: folderId=${test.folderId}`);
+      });
+      
+      // Check legacy collection
+      const { FirebaseService } = await import('@/services/firebaseService');
+      const allLegacyTests = await FirebaseService.getUserTestHistory(userId);
+      console.log(`Legacy Collection (testHistory):`, allLegacyTests.length, 'tests');
+      allLegacyTests.forEach(test => {
+        console.log(`  - ${test.testName}: folderId=${test.folderId}`);
+      });
+      
+      // Check folder-specific queries
+      if (folders.length > 0) {
+        const folderId = folders[0].id;
+        const folderTests = await getTestsInFolder(userId, folderId);
+        console.log(`Tests in folder ${folderId}:`, folderTests.length, 'tests');
+        folderTests.forEach(test => {
+          console.log(`  - ${test.testName}: folderId=${test.folderId}`);
+        });
+      }
+      
+      alert('Full diagnosis complete! Check console for detailed logs.');
+    } catch (err) {
+      console.error('Diagnosis failed:', err);
+      alert('Diagnosis failed. Check console for details.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -205,6 +242,12 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
                    >
                      🔧 Fix Data Structure
+                   </button>
+                   <button
+                     onClick={handleFullDiagnosis}
+                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                   >
+                     🔍 Full Diagnosis
                    </button>
                    {!migrationComplete && (
                      <button
