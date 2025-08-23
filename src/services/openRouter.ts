@@ -476,20 +476,124 @@ Remember: ONLY return the JSON object, nothing else.`;
     lines.push(`Score: ${score}%`);
     lines.push(`Questions (${questions.length}):`);
     
+    // Helper to clamp and clean strings
+    const clamp = (s: any, n: number) => (s ?? '').toString().replace(/\s+/g, ' ').slice(0, n);
+    
     questions.forEach((q, i) => {
       const ua = answers[i];
       const correct = ua?.isCorrect ? 'correct' : 'incorrect';
-      const uaText = (ua?.answer ?? '').toString().slice(0, 220);
-      const corr = (q.correctAnswer ?? '').toString().slice(0, 220);
-      const expl = (q.explanation ?? '').toString().slice(0, 280);
       
-      // Keep it compact; avoid dumping huge text
+      // More compact format to reduce truncation risk
       lines.push(
-        `#${i+1} [${q.type}] ${correct}\nQ: ${q.question}\nUser: ${uaText}\nCorrect: ${corr}\nWhy: ${expl}`
+        `#${i+1} [${q.type}] ${correct}\n` +
+        `Q: ${clamp(q.question, 180)}\n` +
+        `User: ${clamp(ua?.answer, 120)}\n` +
+        `Correct: ${clamp(q.correctAnswer, 120)}\n` +
+        `Why: ${clamp(q.explanation, 160)}`
       );
     });
     
     return lines.join('\n');
+  }
+
+  private static stripReasoningAndFences(text: string): string {
+    // Remove <think> blocks
+    text = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    // Remove code fences
+    text = text.replace(/```[\s\S]*?```/g, '');
+    return text.trim();
+  }
+
+  private static extractBalancedJson(text: string): string | null {
+    // Find first '{' then walk to matching '}' with string-awareness
+    const s = text;
+    const start = s.indexOf('{');
+    if (start < 0) return null;
+
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < s.length; i++) {
+      const ch = s[i];
+      if (inStr) {
+        if (esc) { esc = false; continue; }
+        if (ch === '\\') { esc = true; continue; }
+        if (ch === '"') inStr = false;
+      } else {
+        if (ch === '"') inStr = true;
+        else if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) return s.slice(start, i + 1);
+        }
+      }
+    }
+    return null; // likely truncated
+  }
+
+  private static tryJsonRepair(text: string): string {
+    // Minimal "repair": remove trailing commas and fix common truncations
+    return text
+      .replace(/,\s*([}\]])/g, '$1')   // trailing commas
+      .replace(/[\u0000-\u001f]/g, ''); // stray control chars
+  }
+
+  private static safeParseFeedbackJSON(text: string): FeedbackSummary {
+    console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
+    
+    let cleaned = this.stripReasoningAndFences(text);
+    console.log('OpenRouter: After cleaning reasoning/fences:', cleaned.substring(0, 200) + '...');
+    
+    let jsonString = this.extractBalancedJson(cleaned);
+
+    if (!jsonString) {
+      console.warn('OpenRouter: No balanced JSON found, trying repair...');
+      // try aggressive cleaning
+      cleaned = this.tryJsonRepair(cleaned);
+      jsonString = this.extractBalancedJson(cleaned);
+    }
+    
+    if (!jsonString) {
+      console.warn('OpenRouter: Still no JSON found, using text as fallback');
+      // final fallback: treat whole string as summary to avoid hard failure
+      return {
+        overall_assessment: cleaned.slice(0, 500) || 'Unable to generate detailed feedback at this time.',
+        strengths: [],
+        focus_areas: [],
+        suggested_next_quiz: { 
+          difficulty: 'mixed', 
+          question_mix: ['multiple_choice','scenario'], 
+          target_topics: [] 
+        }
+      };
+    }
+
+    console.log('OpenRouter: Extracted JSON string:', jsonString.substring(0, 200) + '...');
+
+    try {
+      const parsed = JSON.parse(jsonString);
+      console.log('OpenRouter: Successfully parsed feedback JSON');
+      return parsed;
+    } catch (error) {
+      console.warn('OpenRouter: JSON parse failed, trying repair...', error);
+      const repaired = this.tryJsonRepair(jsonString);
+      try {
+        const parsed = JSON.parse(repaired);
+        console.log('OpenRouter: Successfully parsed repaired JSON');
+        return parsed;
+      } catch (repairError) {
+        console.error('OpenRouter: All JSON parsing attempts failed:', repairError);
+        // Return graceful fallback
+        return {
+          overall_assessment: 'Unable to generate detailed feedback due to parsing issues. Please try regenerating.',
+          strengths: [],
+          focus_areas: [],
+          suggested_next_quiz: { 
+            difficulty: 'mixed', 
+            question_mix: ['multiple_choice','scenario'], 
+            target_topics: [] 
+          }
+        };
+      }
+    }
   }
 
   static async generateFeedbackSummary(
@@ -508,18 +612,93 @@ Remember: ONLY return the JSON object, nothing else.`;
     console.log('OpenRouter: Generating feedback summary for:', testName);
     console.log('OpenRouter: Score:', score, '% | Questions:', questions.length);
 
-    // Try primary model first, with fallback
-    try {
-      return await this.tryGenerateFeedback(system, user, 'qwen/qwen3-235b-a22b:free', 0.3, 1000);
-    } catch (error) {
-      console.warn('OpenRouter: Primary model failed, trying fallback:', error);
-      try {
-        return await this.tryGenerateFeedback(system, user, 'microsoft/phi-3-mini-4k-instruct:free', 0.5, 800);
-      } catch (fallbackError) {
-        console.error('OpenRouter: All models failed');
-        throw new Error('AI feedback service is currently unavailable. Please try again later.');
-      }
+    const response = await fetch(this.API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+        'X-Title': 'Test Buddy',
+        // Best-effort headers to suppress reasoning/thinking
+        'X-OpenRouter-Ignore-Reasoning': 'true',
+        'x-omit-thoughts': 'true'
+      },
+      body: JSON.stringify({
+        model: 'z-ai/glm-4.5-air:free',
+        messages: [
+          { 
+            role: 'system', 
+            content: system + '\n\nReturn ONLY valid JSON. No commentary. No code fences. No thinking process.' 
+          },
+          { role: 'user', content: user }
+        ],
+        temperature: 0.5,
+        max_tokens: 1200,
+        // Force structured JSON output if supported by the model
+        response_format: { type: 'json_object' }
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('OpenRouter: Primary model failed:', data?.error?.message);
+      // Try fallback with backup model without response_format
+      return this.tryFallbackGeneration(system, user);
     }
+
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('AI model returned empty response');
+    }
+
+    console.log('OpenRouter: Full API response structure:', {
+      choices: data?.choices?.length || 0,
+      hasContent: !!content,
+      contentLength: content?.length || 0,
+      usage: data?.usage
+    });
+
+    return this.safeParseFeedbackJSON(content);
+  }
+
+  private static async tryFallbackGeneration(systemPrompt: string, userPrompt: string): Promise<FeedbackSummary> {
+    console.log('OpenRouter: Trying fallback model without response_format...');
+    
+    const response = await fetch(this.API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+        'X-Title': 'Test Buddy'
+      },
+      body: JSON.stringify({
+        model: 'microsoft/phi-3-mini-4k-instruct:free',
+        messages: [
+          { 
+            role: 'system', 
+            content: systemPrompt + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text.' 
+          },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 800
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data?.error?.message || 'All feedback models failed');
+    }
+
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('Fallback model returned empty response');
+    }
+
+    return this.safeParseFeedbackJSON(content);
   }
 
   private static async tryGenerateFeedback(
