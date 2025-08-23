@@ -65,6 +65,22 @@ export interface OpenRouterResponse {
   }[];
 }
 
+export type FeedbackSummary = {
+  overall_assessment: string;
+  strengths: string[];
+  focus_areas: {
+    topic: string;
+    why: string;
+    examples: string[];
+    study_actions: string[];
+  }[];
+  suggested_next_quiz: {
+    difficulty: 'easy' | 'mixed' | 'hard';
+    question_mix: Array<'multiple_choice'|'fill_blank'|'true_false'|'scenario'|'short_answer'|'essay'>;
+    target_topics: string[];
+  };
+};
+
 export interface QuizGenerationRequest {
   text: string;
   quizType: QuizType;

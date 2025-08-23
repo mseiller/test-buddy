@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Trophy, CheckCircle, XCircle, Clock, Book, RotateCcw, Home, Eye, Shuffle, History } from 'lucide-react';
-import { Question, UserAnswer } from '@/types';
+import { useState, useEffect } from 'react';
+import { Trophy, CheckCircle, XCircle, Clock, Book, RotateCcw, Home, Eye, Shuffle, History, Sparkles, RefreshCw } from 'lucide-react';
+import { Question, UserAnswer, FeedbackSummary } from '@/types';
+import { OpenRouterService } from '@/services/openRouter';
 
 interface QuizResultsProps {
   questions: Question[];
@@ -26,13 +27,38 @@ export default function QuizResults({
   onRetakeQuiz, 
   onGoHome,
   onNewQuizFromFile,
-  onBackToHistory
+  onBackToHistory,
+  isHistoricalReview
 }: QuizResultsProps) {
   const [showReview, setShowReview] = useState(false);
-  
+  const [feedback, setFeedback] = useState<FeedbackSummary | null>(null);
+  const [fbLoading, setFbLoading] = useState(false);
+  const [fbError, setFbError] = useState<string | null>(null);
+
   const correctAnswers = answers.filter(a => a.isCorrect).length;
   const totalQuestions = questions.length;
   const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+
+  const fetchFeedback = async () => {
+    try {
+      setFbError(null);
+      setFbLoading(true);
+      const data = await OpenRouterService.generateFeedbackSummary(testName, percentage, questions, answers);
+      setFeedback(data);
+    } catch (e: any) {
+      setFbError(e?.message ?? 'Failed to load AI feedback');
+    } finally {
+      setFbLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Generate feedback on mount (skip for historical reviews to avoid re-cost if desired)
+    if (!isHistoricalReview) {
+      fetchFeedback();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testName, percentage]);
   
   const formatTime = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -256,6 +282,119 @@ export default function QuizResults({
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <h3 className="text-red-800 font-semibold mb-1">Need More Study 📖</h3>
               <p className="text-red-700">Review the material thoroughly before retaking the quiz.</p>
+            </div>
+          )}
+        </div>
+
+        {/* AI Study Plan */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="h-5 w-5 text-indigo-600" />
+              <h2 className="text-xl font-semibold text-gray-900">AI Study Plan</h2>
+            </div>
+            <button
+              onClick={fetchFeedback}
+              disabled={fbLoading}
+              className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-60 transition-colors"
+              title="Regenerate tips"
+            >
+              <RefreshCw className={`h-4 w-4 ${fbLoading ? 'animate-spin' : ''}`} />
+              <span>{fbLoading ? 'Generating...' : 'Regenerate'}</span>
+            </button>
+          </div>
+
+          {fbError && (
+            <div className="text-sm text-red-600 mb-3 p-3 bg-red-50 rounded-lg border border-red-200">
+              {fbError}
+            </div>
+          )}
+
+          {fbLoading && !feedback && (
+            <div className="text-sm text-gray-600 flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+              <span>Analyzing your answers and generating personalized study tips...</span>
+            </div>
+          )}
+
+          {feedback && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-800 leading-relaxed">{feedback.overall_assessment}</p>
+              </div>
+
+              {feedback.strengths?.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-green-700 mb-2 flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Your Strengths</span>
+                  </h3>
+                  <ul className="list-disc list-inside text-gray-800 space-y-1 ml-6">
+                    {feedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {feedback.focus_areas?.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-orange-700 mb-3 flex items-center space-x-2">
+                    <Book className="h-4 w-4" />
+                    <span>Areas to Focus On</span>
+                  </h3>
+                  <div className="space-y-4">
+                    {feedback.focus_areas.map((fa, i) => (
+                      <div key={i} className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+                        <div className="font-semibold text-orange-800 mb-2">{fa.topic}</div>
+                        <p className="text-gray-800 mb-3">{fa.why}</p>
+                        
+                        {fa.examples?.length > 0 && (
+                          <div className="mb-3">
+                            <div className="text-sm font-medium text-gray-700 mb-1">Your Mistakes:</div>
+                            <ul className="text-sm text-gray-700 list-disc list-inside space-y-1 ml-2">
+                              {fa.examples.map((ex, j) => (
+                                <li key={j} className="italic">&ldquo;{ex}&rdquo;</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {fa.study_actions?.length > 0 && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-800 mb-2 flex items-center space-x-1">
+                              <Trophy className="h-3 w-3" />
+                              <span>Action Steps</span>
+                            </div>
+                            <ul className="text-sm text-gray-800 space-y-1">
+                              {fa.study_actions.map((a, k) => (
+                                <li key={k} className="flex items-start space-x-2">
+                                  <span className="text-orange-600 font-bold">•</span>
+                                  <span>{a}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {feedback.suggested_next_quiz && (
+                <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                  <h3 className="font-medium text-indigo-800 mb-2 flex items-center space-x-2">
+                    <Shuffle className="h-4 w-4" />
+                    <span>Suggested Next Quiz</span>
+                  </h3>
+                  <div className="text-sm text-indigo-700 space-y-1">
+                    <div><span className="font-medium">Difficulty:</span> <span className="capitalize">{feedback.suggested_next_quiz.difficulty}</span></div>
+                    <div><span className="font-medium">Question Types:</span> {feedback.suggested_next_quiz.question_mix.join(', ')}</div>
+                    {feedback.suggested_next_quiz.target_topics?.length > 0 && (
+                      <div><span className="font-medium">Focus Topics:</span> {feedback.suggested_next_quiz.target_topics.join(', ')}</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

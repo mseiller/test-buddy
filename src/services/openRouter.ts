@@ -1,4 +1,4 @@
-import { Question, QuizType } from '@/types';
+import { Question, QuizType, UserAnswer, FeedbackSummary } from '@/types';
 
 export class OpenRouterService {
   private static readonly API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -420,6 +420,149 @@ Requirements:
       return response.ok;
     } catch {
       return false;
+    }
+  }
+
+  static feedbackSystemPrompt(): string {
+    return `You are Test Buddy, an AI learning coach. You will receive:
+- the quiz name,
+- overall score,
+- the list of questions with the user's answers, correctness, correct answers, and explanations.
+
+Your job:
+1) Identify the top 3–6 "Focus Areas" the learner should work on, combining similar mistakes under one topic.
+2) For each Focus Area, explain WHY it matters using the learner's own mistakes (be specific but concise).
+3) Give 2–4 practical "Study Actions" for each Focus Area (actionable, 1–2 lines each).
+4) Keep it encouraging and concrete. No fluff.
+
+Output strictly in this JSON schema:
+
+{
+  "overall_assessment": "1–3 sentence summary of performance and trends.",
+  "strengths": ["short bullet", "short bullet"],
+  "focus_areas": [
+    {
+      "topic": "short topic name",
+      "why": "1–2 sentence reason grounded in the user's errors",
+      "examples": ["quote or paraphrase 1 user mistake", "another if helpful"],
+      "study_actions": ["action 1", "action 2", "action 3"]
+    }
+  ],
+  "suggested_next_quiz": {
+    "difficulty": "easy|mixed|hard (pick one)",
+    "question_mix": ["multiple_choice","fill_blank","true_false","scenario"],
+    "target_topics": ["topic1","topic2"]
+  }
+}
+
+If the context is insufficient, say so in "overall_assessment" and leave arrays empty.
+Never invent facts not in the provided context.`;
+  }
+
+  // Build a compact, token-friendly context
+  private static buildFeedbackContext(
+    testName: string,
+    score: number,
+    questions: Question[],
+    answers: UserAnswer[]
+  ): string {
+    const lines: string[] = [];
+    lines.push(`Test: ${testName}`);
+    lines.push(`Score: ${score}%`);
+    lines.push(`Questions (${questions.length}):`);
+    
+    questions.forEach((q, i) => {
+      const ua = answers[i];
+      const correct = ua?.isCorrect ? 'correct' : 'incorrect';
+      const uaText = (ua?.answer ?? '').toString().slice(0, 220);
+      const corr = (q.correctAnswer ?? '').toString().slice(0, 220);
+      const expl = (q.explanation ?? '').toString().slice(0, 280);
+      
+      // Keep it compact; avoid dumping huge text
+      lines.push(
+        `#${i+1} [${q.type}] ${correct}\nQ: ${q.question}\nUser: ${uaText}\nCorrect: ${corr}\nWhy: ${expl}`
+      );
+    });
+    
+    return lines.join('\n');
+  }
+
+  static async generateFeedbackSummary(
+    testName: string,
+    score: number,
+    questions: Question[],
+    answers: UserAnswer[]
+  ): Promise<FeedbackSummary> {
+    if (!this.API_KEY) {
+      throw new Error('OpenRouter API key is not configured');
+    }
+
+    const system = this.feedbackSystemPrompt();
+    const user = this.buildFeedbackContext(testName, score, questions, answers);
+
+    console.log('OpenRouter: Generating feedback summary for:', testName);
+    console.log('OpenRouter: Score:', score, '% | Questions:', questions.length);
+
+    try {
+      const response = await fetch(this.API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+          'X-Title': 'Test Buddy',
+        },
+        body: JSON.stringify({
+          model: 'z-ai/glm-4.5-air:free',
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user }
+          ],
+          temperature: 0.7,
+          max_tokens: 700
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('OpenRouter feedback error:', data);
+        throw new Error(data?.error?.message || 'OpenRouter feedback request failed');
+      }
+
+      // Defensive JSON parsing (model might return code fences)
+      let text = data?.choices?.[0]?.message?.content ?? '';
+      text = text.trim();
+      
+      console.log('OpenRouter: Raw feedback response:', text.substring(0, 200) + '...');
+      
+      // Try to extract JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*\}$/);
+      const jsonString = jsonMatch ? jsonMatch[0] : text;
+
+      let parsed: FeedbackSummary;
+      try {
+        parsed = JSON.parse(jsonString);
+        console.log('OpenRouter: Successfully parsed feedback JSON');
+      } catch (parseError) {
+        console.warn('OpenRouter: Failed to parse feedback JSON, using fallback');
+        // Minimal fallback if the model returns non-JSON
+        parsed = {
+          overall_assessment: text.slice(0, 400) || 'Unable to generate detailed feedback at this time.',
+          strengths: [],
+          focus_areas: [],
+          suggested_next_quiz: { 
+            difficulty: 'mixed', 
+            question_mix: ['multiple_choice', 'scenario'], 
+            target_topics: [] 
+          }
+        };
+      }
+      
+      return parsed;
+    } catch (error: any) {
+      console.error('OpenRouter feedback generation failed:', error);
+      throw new Error(error.message || 'Failed to generate AI feedback');
     }
   }
 } 
