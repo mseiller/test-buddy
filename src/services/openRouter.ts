@@ -506,25 +506,46 @@ Remember: ONLY return the JSON object, nothing else.`;
     console.log('OpenRouter: Generating feedback summary for:', testName);
     console.log('OpenRouter: Score:', score, '% | Questions:', questions.length);
 
+    // Try primary model first, with fallback
     try {
-      const response = await fetch(this.API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
-          'X-Title': 'Test Buddy',
-        },
-        body: JSON.stringify({
-          model: 'z-ai/glm-4.5-air:free',
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user }
-          ],
-          temperature: 0.7,
-          max_tokens: 700
-        })
-      });
+      return await this.tryGenerateFeedback(system, user, 'qwen/qwen3-235b-a22b:free', 0.3, 1000);
+    } catch (error) {
+      console.warn('OpenRouter: Primary model failed, trying fallback:', error);
+      try {
+        return await this.tryGenerateFeedback(system, user, 'microsoft/phi-3-mini-4k-instruct:free', 0.5, 800);
+      } catch (fallbackError) {
+        console.error('OpenRouter: All models failed');
+        throw new Error('AI feedback service is currently unavailable. Please try again later.');
+      }
+    }
+  }
+
+  private static async tryGenerateFeedback(
+    system: string,
+    user: string,
+    modelName: string,
+    temperature: number,
+    maxTokens: number
+  ): Promise<FeedbackSummary> {
+    const response = await fetch(this.API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+        'X-Title': 'Test Buddy',
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user }
+        ],
+        temperature: temperature,
+        max_tokens: maxTokens,
+        top_p: 0.9
+      })
+    });
 
       const data = await response.json();
       
@@ -533,9 +554,22 @@ Remember: ONLY return the JSON object, nothing else.`;
         throw new Error(data?.error?.message || 'OpenRouter feedback request failed');
       }
 
-      // Defensive JSON parsing (model might return code fences)
+      // Check if we have any content at all
       let text = data?.choices?.[0]?.message?.content ?? '';
       text = text.trim();
+      
+      console.log('OpenRouter: Full API response structure:', {
+        choices: data?.choices?.length,
+        hasContent: !!text,
+        contentLength: text.length,
+        usage: data?.usage
+      });
+      
+      if (!text || text.length === 0) {
+        console.error('OpenRouter: Received empty content from API');
+        console.error('OpenRouter: Full response data:', JSON.stringify(data, null, 2));
+        throw new Error('AI model returned empty response. This might be due to content filtering or model issues.');
+      }
       
       console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
       
@@ -610,9 +644,5 @@ Remember: ONLY return the JSON object, nothing else.`;
       }
       
       return parsed;
-    } catch (error: any) {
-      console.error('OpenRouter feedback generation failed:', error);
-      throw new Error(error.message || 'Failed to generate AI feedback');
-    }
   }
 } 
