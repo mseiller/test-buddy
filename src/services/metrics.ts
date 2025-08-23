@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { logResult } from './results';
 
@@ -235,6 +235,50 @@ export async function getUserFolders(uid: string): Promise<Array<{id: string, na
   } catch (error) {
     console.error('Error fetching user folders:', error);
     return [];
+  }
+}
+
+// Function to fix tests that should be in folders but show as unorganized
+export async function fixUnorganizedTests(uid: string, targetFolderId: string): Promise<number> {
+  try {
+    console.log('Starting fix for unorganized tests, target folder:', targetFolderId);
+    
+    // Get all test history
+    const testHistoryBase = collection(db, 'testHistory');
+    const snapHistory = await getDocs(
+      query(testHistoryBase, where('userId', '==', uid))
+    );
+    
+    const allTests = snapHistory.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    })) as any[];
+    
+    // Find tests that should be in the target folder but aren't
+    const unorganizedTests = allTests.filter(test => 
+      !test.folderId || test.folderId === '' || test.folderId === null || test.folderId === undefined
+    );
+    
+    console.log(`Found ${unorganizedTests.length} unorganized tests:`, unorganizedTests.map(t => t.testName));
+    
+    // Update all unorganized tests to be in the target folder
+    let fixedCount = 0;
+    for (const test of unorganizedTests) {
+      try {
+        const testRef = doc(db, 'testHistory', test.id);
+        await updateDoc(testRef, { folderId: targetFolderId });
+        console.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
+        fixedCount++;
+      } catch (error) {
+        console.error(`Failed to fix test ${test.testName}:`, error);
+      }
+    }
+    
+    console.log(`Successfully fixed ${fixedCount} tests`);
+    return fixedCount;
+  } catch (error) {
+    console.error('Error fixing unorganized tests:', error);
+    throw error;
   }
 }
 
