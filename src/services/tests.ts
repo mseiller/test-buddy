@@ -69,19 +69,34 @@ export async function getAllTests(uid: string): Promise<TestDoc[]> {
 
 // Get tests in a specific folder
 export async function getTestsInFolder(uid: string, folderId: string): Promise<TestDoc[]> {
+  console.log(`Querying tests collection for folderId: ${folderId}`);
   const ref = getTestsCollection(uid);
+  
+  // Temporarily remove orderBy to avoid index requirement
+  // TODO: Add back orderBy('createdAt', 'desc') after index is deployed
   const q = query(
     ref, 
-    where('folderId', '==', folderId), 
-    orderBy('createdAt', 'desc'),
+    where('folderId', '==', folderId),
     limit(500)
   );
   const snapshot = await getDocs(q);
   
-  return snapshot.docs.map(doc => ({
+  console.log(`Found ${snapshot.docs.length} tests with folderId ${folderId}`);
+  
+  // Sort manually for now
+  const tests = snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
   })) as TestDoc[];
+  
+  // Manual sort by createdAt desc
+  tests.sort((a, b) => {
+    const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+    const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+    return bTime - aTime;
+  });
+  
+  return tests;
 }
 
 // Get unorganized tests (no folder)

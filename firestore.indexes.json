@@ -1,9 +1,10 @@
 {
   "indexes": [
     {
-      "collectionGroup": "results",
+      "collectionGroup": "tests",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "folderId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
