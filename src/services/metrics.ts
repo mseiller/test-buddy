@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy, limit, where, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { logResult } from './results';
 
@@ -336,6 +336,63 @@ export async function fixFolderIdMismatch(uid: string, targetFolderId: string): 
     return fixedCount;
   } catch (error) {
     console.error('Error fixing folder ID mismatches:', error);
+    throw error;
+  }
+}
+
+// Migrate to single source of truth: /users/{uid}/tests
+export async function migrateToSingleSourceOfTruth(uid: string): Promise<number> {
+  try {
+    console.log('Starting migration to single source of truth');
+    
+    // Get all tests from testHistory
+    const testHistoryBase = collection(db, 'testHistory');
+    const historyQuery = query(testHistoryBase, where('userId', '==', uid));
+    const historySnapshot = await getDocs(historyQuery);
+    
+    // Get existing tests in new collection to avoid duplicates
+    const newTestsBase = collection(db, `users/${uid}/tests`);
+    const existingSnapshot = await getDocs(newTestsBase);
+    const existingTestIds = new Set(existingSnapshot.docs.map(d => d.id));
+    
+    let migratedCount = 0;
+    
+    for (const docSnapshot of historySnapshot.docs) {
+      const data = docSnapshot.data();
+      
+      // Skip if already exists in new collection
+      if (existingTestIds.has(docSnapshot.id)) {
+        console.log(`Test ${docSnapshot.id} already exists in new collection`);
+        continue;
+      }
+      
+      // Create in new collection with same ID
+      const newTestRef = doc(db, `users/${uid}/tests/${docSnapshot.id}`);
+      const testDoc = {
+        userId: uid,
+        testName: data.testName,
+        fileName: data.fileName,
+        fileType: data.fileType || 'txt',
+        extractedText: data.extractedText || '',
+        quizType: data.quizType,
+        questions: data.questions || [],
+        answers: data.answers || [],
+        score: data.score,
+        folderId: data.folderId || null,
+        createdAt: data.createdAt || new Date(),
+        updatedAt: new Date(),
+        completedAt: data.completedAt
+      };
+      
+      await setDoc(newTestRef, testDoc);
+      console.log(`Migrated test: ${data.testName} (${docSnapshot.id})`);
+      migratedCount++;
+    }
+    
+    console.log(`Migration complete: ${migratedCount} tests migrated to single source of truth`);
+    return migratedCount;
+  } catch (error) {
+    console.error('Error migrating to single source of truth:', error);
     throw error;
   }
 }

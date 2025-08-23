@@ -1,0 +1,178 @@
+import { db } from '@/lib/firebase';
+import { doc, setDoc, updateDoc, getDoc, collection, addDoc, deleteDoc, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+
+export type TestDoc = {
+  id?: string;
+  userId: string;
+  testName: string;
+  fileName: string;
+  fileType: string;
+  extractedText: string;
+  quizType: string;
+  questions: any[];
+  answers: any[];
+  score?: number;
+  folderId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
+};
+
+// Single source of truth: /users/{uid}/tests
+const getTestsCollection = (uid: string) => collection(db, `users/${uid}/tests`);
+
+export async function createTest(uid: string, data: Omit<TestDoc, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<TestDoc> {
+  const ref = getTestsCollection(uid);
+  const now = new Date();
+  const payload: Omit<TestDoc, 'id'> = { 
+    ...data, 
+    userId: uid, 
+    createdAt: now, 
+    updatedAt: now 
+  };
+  
+  const newRef = await addDoc(ref, payload);
+  return { id: newRef.id, ...payload };
+}
+
+export async function updateTest(uid: string, testId: string, patch: Partial<TestDoc>): Promise<void> {
+  const ref = doc(db, `users/${uid}/tests/${testId}`);
+  await updateDoc(ref, { ...patch, updatedAt: new Date() });
+}
+
+export async function moveTest(uid: string, testId: string, toFolderId: string | null): Promise<void> {
+  console.log(`Moving test ${testId} to folder ${toFolderId}`);
+  const ref = doc(db, `users/${uid}/tests/${testId}`);
+  await updateDoc(ref, { folderId: toFolderId, updatedAt: new Date() });
+  console.log(`Successfully moved test ${testId} to folder ${toFolderId}`);
+}
+
+export async function getTest(uid: string, testId: string): Promise<TestDoc | null> {
+  const ref = doc(db, `users/${uid}/tests/${testId}`);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  
+  return { id: snap.id, ...snap.data() } as TestDoc;
+}
+
+// Get all tests for a user
+export async function getAllTests(uid: string): Promise<TestDoc[]> {
+  const ref = getTestsCollection(uid);
+  const q = query(ref, orderBy('createdAt', 'desc'), limit(500));
+  const snapshot = await getDocs(q);
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as TestDoc[];
+}
+
+// Get tests in a specific folder
+export async function getTestsInFolder(uid: string, folderId: string): Promise<TestDoc[]> {
+  const ref = getTestsCollection(uid);
+  const q = query(
+    ref, 
+    where('folderId', '==', folderId), 
+    orderBy('createdAt', 'desc'),
+    limit(500)
+  );
+  const snapshot = await getDocs(q);
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as TestDoc[];
+}
+
+// Get unorganized tests (no folder)
+export async function getUnorganizedTests(uid: string): Promise<TestDoc[]> {
+  const ref = getTestsCollection(uid);
+  const q = query(
+    ref, 
+    where('folderId', '==', null), 
+    orderBy('createdAt', 'desc'),
+    limit(500)
+  );
+  const snapshot = await getDocs(q);
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as TestDoc[];
+}
+
+// Migration function to move data from testHistory to new structure
+export async function migrateFromTestHistory(uid: string): Promise<number> {
+  console.log('Starting migration from testHistory to new tests collection');
+  
+  // Get all tests from testHistory
+  const testHistoryRef = collection(db, 'testHistory');
+  const historyQuery = query(testHistoryRef, where('userId', '==', uid));
+  const historySnapshot = await getDocs(historyQuery);
+  
+  // Get existing tests to avoid duplicates
+  const existingTests = await getAllTests(uid);
+  const existingTestNames = new Set(existingTests.map(t => t.testName + '_' + t.createdAt.getTime()));
+  
+  let migratedCount = 0;
+  
+  for (const doc of historySnapshot.docs) {
+    const data = doc.data();
+    
+    // Create unique key to avoid duplicates
+    const createdAt = data.createdAt?.toDate() || new Date();
+    const uniqueKey = data.testName + '_' + createdAt.getTime();
+    
+    if (existingTestNames.has(uniqueKey)) {
+      console.log(`Skipping duplicate test: ${data.testName}`);
+      continue;
+    }
+    
+    // Convert to new format
+    const testDoc: Omit<TestDoc, 'id'> = {
+      userId: uid,
+      testName: data.testName,
+      fileName: data.fileName,
+      fileType: data.fileType || 'txt',
+      extractedText: data.extractedText || '',
+      quizType: data.quizType,
+      questions: data.questions || [],
+      answers: data.answers || [],
+      score: data.score,
+      folderId: data.folderId || null,
+      createdAt: createdAt,
+      updatedAt: createdAt,
+      completedAt: data.completedAt?.toDate()
+    };
+    
+    // Add to new collection
+    const newRef = getTestsCollection(uid);
+    await addDoc(newRef, testDoc);
+    
+    console.log(`Migrated test: ${data.testName}`);
+    migratedCount++;
+  }
+  
+  console.log(`Migration complete: ${migratedCount} tests migrated`);
+  return migratedCount;
+}
+
+// Fix any tests that have incorrect folderId
+export async function fixFolderMismatches(uid: string, targetFolderId: string): Promise<number> {
+  console.log('Fixing folder mismatches in new tests collection');
+  
+  const allTests = await getAllTests(uid);
+  let fixedCount = 0;
+  
+  for (const test of allTests) {
+    // If test has no folderId or wrong folderId, fix it
+    if (!test.folderId || test.folderId !== targetFolderId) {
+      await moveTest(uid, test.id!, targetFolderId);
+      console.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
+      fixedCount++;
+    }
+  }
+  
+  console.log(`Fixed ${fixedCount} folder mismatches`);
+  return fixedCount;
+}

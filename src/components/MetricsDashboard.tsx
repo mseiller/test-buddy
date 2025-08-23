@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getUserMetrics, UserMetrics, migrateTestHistoryToResults, getUserFolders, MetricsFilters, diagnoseAndFixFolderData, fixUnorganizedTests, fixFolderIdMismatch } from '@/services/metrics';
+import { getUserMetrics, UserMetrics, migrateTestHistoryToResults, getUserFolders, MetricsFilters, diagnoseAndFixFolderData, fixUnorganizedTests, fixFolderIdMismatch, migrateToSingleSourceOfTruth } from '@/services/metrics';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface MetricsDashboardProps {
@@ -139,6 +139,31 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
     }
   };
 
+  const handleMigrateSingleSource = async () => {
+    if (!confirm('This will migrate all your tests to a single source of truth structure. This should fix the folder organization issues permanently. Continue?')) {
+      return;
+    }
+
+    try {
+      const migratedCount = await migrateToSingleSourceOfTruth(userId);
+      
+      // Reload metrics after migration
+      const data = await getUserMetrics(userId, filters);
+      setMetrics(data);
+      
+      const message = `Successfully migrated ${migratedCount} tests to single source of truth!\n\nThis should fix the folder organization issues. Would you like to refresh the app to see the changes?`;
+      
+      if (confirm(message)) {
+        window.location.reload();
+      } else {
+        alert('Migration complete! The folder organization should now work correctly.');
+      }
+    } catch (err) {
+      console.error('Migration failed:', err);
+      alert('Migration failed. Check console for details.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -175,6 +200,12 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
           <h2 className="text-xl font-semibold text-gray-900">Your Learning Analytics</h2>
           
                            <div className="flex gap-2 flex-wrap">
+                   <button
+                     onClick={handleMigrateSingleSource}
+                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+                   >
+                     🔧 Fix Data Structure
+                   </button>
                    {!migrationComplete && (
                      <button
                        onClick={handleMigration}

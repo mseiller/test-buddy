@@ -369,8 +369,28 @@ export class FirebaseService {
 
   static async moveTestToFolder(testId: string, folderId: string | null): Promise<void> {
     try {
+      // Update both collections for backward compatibility during transition
       const testRef = doc(db, 'testHistory', testId);
       await updateDoc(testRef, { folderId });
+      
+      // Also try to update in new collection if it exists
+      // We'll need the userId for this, so let's get it from the test
+      const testDoc = await getDoc(testRef);
+      if (testDoc.exists()) {
+        const data = testDoc.data();
+        if (data.userId) {
+          try {
+            const newTestRef = doc(db, `users/${data.userId}/tests/${testId}`);
+            const newTestDoc = await getDoc(newTestRef);
+            if (newTestDoc.exists()) {
+              await updateDoc(newTestRef, { folderId, updatedAt: new Date() });
+              console.log(`Updated test in new collection: ${testId} -> folder ${folderId}`);
+            }
+          } catch (newCollectionError) {
+            console.log('Test not found in new collection, only updated legacy collection');
+          }
+        }
+      }
     } catch (error: any) {
       throw new Error(error.message || 'Failed to move test to folder');
     }
