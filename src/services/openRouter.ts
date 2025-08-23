@@ -435,7 +435,9 @@ Your job:
 3) Give 2–4 practical "Study Actions" for each Focus Area (actionable, 1–2 lines each).
 4) Keep it encouraging and concrete. No fluff.
 
-CRITICAL: You must respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use code fences or markdown. Do not include explanatory text.
+CRITICAL: You must respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use code fences, markdown, or <think> tags. Do not include explanatory text or reasoning.
+
+Your response must start with { and end with }. Nothing else.
 
 Output strictly in this JSON schema:
 
@@ -576,35 +578,53 @@ Remember: ONLY return the JSON object, nothing else.`;
       // Try multiple strategies to extract JSON
       let jsonString = text;
       
-      // Strategy 1: Remove code fences if present
-      if (text.includes('```json') || text.includes('```')) {
-        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      // Strategy 1: Remove <think> tags if present (common with some models)
+      if (text.includes('<think>')) {
+        // Remove everything from <think> to </think> or end of <think> block
+        jsonString = text.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim();
+        console.log('OpenRouter: Removed <think> tags');
+      }
+      
+      // Strategy 2: Remove code fences if present
+      if (jsonString.includes('```json') || jsonString.includes('```')) {
+        const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         if (codeBlockMatch) {
           jsonString = codeBlockMatch[1].trim();
           console.log('OpenRouter: Extracted JSON from code block');
         }
       }
       
-      // Strategy 2: Find JSON object boundaries
+      // Strategy 3: Find JSON object boundaries
       if (!jsonString.startsWith('{')) {
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           jsonString = jsonMatch[0];
           console.log('OpenRouter: Extracted JSON using regex match');
         }
       }
       
-      // Strategy 3: Clean up common formatting issues
+      // Strategy 4: Clean up common formatting issues
       jsonString = jsonString
         .replace(/```json/g, '')
         .replace(/```/g, '')
         .replace(/^\s*Here's the feedback:\s*/i, '')
         .replace(/^\s*Response:\s*/i, '')
+        .replace(/<\/?think>/gi, '') // Remove any remaining think tags
         .trim();
 
       console.log('OpenRouter: Cleaned JSON string:', jsonString.substring(0, 200) + '...');
 
-      let parsed: FeedbackSummary;
+      let parsed: FeedbackSummary = {
+        overall_assessment: 'Unable to generate detailed feedback at this time.',
+        strengths: [],
+        focus_areas: [],
+        suggested_next_quiz: { 
+          difficulty: 'mixed', 
+          question_mix: ['multiple_choice', 'scenario'], 
+          target_topics: [] 
+        }
+      };
+      
       try {
         parsed = JSON.parse(jsonString);
         console.log('OpenRouter: Successfully parsed feedback JSON');
@@ -625,21 +645,34 @@ Remember: ONLY return the JSON object, nothing else.`;
           parsed = JSON.parse(fixedJson);
           console.log('OpenRouter: Successfully parsed feedback JSON after fixing');
         } catch (secondError) {
-          console.error('OpenRouter: All JSON parsing attempts failed:', secondError);
-          console.error('OpenRouter: Original text:', text.substring(0, 500));
-          console.error('OpenRouter: Final attempt:', fixedJson.substring(0, 500));
+          console.warn('OpenRouter: Fixed JSON also failed, trying to find JSON anywhere in response...');
           
-          // Minimal fallback if the model returns non-JSON
-          parsed = {
-            overall_assessment: 'Unable to generate detailed feedback at this time. The AI response could not be processed properly.',
-            strengths: [],
-            focus_areas: [],
-            suggested_next_quiz: { 
-              difficulty: 'mixed', 
-              question_mix: ['multiple_choice', 'scenario'], 
-              target_topics: [] 
+          // Last resort: try to find any JSON object in the entire response
+          const allJsonMatches = text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
+          let foundValidJson = false;
+          
+          if (allJsonMatches) {
+            for (const match of allJsonMatches) {
+              try {
+                const testParsed = JSON.parse(match);
+                if (testParsed.overall_assessment || testParsed.focus_areas) {
+                  parsed = testParsed;
+                  foundValidJson = true;
+                  console.log('OpenRouter: Found valid JSON in response!');
+                  break;
+                }
+              } catch {
+                // Continue searching
+              }
             }
-          };
+          }
+          
+          if (!foundValidJson) {
+            console.error('OpenRouter: All JSON parsing attempts failed:', secondError);
+            console.error('OpenRouter: Original text:', text.substring(0, 500));
+            console.error('OpenRouter: Final attempt:', fixedJson.substring(0, 500));
+            // Keep the default fallback value that was already assigned
+          }
         }
       }
       
