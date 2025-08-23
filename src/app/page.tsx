@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { User, FileUpload as FileUploadType, Question, UserAnswer, TestHistory as TestHistoryType, QuizType, Folder } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
 import { OpenRouterService } from '@/services/openRouter';
+import { logResult, inferQuizTypeFrom } from '@/services/results';
 import AuthForm from '@/components/AuthForm';
 import FileUpload from '@/components/FileUpload';
 import QuizConfig from '@/components/QuizConfig';
@@ -11,9 +12,10 @@ import QuizDisplay from '@/components/QuizDisplay';
 import QuizResults from '@/components/QuizResults';
 import TestHistory from '@/components/TestHistory';
 import FolderManager from '@/components/FolderManager';
-import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen, Folder as FolderIcon } from 'lucide-react';
+import MetricsDashboard from '@/components/MetricsDashboard';
+import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen, Folder as FolderIcon, BarChart3 } from 'lucide-react';
 
-type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history' | 'folders';
+type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history' | 'folders' | 'metrics';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -185,6 +187,26 @@ export default function Home() {
 
       const savedId = await FirebaseService.saveTestHistory(testHistory);
       console.log('Test history saved successfully with ID:', savedId);
+      
+      // Log result for metrics (only for completed tests)
+      if (!isIncomplete) {
+        try {
+          await logResult(user.uid, {
+            testName,
+            folderId: selectedFolder?.id,
+            score: calculatedScore,
+            timeTaken,
+            quizType: inferQuizTypeFrom(questions),
+            questionCount: questions.length,
+            retakeOf: isRetaking ? undefined : undefined, // TODO: Track retakes properly
+            topics: [] // TODO: Extract from AI feedback later
+          });
+          console.log('Result metrics logged successfully');
+        } catch (metricsError) {
+          console.error('Failed to log result metrics:', metricsError);
+          // Don't fail the whole operation if metrics logging fails
+        }
+      }
       
       if (isIncomplete) {
         setError('Progress saved! You can continue this test later from your history.');
@@ -366,6 +388,16 @@ export default function Home() {
                 >
                   <FolderIcon className="h-4 w-4" />
                   <span className="hidden sm:inline">Folders</span>
+                </button>
+              )}
+              
+              {appState !== 'metrics' && (
+                <button
+                  onClick={() => setAppState('metrics')}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Analytics</span>
                 </button>
               )}
               
@@ -629,6 +661,22 @@ export default function Home() {
               selectedFolder={selectedFolder}
               onTestSelect={handleViewTest}
             />
+          </div>
+        )}
+
+        {appState === 'metrics' && user && (
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex items-center justify-between mb-8">
+              <button
+                onClick={() => setAppState('home')}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <HomeIcon className="h-4 w-4" />
+                <span>Back to Home</span>
+              </button>
+            </div>
+            
+            <MetricsDashboard userId={user.uid} />
           </div>
         )}
       </main>
