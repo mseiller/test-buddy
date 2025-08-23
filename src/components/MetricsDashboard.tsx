@@ -139,6 +139,8 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Time</option>
+                <option value="1">Last 24 Hours</option>
+                <option value="3">Last 3 Days</option>
                 <option value="7">Last 7 Days</option>
                 <option value="30">Last 30 Days</option>
                 <option value="90">Last 3 Months</option>
@@ -300,6 +302,8 @@ function getTrendDirection(data: Array<{ score: number }>): string {
 
 function getTimePeriodLabel(days: number): string {
   switch (days) {
+    case 1: return 'Last 24 Hours';
+    case 3: return 'Last 3 Days';
     case 7: return 'Last 7 Days';
     case 30: return 'Last 30 Days';
     case 90: return 'Last 3 Months';

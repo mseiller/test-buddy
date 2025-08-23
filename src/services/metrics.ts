@@ -61,9 +61,22 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
       .slice(0, 500); // Limit total results
 
     // Apply folder filter if specified
-    if (filters.folderId) {
-      all = all.filter(item => item.folderId === filters.folderId);
+    if (filters.folderId !== undefined) {
+      if (filters.folderId === '') {
+        // Filter for tests with no folder (empty string or null/undefined)
+        all = all.filter(item => !item.folderId || item.folderId === '');
+      } else {
+        // Filter for tests in specific folder
+        all = all.filter(item => item.folderId === filters.folderId);
+      }
     }
+
+    // Debug logging
+    console.log('Metrics Debug:', {
+      totalItems: all.length,
+      filters,
+      sampleFolderIds: all.slice(0, 5).map(item => ({ testName: item.testName, folderId: item.folderId }))
+    });
 
     // Apply time filter if specified
     let filteredByTime = all;
