@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getUserMetrics, UserMetrics } from '@/services/metrics';
+import { getUserMetrics, UserMetrics, migrateTestHistoryToResults } from '@/services/metrics';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface MetricsDashboardProps {
@@ -11,6 +11,8 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
   const [metrics, setMetrics] = useState<UserMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [migrating, setMigrating] = useState(false);
+  const [migrationComplete, setMigrationComplete] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -27,6 +29,29 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
       }
     })();
   }, [userId]);
+
+  const handleMigration = async () => {
+    setMigrating(true);
+    try {
+      const migratedCount = await migrateTestHistoryToResults(userId);
+      setMigrationComplete(true);
+      
+      // Reload metrics after migration
+      const data = await getUserMetrics(userId);
+      setMetrics(data);
+      
+      if (migratedCount > 0) {
+        alert(`Successfully migrated ${migratedCount} test records to analytics!`);
+      } else {
+        alert('No additional test records found to migrate.');
+      }
+    } catch (err) {
+      console.error('Migration failed:', err);
+      alert('Migration failed. Please try again.');
+    } finally {
+      setMigrating(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -60,7 +85,28 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Learning Analytics</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Your Learning Analytics</h2>
+          
+          {!migrationComplete && (
+            <button
+              onClick={handleMigration}
+              disabled={migrating}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {migrating ? 'Migrating...' : 'Include Past Tests'}
+            </button>
+          )}
+        </div>
+        
+        {!migrationComplete && metrics && metrics.quizzesTaken > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="text-blue-800 text-sm">
+              <strong>Note:</strong> This dashboard shows your quiz history including past tests. 
+              Click &quot;Include Past Tests&quot; to ensure all your historical data is properly indexed for faster loading.
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <KpiCard 
