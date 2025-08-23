@@ -327,6 +327,12 @@ export async function fixFolderIdMismatch(uid: string, targetFolderId: string): 
     }
     
     console.log(`Successfully fixed ${fixedCount} folder ID mismatches`);
+    
+    // Trigger a page refresh to update the folder manager UI
+    if (fixedCount > 0) {
+      console.log('Folder ID fix complete. The folder manager UI will need to refresh to show the updated organization.');
+    }
+    
     return fixedCount;
   } catch (error) {
     console.error('Error fixing folder ID mismatches:', error);

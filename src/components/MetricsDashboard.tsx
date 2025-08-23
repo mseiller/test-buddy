@@ -126,7 +126,13 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
       const data = await getUserMetrics(userId, filters);
       setMetrics(data);
       
-      alert(`Successfully fixed ${fixedCount} folder ID mismatches for the "${targetFolder.name}" folder!`);
+      const message = `Successfully fixed ${fixedCount} folder ID mismatches for the "${targetFolder.name}" folder!\n\nTo see the updated organization:\n1. Go to the Folders page\n2. Refresh the page (F5 or Cmd+R)\n3. Your tests should now appear in the "${targetFolder.name}" folder\n\nWould you like to refresh the entire app now?`;
+      
+      if (confirm(message)) {
+        window.location.reload();
+      } else {
+        alert('Fix complete! Remember to refresh the Folders page to see the updated organization.');
+      }
     } catch (err) {
       console.error('Fix mismatch failed:', err);
       alert('Fix mismatch failed. Check console for details.');
