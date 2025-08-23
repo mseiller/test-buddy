@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Folder, TestHistory } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
+import { getAllTests, getTestsInFolder, getUnorganizedTests, moveTest } from '@/services/tests';
 import { Plus, Folder as FolderIcon, Edit, Trash2, MoreHorizontal, X } from 'lucide-react';
 
 interface FolderManagerProps {
@@ -91,19 +92,74 @@ export default function FolderManager({
 
   const loadAllTests = async () => {
     try {
-      const allTests = await FirebaseService.getUserTestHistory(userId);
-      setTests(allTests);
+      console.log('Loading all tests from single source of truth');
+      const allTests = await getAllTests(userId);
+      console.log(`Loaded ${allTests.length} tests from new collection`);
+      
+      // Convert to TestHistory format for compatibility
+      const convertedTests: TestHistory[] = allTests.map(test => ({
+        id: test.id!,
+        userId: test.userId,
+        testName: test.testName,
+        fileName: test.fileName,
+        fileType: test.fileType,
+        extractedText: test.extractedText,
+        quizType: test.quizType as any,
+        questions: test.questions,
+        answers: test.answers,
+        score: test.score,
+        createdAt: test.createdAt,
+        completedAt: test.completedAt,
+        folderId: test.folderId || undefined
+      }));
+      
+      setTests(convertedTests);
+      console.log('Tests loaded and converted:', convertedTests.map(t => ({ name: t.testName, folderId: t.folderId })));
     } catch (error) {
-      console.error('Failed to load tests:', error);
+      console.error('Failed to load tests from new collection, falling back to legacy:', error);
+      // Fallback to legacy collection
+      try {
+        const allTests = await FirebaseService.getUserTestHistory(userId);
+        setTests(allTests);
+      } catch (fallbackError) {
+        console.error('Failed to load tests from legacy collection:', fallbackError);
+      }
     }
   };
 
   const loadTestsInFolder = async (folderId: string) => {
     try {
-      const folderTests = await FirebaseService.getTestsInFolder(userId, folderId);
-      setTests(folderTests);
+      console.log(`Loading tests in folder ${folderId} from single source of truth`);
+      const folderTests = await getTestsInFolder(userId, folderId);
+      console.log(`Loaded ${folderTests.length} tests in folder ${folderId}`);
+      
+      // Convert to TestHistory format for compatibility
+      const convertedTests: TestHistory[] = folderTests.map(test => ({
+        id: test.id!,
+        userId: test.userId,
+        testName: test.testName,
+        fileName: test.fileName,
+        fileType: test.fileType,
+        extractedText: test.extractedText,
+        quizType: test.quizType as any,
+        questions: test.questions,
+        answers: test.answers,
+        score: test.score,
+        createdAt: test.createdAt,
+        completedAt: test.completedAt,
+        folderId: test.folderId || undefined
+      }));
+      
+      setTests(convertedTests);
     } catch (error) {
-      console.error('Failed to load tests in folder:', error);
+      console.error('Failed to load tests in folder from new collection, falling back to legacy:', error);
+      // Fallback to legacy collection
+      try {
+        const folderTests = await FirebaseService.getTestsInFolder(userId, folderId);
+        setTests(folderTests);
+      } catch (fallbackError) {
+        console.error('Failed to load tests in folder from legacy collection:', fallbackError);
+      }
     }
   };
 
@@ -204,15 +260,32 @@ export default function FolderManager({
 
   const handleMoveTestToFolder = async (testId: string, folderId: string | null) => {
     try {
-      console.log('Moving test', testId, 'to folder', folderId);
-      await FirebaseService.moveTestToFolder(testId, folderId);
-      console.log('Test moved successfully');
+      console.log('Moving test', testId, 'to folder', folderId, 'using new service');
+      
+      // Use new service first
+      await moveTest(userId, testId, folderId);
+      console.log('Test moved successfully with new service');
+      
+      // Also update legacy collection for backward compatibility
+      try {
+        await FirebaseService.moveTestToFolder(testId, folderId);
+        console.log('Legacy collection also updated');
+      } catch (legacyError) {
+        console.log('Legacy update failed, but new service succeeded:', legacyError);
+      }
       
       // Update local state
       setTests(tests.map(test => 
         test.id === testId ? { ...test, folderId: folderId || undefined } : test
       ));
       console.log('Local state updated for test move');
+      
+      // Reload the current view to reflect changes
+      if (selectedFolder) {
+        loadTestsInFolder(selectedFolder.id);
+      } else if (selectedFolder === null) {
+        loadAllTests();
+      }
     } catch (error: any) {
       console.error('Failed to move test:', error);
       alert('Failed to move test. Please try again.');
