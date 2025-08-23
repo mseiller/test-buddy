@@ -21,6 +21,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
     (async () => {
       try {
         const folderData = await getUserFolders(userId);
+        console.log('Loaded folders for metrics:', folderData);
         setFolders(folderData);
       } catch (err) {
         console.error('Error loading folders:', err);

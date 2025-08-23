@@ -75,7 +75,16 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
     console.log('Metrics Debug:', {
       totalItems: all.length,
       filters,
-      sampleFolderIds: all.slice(0, 5).map(item => ({ testName: item.testName, folderId: item.folderId }))
+      sampleFolderIds: all.slice(0, 5).map(item => ({ testName: item.testName, folderId: item.folderId })),
+      allFolderIds: [...new Set(all.map(item => item.folderId))], // Unique folder IDs
+      filteringFor: filters.folderId,
+      matchingItems: filters.folderId !== undefined ? all.filter(item => {
+        if (filters.folderId === '') {
+          return !item.folderId || item.folderId === '';
+        } else {
+          return item.folderId === filters.folderId;
+        }
+      }).length : 'not filtering'
     });
 
     // Apply time filter if specified
