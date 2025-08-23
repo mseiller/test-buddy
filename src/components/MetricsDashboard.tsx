@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getUserMetrics, UserMetrics, migrateTestHistoryToResults, getUserFolders, MetricsFilters, diagnoseAndFixFolderData, fixUnorganizedTests, fixFolderIdMismatch, migrateToSingleSourceOfTruth } from '@/services/metrics';
+import { getUserMetrics, UserMetrics, getUserFolders, MetricsFilters } from '@/services/metrics';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface MetricsDashboardProps {
@@ -11,8 +11,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
   const [metrics, setMetrics] = useState<UserMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [migrating, setMigrating] = useState(false);
-  const [migrationComplete, setMigrationComplete] = useState(false);
+
   const [folders, setFolders] = useState<Array<{id: string, name: string, color?: string}>>([]);
   const [filters, setFilters] = useState<MetricsFilters>({});
 
@@ -46,160 +45,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
     })();
   }, [userId, filters]);
 
-  const handleMigration = async () => {
-    setMigrating(true);
-    try {
-      const migratedCount = await migrateTestHistoryToResults(userId);
-      setMigrationComplete(true);
-      
-      // Reload metrics after migration
-      const data = await getUserMetrics(userId, filters);
-      setMetrics(data);
-      
-      if (migratedCount > 0) {
-        alert(`Successfully migrated ${migratedCount} test records to analytics!`);
-      } else {
-        alert('No additional test records found to migrate.');
-      }
-    } catch (err) {
-      console.error('Migration failed:', err);
-      alert('Migration failed. Please try again.');
-    } finally {
-      setMigrating(false);
-    }
-  };
 
-  const handleDiagnosis = async () => {
-    try {
-      const diagnosis = await diagnoseAndFixFolderData(userId);
-      alert(`Folder Diagnosis Complete!\n\nTotal Tests: ${diagnosis.totalTests}\nTests with Folders: ${diagnosis.testsWithFolders}\nTests without Folders: ${diagnosis.testsWithoutFolders}\nUnique Folder IDs: ${diagnosis.uniqueFolderIds.length}\nAvailable Folders: ${diagnosis.availableFolders.length}\n\nCheck console for detailed logs.`);
-    } catch (err) {
-      console.error('Diagnosis failed:', err);
-      alert('Diagnosis failed. Check console for details.');
-    }
-  };
-
-  const handleFixTests = async () => {
-    if (folders.length === 0) {
-      alert('No folders available. Please create a folder first.');
-      return;
-    }
-
-    // Use the first folder (likely D487) as the target
-    const targetFolder = folders[0];
-    
-    if (!confirm(`This will move all unorganized tests to the "${targetFolder.name}" folder. Continue?`)) {
-      return;
-    }
-
-    try {
-      const fixedCount = await fixUnorganizedTests(userId, targetFolder.id);
-      
-      // Reload metrics after fixing
-      const data = await getUserMetrics(userId, filters);
-      setMetrics(data);
-      
-      alert(`Successfully moved ${fixedCount} tests to the "${targetFolder.name}" folder!`);
-    } catch (err) {
-      console.error('Fix failed:', err);
-      alert('Fix failed. Check console for details.');
-    }
-  };
-
-  const handleFixMismatch = async () => {
-    if (folders.length === 0) {
-      alert('No folders available. Please create a folder first.');
-      return;
-    }
-
-    // Use the first folder (likely D487) as the target
-    const targetFolder = folders[0];
-    
-    if (!confirm(`This will update ALL tests to use the current "${targetFolder.name}" folder ID. This fixes folder ID mismatches. Continue?`)) {
-      return;
-    }
-
-    try {
-      const fixedCount = await fixFolderIdMismatch(userId, targetFolder.id);
-      
-      // Reload metrics after fixing
-      const data = await getUserMetrics(userId, filters);
-      setMetrics(data);
-      
-      const message = `Successfully fixed ${fixedCount} folder ID mismatches for the "${targetFolder.name}" folder!\n\nTo see the updated organization:\n1. Go to the Folders page\n2. Refresh the page (F5 or Cmd+R)\n3. Your tests should now appear in the "${targetFolder.name}" folder\n\nWould you like to refresh the entire app now?`;
-      
-      if (confirm(message)) {
-        window.location.reload();
-      } else {
-        alert('Fix complete! Remember to refresh the Folders page to see the updated organization.');
-      }
-    } catch (err) {
-      console.error('Fix mismatch failed:', err);
-      alert('Fix mismatch failed. Check console for details.');
-    }
-  };
-
-  const handleMigrateSingleSource = async () => {
-    if (!confirm('This will migrate all your tests to a single source of truth structure. This should fix the folder organization issues permanently. Continue?')) {
-      return;
-    }
-
-    try {
-      const migratedCount = await migrateToSingleSourceOfTruth(userId);
-      
-      // Reload metrics after migration
-      const data = await getUserMetrics(userId, filters);
-      setMetrics(data);
-      
-      const message = `Successfully migrated ${migratedCount} tests to single source of truth!\n\nThis should fix the folder organization issues. Would you like to refresh the app to see the changes?`;
-      
-      if (confirm(message)) {
-        window.location.reload();
-      } else {
-        alert('Migration complete! The folder organization should now work correctly.');
-      }
-    } catch (err) {
-      console.error('Migration failed:', err);
-      alert('Migration failed. Check console for details.');
-    }
-  };
-
-  const handleFullDiagnosis = async () => {
-    try {
-      console.log('=== FULL DATA DIAGNOSIS ===');
-      
-      // Check new collection
-      const { getAllTests, getTestsInFolder } = await import('@/services/tests');
-      const allNewTests = await getAllTests(userId);
-      console.log(`New Collection (/users/${userId}/tests):`, allNewTests.length, 'tests');
-      allNewTests.forEach(test => {
-        console.log(`  - ${test.testName}: folderId=${test.folderId}`);
-      });
-      
-      // Check legacy collection
-      const { FirebaseService } = await import('@/services/firebaseService');
-      const allLegacyTests = await FirebaseService.getUserTestHistory(userId);
-      console.log(`Legacy Collection (testHistory):`, allLegacyTests.length, 'tests');
-      allLegacyTests.forEach(test => {
-        console.log(`  - ${test.testName}: folderId=${test.folderId}`);
-      });
-      
-      // Check folder-specific queries
-      if (folders.length > 0) {
-        const folderId = folders[0].id;
-        const folderTests = await getTestsInFolder(userId, folderId);
-        console.log(`Tests in folder ${folderId}:`, folderTests.length, 'tests');
-        folderTests.forEach(test => {
-          console.log(`  - ${test.testName}: folderId=${test.folderId}`);
-        });
-      }
-      
-      alert('Full diagnosis complete! Check console for detailed logs.');
-    } catch (err) {
-      console.error('Diagnosis failed:', err);
-      alert('Diagnosis failed. Check console for details.');
-    }
-  };
 
   if (loading) {
     return (
@@ -235,58 +81,8 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Your Learning Analytics</h2>
-          
-                           <div className="flex gap-2 flex-wrap">
-                   <button
-                     onClick={handleMigrateSingleSource}
-                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
-                   >
-                     🔧 Fix Data Structure
-                   </button>
-                   <button
-                     onClick={handleFullDiagnosis}
-                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-                   >
-                     🔍 Full Diagnosis
-                   </button>
-                   {!migrationComplete && (
-                     <button
-                       onClick={handleMigration}
-                       disabled={migrating}
-                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                     >
-                       {migrating ? 'Migrating...' : 'Include Past Tests'}
-                     </button>
-                   )}
-                   <button
-                     onClick={handleDiagnosis}
-                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
-                   >
-                     Debug Folders
-                   </button>
-                   <button
-                     onClick={handleFixTests}
-                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-                   >
-                     Fix Unorganized
-                   </button>
-                   <button
-                     onClick={handleFixMismatch}
-                     className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm"
-                   >
-                     Fix Mismatch
-                   </button>
-                 </div>
         </div>
         
-        {!migrationComplete && metrics && metrics.quizzesTaken > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <div className="text-blue-800 text-sm">
-              <strong>Note:</strong> This dashboard shows your quiz history including past tests. 
-              Click &quot;Include Past Tests&quot; to ensure all your historical data is properly indexed for faster loading.
-            </div>
-          </div>
-        )}
 
         {/* Filter Controls */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
