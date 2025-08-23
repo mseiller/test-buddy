@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getUserMetrics, UserMetrics, migrateTestHistoryToResults, getUserFolders, MetricsFilters, diagnoseAndFixFolderData, fixUnorganizedTests } from '@/services/metrics';
+import { getUserMetrics, UserMetrics, migrateTestHistoryToResults, getUserFolders, MetricsFilters, diagnoseAndFixFolderData, fixUnorganizedTests, fixFolderIdMismatch } from '@/services/metrics';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface MetricsDashboardProps {
@@ -106,6 +106,33 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
     }
   };
 
+  const handleFixMismatch = async () => {
+    if (folders.length === 0) {
+      alert('No folders available. Please create a folder first.');
+      return;
+    }
+
+    // Use the first folder (likely D487) as the target
+    const targetFolder = folders[0];
+    
+    if (!confirm(`This will update ALL tests to use the current "${targetFolder.name}" folder ID. This fixes folder ID mismatches. Continue?`)) {
+      return;
+    }
+
+    try {
+      const fixedCount = await fixFolderIdMismatch(userId, targetFolder.id);
+      
+      // Reload metrics after fixing
+      const data = await getUserMetrics(userId, filters);
+      setMetrics(data);
+      
+      alert(`Successfully fixed ${fixedCount} folder ID mismatches for the "${targetFolder.name}" folder!`);
+    } catch (err) {
+      console.error('Fix mismatch failed:', err);
+      alert('Fix mismatch failed. Check console for details.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -141,7 +168,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Your Learning Analytics</h2>
           
-                           <div className="flex gap-2">
+                           <div className="flex gap-2 flex-wrap">
                    {!migrationComplete && (
                      <button
                        onClick={handleMigration}
@@ -161,7 +188,13 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
                      onClick={handleFixTests}
                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
                    >
-                     Fix Tests
+                     Fix Unorganized
+                   </button>
+                   <button
+                     onClick={handleFixMismatch}
+                     className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm"
+                   >
+                     Fix Mismatch
                    </button>
                  </div>
         </div>

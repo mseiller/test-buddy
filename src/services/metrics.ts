@@ -85,15 +85,20 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
           return item.folderId === filters.folderId;
         }
       }).length : 'not filtering',
-      // Additional debugging for folder mismatch
-      testNamesWithFolderIds: all.map(item => ({ 
-        testName: item.testName, 
-        folderId: item.folderId,
-        folderIdType: typeof item.folderId,
-        isUndefined: item.folderId === undefined,
-        isNull: item.folderId === null,
-        isEmpty: item.folderId === ''
-      }))
+      // Enhanced debugging for folder ID mismatch
+      folderIdComparison: {
+        expectedFolderId: filters.folderId,
+        actualFolderIds: all.map(item => item.folderId),
+        exactMatches: all.filter(item => item.folderId === filters.folderId).length,
+        stringComparison: all.map(item => ({
+          testName: item.testName,
+          actualId: item.folderId,
+          expectedId: filters.folderId,
+          exactMatch: item.folderId === filters.folderId,
+          stringMatch: String(item.folderId) === String(filters.folderId),
+          bothTruthy: !!item.folderId && !!filters.folderId
+        }))
+      }
     });
 
     // Apply time filter if specified
@@ -278,6 +283,53 @@ export async function fixUnorganizedTests(uid: string, targetFolderId: string): 
     return fixedCount;
   } catch (error) {
     console.error('Error fixing unorganized tests:', error);
+    throw error;
+  }
+}
+
+// Function to fix folder ID mismatches - update all tests to use current folder ID
+export async function fixFolderIdMismatch(uid: string, targetFolderId: string): Promise<number> {
+  try {
+    console.log('Starting fix for folder ID mismatch, target folder:', targetFolderId);
+    
+    // Get all test history
+    const testHistoryBase = collection(db, 'testHistory');
+    const snapHistory = await getDocs(
+      query(testHistoryBase, where('userId', '==', uid))
+    );
+    
+    const allTests = snapHistory.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    })) as any[];
+    
+    // Find tests that have folder IDs but don't match the target folder
+    const mismatchedTests = allTests.filter(test => 
+      test.folderId && test.folderId !== '' && test.folderId !== targetFolderId
+    );
+    
+    console.log(`Found ${mismatchedTests.length} tests with mismatched folder IDs:`);
+    mismatchedTests.forEach(test => {
+      console.log(`- ${test.testName}: current=${test.folderId}, target=${targetFolderId}`);
+    });
+    
+    // Update all mismatched tests to use the target folder ID
+    let fixedCount = 0;
+    for (const test of mismatchedTests) {
+      try {
+        const testRef = doc(db, 'testHistory', test.id);
+        await updateDoc(testRef, { folderId: targetFolderId });
+        console.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
+        fixedCount++;
+      } catch (error) {
+        console.error(`Failed to fix test ${test.testName}:`, error);
+      }
+    }
+    
+    console.log(`Successfully fixed ${fixedCount} folder ID mismatches`);
+    return fixedCount;
+  } catch (error) {
+    console.error('Error fixing folder ID mismatches:', error);
     throw error;
   }
 }
