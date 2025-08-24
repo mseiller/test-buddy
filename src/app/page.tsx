@@ -9,6 +9,7 @@ import { useUserPlan, useUsageStatus } from '@/contexts/UserPlanContext';
 import { FeatureGate, UsageLimit } from '@/components/FeatureGate';
 import { incrementTestUsage } from '@/services/usageService';
 import PaywallModal from '@/components/PaywallModal';
+import PlanManager from '@/components/PlanManager';
 import { usePaywall } from '@/hooks/usePaywall';
 import AuthForm from '@/components/AuthForm';
 import FileUpload from '@/components/FileUpload';
@@ -27,6 +28,7 @@ export default function Home() {
   const { plan, planFeatures, loading: planLoading, refreshUsage, refreshProfile } = useUserPlan();
   const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
   const { isPaywallOpen, triggerFeature, showPaywall, hidePaywall, showUpgradePrompt } = usePaywall();
+  const [showPlanManager, setShowPlanManager] = useState(false);
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -394,9 +396,13 @@ export default function Home() {
               {/* Plan and Usage Display */}
               {!planLoading && (
                 <div className="hidden lg:flex items-center space-x-3">
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-medium">
+                  <button
+                    onClick={() => setShowPlanManager(true)}
+                    className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-medium hover:bg-blue-200 transition-colors cursor-pointer"
+                    title="Click to manage plan"
+                  >
                     {planFeatures.name}
-                  </span>
+                  </button>
                   {usage && limit !== Infinity && (
                     <span className="text-xs text-gray-500">
                       {testsRemaining} tests left
@@ -770,6 +776,14 @@ export default function Home() {
             await refreshProfile();
             await refreshUsage();
           }}
+        />
+      )}
+
+      {/* Plan Manager Modal */}
+      {user && showPlanManager && (
+        <PlanManager
+          userId={user.uid}
+          onClose={() => setShowPlanManager(false)}
         />
       )}
 
