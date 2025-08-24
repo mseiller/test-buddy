@@ -8,6 +8,8 @@ import { logResult, inferQuizTypeFrom } from '@/services/results';
 import { useUserPlan, useUsageStatus } from '@/contexts/UserPlanContext';
 import { FeatureGate, UsageLimit } from '@/components/FeatureGate';
 import { incrementTestUsage } from '@/services/usageService';
+import PaywallModal from '@/components/PaywallModal';
+import { usePaywall } from '@/hooks/usePaywall';
 import AuthForm from '@/components/AuthForm';
 import FileUpload from '@/components/FileUpload';
 import QuizConfig from '@/components/QuizConfig';
@@ -22,8 +24,9 @@ type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'hi
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const { plan, planFeatures, loading: planLoading, refreshUsage } = useUserPlan();
+  const { plan, planFeatures, loading: planLoading, refreshUsage, refreshProfile } = useUserPlan();
   const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
+  const { isPaywallOpen, triggerFeature, showPaywall, hidePaywall, showUpgradePrompt } = usePaywall();
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -127,7 +130,7 @@ export default function Home() {
 
     // Check if user can create a test (this should already be handled by UI, but double-check)
     if (!canCreateTest) {
-      setError('You have reached your monthly test limit. Please upgrade to create more tests.');
+      showUpgradePrompt('usage');
       return;
     }
 
@@ -243,7 +246,7 @@ export default function Home() {
   const handleRetakeQuiz = () => {
     // Check plan-based retake permissions
     if (!planFeatures.retakesAllowed) {
-      setError('Quiz retakes are not available on your current plan. Upgrade to Student or Pro to unlock retakes.');
+      showUpgradePrompt('retakes');
       return;
     }
 
@@ -336,7 +339,7 @@ export default function Home() {
   const handleRetakeFromHistory = (test: TestHistoryType) => {
     // Check plan-based retake permissions
     if (!planFeatures.retakesAllowed) {
-      setError('Quiz retakes are not available on your current plan. Upgrade to Student or Pro to unlock retakes.');
+      showUpgradePrompt('retakes');
       return;
     }
 
@@ -524,12 +527,11 @@ export default function Home() {
                     Upload a document and let AI generate personalized quiz questions for you
                   </p>
                   <button
-                    onClick={handleCreateNewQuiz}
-                    disabled={!canCreateTest}
+                    onClick={canCreateTest ? handleCreateNewQuiz : () => showUpgradePrompt('usage')}
                     className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${
                       canCreateTest
                         ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
                     }`}
                   >
                     {canCreateTest ? 'Start Creating' : 'Upgrade to Create More'}
@@ -755,6 +757,21 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* Paywall Modal */}
+      {user && (
+        <PaywallModal
+          isOpen={isPaywallOpen}
+          onClose={hidePaywall}
+          currentPlan={plan}
+          userId={user.uid}
+          triggerFeature={triggerFeature}
+          onUpgrade={async (newPlan) => {
+            await refreshProfile();
+            await refreshUsage();
+          }}
+        />
+      )}
 
       {/* Folder Selection Modal */}
       {showFolderSelection && (
