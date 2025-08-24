@@ -7,7 +7,8 @@ export class OpenRouterService {
   static async generateQuiz(
     text: string,
     quizType: QuizType,
-    questionCount: number = 5
+    questionCount: number = 5,
+    modelOverride?: string
   ): Promise<Question[]> {
     if (!this.API_KEY) {
       throw new Error('OpenRouter API key is not configured');
@@ -34,7 +35,7 @@ export class OpenRouterService {
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
 
     // Use the qwen/qwen3-235b-a22b:free model with 131k context
-    const model = 'qwen/qwen3-235b-a22b:free';
+    const model = modelOverride || 'qwen/qwen3-235b-a22b:free';
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
     console.log('OpenRouter: API Key configured:', !!this.API_KEY);

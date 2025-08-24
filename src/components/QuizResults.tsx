@@ -16,6 +16,8 @@ interface QuizResultsProps {
   onNewQuizFromFile?: () => void;
   isHistoricalReview?: boolean;
   onBackToHistory?: () => void;
+  canUseAiFeedback?: boolean; // Plan-based AI feedback access
+  canRetake?: boolean; // Plan-based retake access
 }
 
 export default function QuizResults({ 
@@ -28,7 +30,9 @@ export default function QuizResults({
   onGoHome,
   onNewQuizFromFile,
   onBackToHistory,
-  isHistoricalReview
+  isHistoricalReview,
+  canUseAiFeedback = true,
+  canRetake = true
 }: QuizResultsProps) {
   const [showReview, setShowReview] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackSummary | null>(null);
@@ -287,22 +291,23 @@ export default function QuizResults({
         </div>
 
         {/* AI Study Plan */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Sparkles className="h-5 w-5 text-indigo-600" />
-              <h2 className="text-xl font-semibold text-gray-900">AI Study Plan</h2>
+        {canUseAiFeedback ? (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="h-5 w-5 text-indigo-600" />
+                <h2 className="text-xl font-semibold text-gray-900">AI Study Plan</h2>
+              </div>
+              <button
+                onClick={fetchFeedback}
+                disabled={fbLoading}
+                className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+                title="Generate AI study tips"
+              >
+                <RefreshCw className={`h-4 w-4 ${fbLoading ? 'animate-spin' : ''}`} />
+                <span>{fbLoading ? 'Generating...' : 'Generate'}</span>
+              </button>
             </div>
-            <button
-              onClick={fetchFeedback}
-              disabled={fbLoading}
-              className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700 disabled:opacity-60 transition-colors"
-              title="Generate AI study tips"
-            >
-              <RefreshCw className={`h-4 w-4 ${fbLoading ? 'animate-spin' : ''}`} />
-              <span>{fbLoading ? 'Generating...' : 'Generate'}</span>
-            </button>
-          </div>
 
           {fbError && (
             <div className="text-sm text-red-600 mb-3 p-3 bg-red-50 rounded-lg border border-red-200">
@@ -397,7 +402,29 @@ export default function QuizResults({
               )}
             </div>
           )}
-        </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
+            <div className="flex items-center space-x-2 mb-4">
+              <Sparkles className="h-5 w-5 text-gray-400" />
+              <h2 className="text-xl font-semibold text-gray-500">AI Study Plan</h2>
+            </div>
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
+              <div className="text-gray-600 mb-4">
+                Get personalized AI-powered study recommendations based on your quiz performance.
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Upgrade to Pro to unlock AI feedback and study plans.
+              </p>
+              <button 
+                onClick={() => alert('Upgrade functionality coming soon!')}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -409,7 +436,7 @@ export default function QuizResults({
             <span>Review Answers</span>
           </button>
           
-          {onRetakeQuiz && (
+          {onRetakeQuiz && canRetake && (
             <button
               onClick={onRetakeQuiz}
               className="flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -417,6 +444,13 @@ export default function QuizResults({
               <RotateCcw className="h-4 w-4" />
               <span>Retake Quiz</span>
             </button>
+          )}
+          
+          {!canRetake && (
+            <div className="flex items-center justify-center space-x-2 px-6 py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
+              <RotateCcw className="h-4 w-4" />
+              <span>Retake (Pro Feature)</span>
+            </div>
           )}
           
           {onNewQuizFromFile && (

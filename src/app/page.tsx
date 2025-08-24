@@ -7,6 +7,7 @@ import { OpenRouterService } from '@/services/openRouter';
 import { logResult, inferQuizTypeFrom } from '@/services/results';
 import { useUserPlan, useUsageStatus } from '@/contexts/UserPlanContext';
 import { FeatureGate, UsageLimit } from '@/components/FeatureGate';
+import { incrementTestUsage } from '@/services/usageService';
 import AuthForm from '@/components/AuthForm';
 import FileUpload from '@/components/FileUpload';
 import QuizConfig from '@/components/QuizConfig';
@@ -21,7 +22,7 @@ type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'hi
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const { plan, planFeatures, loading: planLoading } = useUserPlan();
+  const { plan, planFeatures, loading: planLoading, refreshUsage } = useUserPlan();
   const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
@@ -122,7 +123,13 @@ export default function Home() {
   };
 
   const handleConfigSubmit = async (quizType: QuizType, questionCount: number, name: string) => {
-    if (!uploadedFile) return;
+    if (!uploadedFile || !user) return;
+
+    // Check if user can create a test (this should already be handled by UI, but double-check)
+    if (!canCreateTest) {
+      setError('You have reached your monthly test limit. Please upgrade to create more tests.');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -133,10 +140,15 @@ export default function Home() {
     setRetakeTestName('');
 
     try {
+      // Increment usage counter first
+      await incrementTestUsage(user.uid);
+      
+      // Use plan-specific model
       const generatedQuestions = await OpenRouterService.generateQuiz(
         uploadedFile.extractedText,
         quizType,
-        questionCount
+        questionCount,
+        planFeatures.model // Pass the plan-specific model
       );
       
       // Check if fewer questions were generated than requested
@@ -146,6 +158,9 @@ export default function Home() {
       
       setQuestions(generatedQuestions);
       setAppState('quiz');
+      
+      // Refresh usage data to update UI
+      await refreshUsage();
     } catch (error: any) {
       setError(error.message || 'Failed to generate quiz questions');
     } finally {
@@ -226,6 +241,12 @@ export default function Home() {
   };
 
   const handleRetakeQuiz = () => {
+    // Check plan-based retake permissions
+    if (!planFeatures.retakesAllowed) {
+      setError('Quiz retakes are not available on your current plan. Upgrade to Student or Pro to unlock retakes.');
+      return;
+    }
+
     setAnswers([]);
     setScore(0);
     setTimeTaken(0);
@@ -313,6 +334,12 @@ export default function Home() {
   };
 
   const handleRetakeFromHistory = (test: TestHistoryType) => {
+    // Check plan-based retake permissions
+    if (!planFeatures.retakesAllowed) {
+      setError('Quiz retakes are not available on your current plan. Upgrade to Student or Pro to unlock retakes.');
+      return;
+    }
+
     // Check if we have the extracted text for retaking
     if (!test.extractedText || test.extractedText.trim() === '') {
       setError('This test cannot be retaken because the original file content was not saved. Please upload the file again to retake.');
@@ -644,6 +671,8 @@ export default function Home() {
             onNewQuizFromFile={handleNewQuizFromFile}
             isHistoricalReview={timeTaken === 0}
             onBackToHistory={() => setAppState('history')}
+            canUseAiFeedback={planFeatures.aiFeedback}
+            canRetake={planFeatures.retakesAllowed}
           />
         )}
 
