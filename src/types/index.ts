@@ -2,6 +2,8 @@ export interface User {
   uid: string;
   email: string;
   displayName?: string;
+  plan?: "free" | "student" | "pro";
+  createdAt?: Date;
 }
 
 export type QuizType = 'MCQ' | 'Fill-in-the-blank' | 'Essay' | 'Mixed';
