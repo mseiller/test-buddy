@@ -5,6 +5,8 @@ import { User, FileUpload as FileUploadType, Question, UserAnswer, TestHistory a
 import { FirebaseService } from '@/services/firebaseService';
 import { OpenRouterService } from '@/services/openRouter';
 import { logResult, inferQuizTypeFrom } from '@/services/results';
+import { useUserPlan, useUsageStatus } from '@/contexts/UserPlanContext';
+import { FeatureGate, UsageLimit } from '@/components/FeatureGate';
 import AuthForm from '@/components/AuthForm';
 import FileUpload from '@/components/FileUpload';
 import QuizConfig from '@/components/QuizConfig';
@@ -19,6 +21,8 @@ type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'hi
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
+  const { plan, planFeatures, loading: planLoading } = useUserPlan();
+  const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -357,6 +361,20 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Plan and Usage Display */}
+              {!planLoading && (
+                <div className="hidden lg:flex items-center space-x-3">
+                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-medium">
+                    {planFeatures.name}
+                  </span>
+                  {usage && limit !== Infinity && (
+                    <span className="text-xs text-gray-500">
+                      {testsRemaining} tests left
+                    </span>
+                  )}
+                </div>
+              )}
+              
               <span className="text-sm text-gray-600">
                 Welcome, {user.displayName || user.email}
               </span>
@@ -381,7 +399,7 @@ export default function Home() {
                 </button>
               )}
               
-              {appState !== 'folders' && (
+              {appState !== 'folders' && planFeatures.folders && (
                 <button
                   onClick={() => setAppState('folders')}
                   className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -391,7 +409,7 @@ export default function Home() {
                 </button>
               )}
               
-              {appState !== 'metrics' && (
+              {appState !== 'metrics' && planFeatures.metrics && (
                 <button
                   onClick={() => setAppState('metrics')}
                   className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -444,6 +462,25 @@ export default function Home() {
               <p className="text-xl text-gray-600 mb-8">
                 AI-Powered Quiz Generation from Your Documents
               </p>
+              
+              {/* Usage Status */}
+              {!planLoading && usage && (
+                <div className="max-w-md mx-auto mb-6">
+                  <UsageLimit
+                    current={usage.testsGenerated}
+                    limit={limit}
+                    feature="Tests Created This Month"
+                    className="text-left"
+                  />
+                  {!canCreateTest && (
+                    <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-sm text-orange-800">
+                        You've reached your monthly limit. Upgrade to create more tests!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -461,9 +498,14 @@ export default function Home() {
                   </p>
                   <button
                     onClick={handleCreateNewQuiz}
-                    className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    disabled={!canCreateTest}
+                    className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${
+                      canCreateTest
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
-                    Start Creating
+                    {canCreateTest ? 'Start Creating' : 'Upgrade to Create More'}
                   </button>
                 </div>
               </div>
@@ -646,21 +688,23 @@ export default function Home() {
               </button>
             </div>
             
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Organize Your Tests
-              </h2>
-              <p className="text-lg text-gray-600">
-                Create folders to organize your tests by topic, subject, or project
-              </p>
-            </div>
-            
-            <FolderManager
-              userId={user.uid}
-              onFolderSelect={setSelectedFolder}
-              selectedFolder={selectedFolder}
-              onTestSelect={handleViewTest}
-            />
+            <FeatureGate feature="folders">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                  Organize Your Tests
+                </h2>
+                <p className="text-lg text-gray-600">
+                  Create folders to organize your tests by topic, subject, or project
+                </p>
+              </div>
+              
+              <FolderManager
+                userId={user.uid}
+                onFolderSelect={setSelectedFolder}
+                selectedFolder={selectedFolder}
+                onTestSelect={handleViewTest}
+              />
+            </FeatureGate>
           </div>
         )}
 
@@ -676,7 +720,9 @@ export default function Home() {
               </button>
             </div>
             
-            <MetricsDashboard userId={user.uid} />
+            <FeatureGate feature="metrics">
+              <MetricsDashboard userId={user.uid} />
+            </FeatureGate>
           </div>
         )}
       </main>
