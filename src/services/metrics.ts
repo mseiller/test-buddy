@@ -231,16 +231,18 @@ export async function getUserFolders(uid: string): Promise<Array<{id: string, na
   try {
     const foldersQuery = query(
       collection(db, 'folders'),
-      where('userId', '==', uid),
-      orderBy('name')
+      where('userId', '==', uid)
     );
     const snapshot = await getDocs(foldersQuery);
     
-    return snapshot.docs.map(doc => ({
+    // Sort in JavaScript to avoid composite index requirement
+    const folders = snapshot.docs.map(doc => ({
       id: doc.id,
       name: doc.data().name,
       color: doc.data().color
     }));
+    
+    return folders.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Error fetching user folders:', error);
     return [];
