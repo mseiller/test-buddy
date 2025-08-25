@@ -117,7 +117,7 @@ Rules:
 
 5. Be creative but accurate. The goal is to challenge the learner and prevent rote memorization.
 
-CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks. Do NOT include any text before or after the JSON. Start directly with [ and end with ]. Ensure all JSON is properly formatted with correct syntax.`
+CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks. Do NOT include any text before or after the JSON. Start directly with [ and end with ]. Do NOT add excessive whitespace or newlines. Keep the response compact and properly formatted JSON only.`
             },
             {
               role: 'user',
@@ -144,6 +144,14 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
         try {
           const responseText = await response.text();
           console.log('OpenRouter: Raw response text length:', responseText.length);
+          
+          // Check for excessive whitespace that indicates token waste
+          const trimmedText = responseText.trim();
+          const whitespaceRatio = (responseText.length - trimmedText.length) / responseText.length;
+          if (whitespaceRatio > 0.5) {
+            console.warn('OpenRouter: Response contains excessive whitespace (', Math.round(whitespaceRatio * 100), '%) - this wastes tokens');
+          }
+          
           console.log('OpenRouter: Raw response preview:', responseText.substring(0, 200));
           
           if (!responseText || responseText.trim() === '') {
@@ -178,6 +186,17 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
         }
 
         console.log('OpenRouter: Content received, length:', content.length);
+        
+        // Check for token efficiency issues
+        if (data.usage) {
+          const tokensPerQuestion = data.usage.completion_tokens / adjustedQuestionCount;
+          console.log('OpenRouter: Token usage - Total:', data.usage.total_tokens, 'Per question:', Math.round(tokensPerQuestion));
+          
+          if (tokensPerQuestion > 100) {
+            console.warn('OpenRouter: High token usage per question (', Math.round(tokensPerQuestion), ') - consider optimizing prompt or switching models');
+          }
+        }
+        
         return this.parseQuizResponse(content);
         
       } catch (error) {

@@ -15,10 +15,22 @@ export interface ResultData {
 export async function logResult(uid: string, data: ResultData) {
   try {
     const ref = collection(db, `users/${uid}/results`);
-    const docRef = await addDoc(ref, { 
-      ...data, 
-      createdAt: serverTimestamp() 
-    });
+    
+    // Clean the data to remove undefined fields
+    const cleanData = {
+      testName: data.testName,
+      score: data.score,
+      timeTaken: data.timeTaken,
+      quizType: data.quizType,
+      questionCount: data.questionCount,
+      topics: data.topics || [],
+      createdAt: serverTimestamp(),
+      // Only include optional fields if they have values
+      ...(data.folderId && { folderId: data.folderId }),
+      ...(data.retakeOf && { retakeOf: data.retakeOf }),
+    };
+    
+    const docRef = await addDoc(ref, cleanData);
     
     console.log('Result logged successfully:', docRef.id);
     return docRef.id;
