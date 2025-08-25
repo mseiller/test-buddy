@@ -117,7 +117,13 @@ Rules:
 
 5. Be creative but accurate. The goal is to challenge the learner and prevent rote memorization.
 
-CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks. Do NOT include any text before or after the JSON. Start directly with [ and end with ]. Do NOT add excessive whitespace or newlines. Keep the response compact and properly formatted JSON only.`
+CRITICAL OUTPUT FORMAT:
+- Respond with ONLY raw JSON array
+- Start directly with [ and end with ]
+- NO markdown blocks, NO extra text
+- NO excessive whitespace or blank lines
+- Compact JSON formatting
+- If the input contains existing test questions, CREATE NEW questions on the same topics rather than reformatting existing ones`
             },
             {
               role: 'user',
@@ -192,8 +198,10 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
           const tokensPerQuestion = data.usage.completion_tokens / adjustedQuestionCount;
           console.log('OpenRouter: Token usage - Total:', data.usage.total_tokens, 'Per question:', Math.round(tokensPerQuestion));
           
-          if (tokensPerQuestion > 100) {
+          if (tokensPerQuestion > 200) {
             console.warn('OpenRouter: High token usage per question (', Math.round(tokensPerQuestion), ') - consider optimizing prompt or switching models');
+          } else if (tokensPerQuestion > 150) {
+            console.log('OpenRouter: Moderate token usage per question (', Math.round(tokensPerQuestion), ') - acceptable but could be optimized');
           }
         }
         
@@ -276,7 +284,13 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
         typeInstruction = 'Create a variety of question types appropriate for the content.';
     }
 
-    return `Generate exactly ${questionCount} dynamic practice questions from this study material.
+    // Detect if this looks like existing test questions
+    const hasExistingQuestions = /\b(question|answer|correct|option|choice)\b/gi.test(text.substring(0, 1000));
+    const instructionPrefix = hasExistingQuestions 
+      ? `The provided material contains existing test questions. Use the TOPICS and CONCEPTS from this material to create ${questionCount} COMPLETELY NEW questions. Do NOT reformat or copy existing questions.`
+      : `Generate exactly ${questionCount} dynamic practice questions from this study material.`;
+    
+    return `${instructionPrefix}
 
 ${typeInstruction}
 
