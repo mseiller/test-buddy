@@ -51,17 +51,28 @@ export class OpenRouterService {
       max_tokens: maxTokens,
     }).length, 'characters');
     
-    try {
-      const response = await fetch(this.API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
-          'X-Title': 'Test Buddy Quiz Generator',
-        },
-        body: JSON.stringify({
-          model: model,
+    // Retry logic for network issues
+    let lastError: Error | null = null;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`OpenRouter: Attempt ${attempt}/${maxRetries}`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+        
+        const response = await fetch(this.API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+            'X-Title': 'Test Buddy Quiz Generator',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: model,
           messages: [
             {
               role: 'system',
@@ -116,48 +127,72 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
           temperature: 0.5,
           max_tokens: maxTokens,
         }),
-      });
+        });
 
-      console.log('OpenRouter: Response status:', response.status, response.statusText);
-      console.log('OpenRouter: Response headers:', Object.fromEntries(response.headers.entries()));
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenRouter: Error response body:', errorText);
-        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+        console.log('OpenRouter: Response status:', response.status, response.statusText);
+        console.log('OpenRouter: Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('OpenRouter: Error response body:', errorText);
+          throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('OpenRouter: Response data structure:', Object.keys(data));
+        console.log('OpenRouter: Full response data:', data);
+        
+        // Check for API errors in response
+        if (data.error) {
+          console.error('OpenRouter: API returned error:', data.error);
+          throw new Error(`OpenRouter API error: ${data.error.message || data.error}`);
+        }
+        
+        const content = data.choices[0]?.message?.content;
+        console.log('OpenRouter: Content from API:', content ? `${content.length} characters` : 'NO CONTENT');
+
+        if (!content || content.trim() === '') {
+          console.error('OpenRouter: No content in response data:', data);
+          throw new Error('No content received from OpenRouter API - possible timeout or generation limit exceeded');
+        }
+
+        console.log('OpenRouter: Content received, length:', content.length);
+        return this.parseQuizResponse(content);
+        
+      } catch (error) {
+        lastError = error as Error;
+        
+        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+          console.error(`OpenRouter: Network error on attempt ${attempt}/${maxRetries}:`, error.message);
+          if (attempt < maxRetries) {
+            const delay = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
+            console.log(`OpenRouter: Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+        } else {
+          // For non-network errors, don't retry
+          throw error;
+        }
       }
-
-      const data = await response.json();
-      console.log('OpenRouter: Response data structure:', Object.keys(data));
-      console.log('OpenRouter: Full response data:', data);
-      
-      // Check for API errors in response
-      if (data.error) {
-        console.error('OpenRouter: API returned error:', data.error);
-        throw new Error(`OpenRouter API error: ${data.error.message || data.error}`);
-      }
-      
-      const content = data.choices[0]?.message?.content;
-      console.log('OpenRouter: Content from API:', content ? `${content.length} characters` : 'NO CONTENT');
-
-      if (!content || content.trim() === '') {
-        console.error('OpenRouter: No content in response data:', data);
-        throw new Error('No content received from OpenRouter API - possible timeout or generation limit exceeded');
-      }
-
-      console.log('OpenRouter: Content received, length:', content.length);
-      return this.parseQuizResponse(content);
-    } catch (error) {
-      console.error('OpenRouter: Detailed error information:', error);
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+    }
+    
+    // If we get here, all retries failed
+    if (lastError) {
+      console.error('OpenRouter: All retries failed. Final error:', lastError);
+      if (lastError instanceof TypeError && lastError.message === 'Failed to fetch') {
         console.error('OpenRouter: Network error - this usually means:');
         console.error('1. No internet connection');
         console.error('2. CORS issue');
         console.error('3. API endpoint is down');
         console.error('4. Request timeout');
       }
-      throw new Error(`Failed to generate quiz questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to generate quiz questions after ${maxRetries} attempts: ${lastError.message}`);
     }
+    
+    throw new Error('Failed to generate quiz questions: Unknown error');
   }
 
   private static createPrompt(text: string, quizType: QuizType, questionCount: number): string {
