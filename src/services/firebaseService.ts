@@ -102,13 +102,33 @@ export class FirebaseService {
   // Test history methods
   static async saveTestHistory(testHistory: Omit<TestHistory, 'id'>): Promise<string> {
     try {
-      const testHistoryData = {
-        ...testHistory,
+      // Build the data object with only defined fields
+      const testHistoryData: any = {
+        userId: testHistory.userId,
+        testName: testHistory.testName,
+        fileName: testHistory.fileName,
+        quizType: testHistory.quizType,
+        questions: testHistory.questions,
+        answers: testHistory.answers,
         createdAt: Timestamp.fromDate(testHistory.createdAt),
-        completedAt: testHistory.completedAt ? Timestamp.fromDate(testHistory.completedAt) : null,
-        // Ensure folderId is null instead of undefined if not provided
-        folderId: testHistory.folderId || null,
       };
+
+      // Only add optional fields if they have values
+      if (testHistory.fileType) {
+        testHistoryData.fileType = testHistory.fileType;
+      }
+      if (testHistory.extractedText) {
+        testHistoryData.extractedText = testHistory.extractedText;
+      }
+      if (testHistory.score !== undefined && testHistory.score !== null) {
+        testHistoryData.score = testHistory.score;
+      }
+      if (testHistory.completedAt) {
+        testHistoryData.completedAt = Timestamp.fromDate(testHistory.completedAt);
+      }
+      if (testHistory.folderId) {
+        testHistoryData.folderId = testHistory.folderId;
+      }
 
       console.log('Attempting to save test history for user:', testHistory.userId);
       const docRef = await addDoc(collection(db, 'testHistory'), testHistoryData);

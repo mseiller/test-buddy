@@ -205,7 +205,7 @@ export default function Home() {
         answers: userAnswers,
         score: calculatedScore,
         createdAt: new Date(),
-        completedAt: isIncomplete ? undefined : new Date(), // Don't set completedAt for incomplete tests
+        ...(isIncomplete ? {} : { completedAt: new Date() }), // Only include completedAt for complete tests
         ...(selectedFolder?.id && { folderId: selectedFolder.id }), // Only include folderId if it exists
       };
 
