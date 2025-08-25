@@ -23,13 +23,31 @@ export interface MetricsFilters {
 
 export async function getUserMetrics(uid: string, filters: MetricsFilters = {}): Promise<UserMetrics> {
   try {
-    // Get data from both new results collection and legacy testHistory collection
+    // Get data from all three collections: results, testHistory, and current tests
     const resultsBase = collection(db, `users/${uid}/results`);
     const testHistoryBase = collection(db, 'testHistory');
+    const testsBase = collection(db, `users/${uid}/tests`);
 
     // Get new results data
     const snapResults = await getDocs(query(resultsBase, orderBy('createdAt', 'desc'), limit(500)));
     const resultsData = snapResults.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+
+    // Get current tests data (includes folder information)
+    const snapTests = await getDocs(query(testsBase, orderBy('createdAt', 'desc'), limit(500)));
+    const testsData = snapTests.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        testName: data.testName,
+        folderId: data.folderId,
+        score: data.score,
+        timeTaken: 0, // Tests collection doesn't have timeTaken
+        quizType: data.quizType || 'mixed',
+        questionCount: data.questions?.length || 0,
+        createdAt: data.completedAt || data.createdAt,
+        topics: []
+      };
+    }) as any[];
 
     // Get legacy test history data
     const snapHistory = await getDocs(
@@ -50,9 +68,19 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
       };
     }) as any[];
 
-    // Combine and sort all data by creation date
-    let all = [...resultsData, ...historyData]
-      .filter(item => item.score != null && !isNaN(item.score)) // Only include completed tests with scores
+    // Combine and deduplicate data from all three sources
+    const seenTests = new Set<string>();
+    let all = [...resultsData, ...testsData, ...historyData]
+      .filter(item => {
+        // Only include completed tests with scores
+        if (item.score == null || isNaN(item.score)) return false;
+        
+        // Deduplicate by test name + creation time to avoid counting same test multiple times
+        const uniqueKey = `${item.testName}_${item.createdAt?.toDate?.()?.getTime() || new Date(item.createdAt).getTime()}`;
+        if (seenTests.has(uniqueKey)) return false;
+        seenTests.add(uniqueKey);
+        return true;
+      })
       .sort((a, b) => {
         const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt);
         const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt);
