@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Folder, TestHistory } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
-import { getAllTests, getTestsInFolder, getUnorganizedTests, moveTest } from '@/services/tests';
+import { getAllTests, getTestsInFolder, getUnorganizedTests, moveTest, migrateFromTestHistory } from '@/services/tests';
 import { Plus, Folder as FolderIcon, Edit, Trash2, MoreHorizontal, X } from 'lucide-react';
 
 interface FolderManagerProps {
@@ -80,6 +80,16 @@ export default function FolderManager({
       console.log('Setting folders state with:', userFolders);
       setFolders(userFolders);
       
+      // Auto-migrate tests when folders are first loaded to ensure all historical tests are available
+      try {
+        const migratedCount = await migrateFromTestHistory(userId);
+        if (migratedCount > 0) {
+          console.log(`Auto-migrated ${migratedCount} tests from testHistory when loading folders`);
+        }
+      } catch (migrationError) {
+        console.warn('Auto-migration failed during folder load:', migrationError);
+      }
+      
       // Verify state was set
       setTimeout(() => {
         console.log('Current folders state after setState:', folders);
@@ -93,6 +103,17 @@ export default function FolderManager({
   const loadAllTests = async () => {
     try {
       console.log('Loading all tests from single source of truth');
+      
+      // First, migrate any tests from testHistory that haven't been migrated yet
+      try {
+        const migratedCount = await migrateFromTestHistory(userId);
+        if (migratedCount > 0) {
+          console.log(`Migrated ${migratedCount} tests from testHistory to new collection`);
+        }
+      } catch (migrationError) {
+        console.warn('Migration failed, but continuing with existing tests:', migrationError);
+      }
+      
       const allTests = await getAllTests(userId);
       console.log(`Loaded ${allTests.length} tests from new collection`);
       
