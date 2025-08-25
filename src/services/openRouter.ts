@@ -140,9 +140,23 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
           throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json();
-        console.log('OpenRouter: Response data structure:', Object.keys(data));
-        console.log('OpenRouter: Full response data:', data);
+        let data;
+        try {
+          const responseText = await response.text();
+          console.log('OpenRouter: Raw response text length:', responseText.length);
+          console.log('OpenRouter: Raw response preview:', responseText.substring(0, 200));
+          
+          if (!responseText || responseText.trim() === '') {
+            throw new Error('Empty response body from OpenRouter API');
+          }
+          
+          data = JSON.parse(responseText);
+          console.log('OpenRouter: Response data structure:', Object.keys(data));
+          console.log('OpenRouter: Full response data:', data);
+        } catch (jsonError) {
+          console.error('OpenRouter: JSON parsing failed:', jsonError);
+          throw new Error(`Invalid JSON response from OpenRouter API: ${jsonError instanceof Error ? jsonError.message : 'Unknown parsing error'}`);
+        }
         
         // Check for API errors in response
         if (data.error) {
@@ -164,8 +178,17 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
       } catch (error) {
         lastError = error as Error;
         
-        if (error instanceof TypeError && error.message === 'Failed to fetch') {
-          console.error(`OpenRouter: Network error on attempt ${attempt}/${maxRetries}:`, error.message);
+        const isRetryableError = (
+          (error instanceof TypeError && error.message === 'Failed to fetch') ||
+          (error instanceof Error && (
+            error.message.includes('Invalid JSON response') ||
+            error.message.includes('Empty response body') ||
+            error.message.includes('Unexpected end of JSON input')
+          ))
+        );
+        
+        if (isRetryableError) {
+          console.error(`OpenRouter: Retryable error on attempt ${attempt}/${maxRetries}:`, error.message);
           if (attempt < maxRetries) {
             const delay = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
             console.log(`OpenRouter: Retrying in ${delay}ms...`);
@@ -173,7 +196,7 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
             continue;
           }
         } else {
-          // For non-network errors, don't retry
+          // For non-retryable errors, don't retry
           throw error;
         }
       }
