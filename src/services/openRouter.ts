@@ -166,10 +166,15 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
         
         const content = data.choices[0]?.message?.content;
         console.log('OpenRouter: Content from API:', content ? `${content.length} characters` : 'NO CONTENT');
+        
+        if (content) {
+          console.log('OpenRouter: Content preview (first 500 chars):', content.substring(0, 500));
+        }
 
         if (!content || content.trim() === '') {
           console.error('OpenRouter: No content in response data:', data);
-          throw new Error('No content received from OpenRouter API - possible timeout or generation limit exceeded');
+          console.error('OpenRouter: Full response structure:', JSON.stringify(data, null, 2));
+          throw new Error('Empty content from OpenRouter API - model may be overloaded or content filtered');
         }
 
         console.log('OpenRouter: Content received, length:', content.length);
@@ -183,7 +188,9 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
           (error instanceof Error && (
             error.message.includes('Invalid JSON response') ||
             error.message.includes('Empty response body') ||
-            error.message.includes('Unexpected end of JSON input')
+            error.message.includes('Unexpected end of JSON input') ||
+            error.message.includes('Empty content from OpenRouter API') ||
+            error.message.includes('No content received from OpenRouter API')
           ))
         );
         
@@ -202,9 +209,21 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
       }
     }
     
-    // If we get here, all retries failed
+    // If we get here, all retries failed with the primary model
     if (lastError) {
-      console.error('OpenRouter: All retries failed. Final error:', lastError);
+      console.error('OpenRouter: All retries failed with primary model. Final error:', lastError);
+      
+      // Try a fallback model if the error seems to be content-related and we're using the free model
+      if (model.includes('free') && lastError.message.includes('Empty content')) {
+        console.log('OpenRouter: Attempting fallback to different model...');
+        try {
+          return await this.generateQuiz(text, quizType, questionCount, 'anthropic/claude-3.5-haiku:beta');
+        } catch (fallbackError) {
+          console.error('OpenRouter: Fallback model also failed:', fallbackError);
+          // Continue to original error handling
+        }
+      }
+      
       if (lastError instanceof TypeError && lastError.message === 'Failed to fetch') {
         console.error('OpenRouter: Network error - this usually means:');
         console.error('1. No internet connection');
