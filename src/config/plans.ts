@@ -19,7 +19,7 @@ export const PLAN_FEATURES: Record<UserPlan, PlanFeatures> = {
     folders: false,
     aiFeedback: false,
     metrics: false,
-    model: "z-ai/glm-4.5-air:free",
+    model: "qwen/qwen3-235b-a22b:free",
     name: "Freemium",
     price: "Free",
     description: "Perfect for trying out Test Buddy"
@@ -30,7 +30,7 @@ export const PLAN_FEATURES: Record<UserPlan, PlanFeatures> = {
     folders: false,
     aiFeedback: false,
     metrics: "basic",
-    model: "z-ai/glm-4.5-air:free",
+    model: "qwen/qwen3-235b-a22b:free",
     name: "Student",
     price: "$5/month",
     description: "Great for students with regular testing needs"
