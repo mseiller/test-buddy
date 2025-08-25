@@ -236,7 +236,7 @@ CRITICAL: Respond with ONLY raw JSON array. Do NOT wrap in markdown code blocks.
       if (model.includes('free') && lastError.message.includes('Empty content')) {
         console.log('OpenRouter: Attempting fallback to different model...');
         try {
-          return await this.generateQuiz(text, quizType, questionCount, 'anthropic/claude-3.5-haiku:beta');
+          return await this.generateQuiz(text, quizType, questionCount, 'meta-llama/llama-3.2-3b-instruct:free');
         } catch (fallbackError) {
           console.error('OpenRouter: Fallback model also failed:', fallbackError);
           // Continue to original error handling
@@ -870,7 +870,7 @@ Remember: ONLY return the JSON object, nothing else.`;
           'X-Title': 'Test Buddy'
         },
         body: JSON.stringify({
-          model: 'z-ai/glm-4.5-air:free',
+          model: 'qwen/qwen3-235b-a22b:free',
           messages: [
             { 
               role: 'system', 
