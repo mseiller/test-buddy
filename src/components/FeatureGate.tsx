@@ -10,13 +10,15 @@ interface FeatureGateProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
   showUpgradePrompt?: boolean;
+  onUpgradeClick?: () => void;
 }
 
 export function FeatureGate({ 
   feature, 
   children, 
   fallback, 
-  showUpgradePrompt = true 
+  showUpgradePrompt = true,
+  onUpgradeClick
 }: FeatureGateProps) {
   const { plan, planFeatures } = useUserPlan();
   
@@ -34,7 +36,7 @@ export function FeatureGate({
     return null;
   }
   
-  return <LockedFeature feature={feature} currentPlan={plan} />;
+  return <LockedFeature feature={feature} currentPlan={plan} onUpgradeClick={onUpgradeClick} />;
 }
 
 interface LockedFeatureProps {
@@ -42,13 +44,15 @@ interface LockedFeatureProps {
   currentPlan: string;
   message?: string;
   compact?: boolean;
+  onUpgradeClick?: () => void;
 }
 
 export function LockedFeature({ 
   feature, 
   currentPlan, 
   message, 
-  compact = false 
+  compact = false,
+  onUpgradeClick
 }: LockedFeatureProps) {
   const upgradeMessage = message || getUpgradeMessage(currentPlan as any, getFeatureDisplayName(feature));
   
@@ -74,8 +78,11 @@ export function LockedFeature({
       </p>
                     <button 
                 onClick={() => {
-                  // This would need to be passed down as a prop or use a context
-                  alert('Upgrade functionality - use PaywallModal component for full experience!');
+                  if (onUpgradeClick) {
+                    onUpgradeClick();
+                  } else {
+                    alert('Upgrade functionality - use PaywallModal component for full experience!');
+                  }
                 }}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
               >

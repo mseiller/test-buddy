@@ -725,7 +725,7 @@ export default function Home() {
               </button>
             </div>
             
-            <FeatureGate feature="folders">
+            <FeatureGate feature="folders" onUpgradeClick={() => showUpgradePrompt('folders')}>
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
                   Organize Your Tests
@@ -757,8 +757,8 @@ export default function Home() {
               </button>
             </div>
             
-            <FeatureGate feature="metrics">
-              <MetricsDashboard userId={user.uid} />
+            <FeatureGate feature="metrics" onUpgradeClick={() => showUpgradePrompt('metrics')}>
+              <MetricsDashboard userId={user.uid} plan={plan} />
             </FeatureGate>
           </div>
         )}
