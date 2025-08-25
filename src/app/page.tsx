@@ -145,9 +145,6 @@ export default function Home() {
     setRetakeTestName('');
 
     try {
-      // Increment usage counter first
-      await incrementTestUsage(user.uid);
-      
       // Use plan-specific model
       const generatedQuestions = await OpenRouterService.generateQuiz(
         uploadedFile.extractedText,
@@ -155,6 +152,9 @@ export default function Home() {
         questionCount,
         planFeatures.model // Pass the plan-specific model
       );
+      
+      // Only increment usage counter AFTER successful generation
+      await incrementTestUsage(user.uid);
       
       // Check if fewer questions were generated than requested
       if (generatedQuestions.length < questionCount && questionCount > 100) {
