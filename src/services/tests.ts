@@ -155,8 +155,8 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
       continue;
     }
     
-    // Convert to new format
-    const testDoc: Omit<TestDoc, 'id'> = {
+    // Convert to new format - only include fields that have values
+    const testDoc: any = {
       userId: uid,
       testName: data.testName,
       fileName: data.fileName,
@@ -165,12 +165,20 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
       quizType: data.quizType,
       questions: data.questions || [],
       answers: data.answers || [],
-      score: data.score,
-      folderId: data.folderId || null,
       createdAt: createdAt,
       updatedAt: createdAt,
-      completedAt: data.completedAt?.toDate()
     };
+
+    // Only add optional fields if they have values
+    if (data.score !== undefined && data.score !== null) {
+      testDoc.score = data.score;
+    }
+    if (data.folderId) {
+      testDoc.folderId = data.folderId;
+    }
+    if (data.completedAt) {
+      testDoc.completedAt = data.completedAt.toDate();
+    }
     
     // Add to new collection
     const newRef = getTestsCollection(uid);
