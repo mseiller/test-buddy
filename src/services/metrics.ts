@@ -229,8 +229,12 @@ function inferQuizType(legacyType: string): string {
 // Get available folders for filter dropdown
 export async function getUserFolders(uid: string): Promise<Array<{id: string, name: string, color?: string}>> {
   try {
-    const foldersRef = collection(db, `users/${uid}/folders`);
-    const snapshot = await getDocs(query(foldersRef, orderBy('name')));
+    const foldersQuery = query(
+      collection(db, 'folders'),
+      where('userId', '==', uid),
+      orderBy('name')
+    );
+    const snapshot = await getDocs(foldersQuery);
     
     return snapshot.docs.map(doc => ({
       id: doc.id,
