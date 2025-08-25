@@ -106,6 +106,8 @@ export class FirebaseService {
         ...testHistory,
         createdAt: Timestamp.fromDate(testHistory.createdAt),
         completedAt: testHistory.completedAt ? Timestamp.fromDate(testHistory.completedAt) : null,
+        // Ensure folderId is null instead of undefined if not provided
+        folderId: testHistory.folderId || null,
       };
 
       console.log('Attempting to save test history for user:', testHistory.userId);

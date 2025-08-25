@@ -206,7 +206,7 @@ export default function Home() {
         score: calculatedScore,
         createdAt: new Date(),
         completedAt: isIncomplete ? undefined : new Date(), // Don't set completedAt for incomplete tests
-        folderId: selectedFolder?.id, // Include folder ID if test is created within a folder
+        ...(selectedFolder?.id && { folderId: selectedFolder.id }), // Only include folderId if it exists
       };
 
       const savedId = await FirebaseService.saveTestHistory(testHistory);
