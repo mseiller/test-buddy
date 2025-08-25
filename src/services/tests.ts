@@ -127,7 +127,19 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
   
   // Get existing tests to avoid duplicates
   const existingTests = await getAllTests(uid);
-  const existingTestNames = new Set(existingTests.map(t => t.testName + '_' + t.createdAt.getTime()));
+  const existingTestNames = new Set(existingTests.map(t => {
+    // Handle both Date objects and Firestore Timestamps
+    let timestamp: number;
+    if (t.createdAt instanceof Date) {
+      timestamp = t.createdAt.getTime();
+    } else if (t.createdAt && typeof (t.createdAt as any).toDate === 'function') {
+      timestamp = (t.createdAt as any).toDate().getTime();
+    } else {
+      // Fallback to current time if createdAt is invalid
+      timestamp = new Date().getTime();
+    }
+    return t.testName + '_' + timestamp;
+  }));
   
   let migratedCount = 0;
   
