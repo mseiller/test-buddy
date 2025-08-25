@@ -19,7 +19,7 @@ import QuizResults from '@/components/QuizResults';
 import TestHistory from '@/components/TestHistory';
 import FolderManager from '@/components/FolderManager';
 import MetricsDashboard from '@/components/MetricsDashboard';
-import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen, Folder as FolderIcon, BarChart3 } from 'lucide-react';
+import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen, Folder as FolderIcon, BarChart3, Crown } from 'lucide-react';
 
 type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history' | 'folders' | 'metrics';
 
@@ -452,6 +452,19 @@ export default function Home() {
                 >
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Analytics</span>
+                </button>
+              )}
+              
+              {/* Upgrade Button - Show for free and student plans */}
+              {(plan === 'free' || plan === 'student') && (
+                <button
+                  onClick={() => showUpgradePrompt('general')}
+                  className="flex items-center space-x-2 px-3 py-2 text-blue-600 hover:text-blue-700 transition-colors bg-blue-50 hover:bg-blue-100 rounded-lg"
+                >
+                  <Crown className="h-4 w-4" />
+                  <span className="hidden sm:inline font-medium">
+                    {plan === 'free' ? 'Upgrade' : 'Upgrade to Pro'}
+                  </span>
                 </button>
               )}
               
