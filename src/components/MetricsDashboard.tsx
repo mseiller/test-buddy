@@ -5,15 +5,21 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 
 interface MetricsDashboardProps {
   userId: string;
+  plan?: string;
 }
 
-export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
+export default function MetricsDashboard({ userId, plan = 'free' }: MetricsDashboardProps) {
   const [metrics, setMetrics] = useState<UserMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [folders, setFolders] = useState<Array<{id: string, name: string, color?: string}>>([]);
-  const [filters, setFilters] = useState<MetricsFilters>({});
+  
+  // For student plan, force 24-hour filter and disable changes
+  const isBasicAnalytics = plan === 'student';
+  const [filters, setFilters] = useState<MetricsFilters>(
+    isBasicAnalytics ? { days: 1 } : {}
+  );
 
   // Load folders on mount
   useEffect(() => {
@@ -84,66 +90,79 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
         </div>
         
 
-        {/* Filter Controls */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Time Period
-              </label>
-              <select
-                value={filters.days || 'all'}
-                onChange={(e) => setFilters(prev => ({ 
-                  ...prev, 
-                  days: e.target.value === 'all' ? undefined : parseInt(e.target.value)
-                }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              >
-                <option value="all">All Time</option>
-                <option value="1">Last 24 Hours</option>
-                <option value="3">Last 3 Days</option>
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="90">Last 3 Months</option>
-                <option value="180">Last 6 Months</option>
-                <option value="365">Last Year</option>
-              </select>
-            </div>
-            
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Folder
-              </label>
-              <select
-                value={filters.folderId || 'all'}
-                onChange={(e) => setFilters(prev => ({ 
-                  ...prev, 
-                  folderId: e.target.value === 'all' ? undefined : e.target.value
-                }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              >
-                <option value="all">All Folders</option>
-                <option value="">No Folder</option>
-                {folders.map(folder => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {(filters.days || filters.folderId) && (
-              <div className="flex items-end">
-                <button
-                  onClick={() => setFilters({})}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
+        {/* Filter Controls - Hidden for basic analytics (student plan) */}
+        {!isBasicAnalytics && (
+          <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Time Period
+                </label>
+                <select
+                  value={filters.days || 'all'}
+                  onChange={(e) => setFilters(prev => ({ 
+                    ...prev, 
+                    days: e.target.value === 'all' ? undefined : parseInt(e.target.value)
+                  }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
-                  Clear Filters
-                </button>
+                  <option value="all">All Time</option>
+                  <option value="1">Last 24 Hours</option>
+                  <option value="3">Last 3 Days</option>
+                  <option value="7">Last 7 Days</option>
+                  <option value="30">Last 30 Days</option>
+                  <option value="90">Last 3 Months</option>
+                  <option value="180">Last 6 Months</option>
+                  <option value="365">Last Year</option>
+                </select>
               </div>
-            )}
+              
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Folder
+                </label>
+                <select
+                  value={filters.folderId || 'all'}
+                  onChange={(e) => setFilters(prev => ({ 
+                    ...prev, 
+                    folderId: e.target.value === 'all' ? undefined : e.target.value
+                  }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                >
+                  <option value="all">All Folders</option>
+                  <option value="">No Folder</option>
+                  {folders.map(folder => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {(filters.days || filters.folderId) && (
+                <div className="flex items-end">
+                  <button
+                    onClick={() => setFilters({})}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+        
+        {/* Basic Analytics Notice for Student Plan */}
+        {isBasicAnalytics && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <div className="text-blue-800">
+                <strong>Basic Analytics</strong> - Showing last 24 hours only. Upgrade to Pro for advanced analytics with custom time periods and detailed insights.
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <KpiCard 
@@ -170,7 +189,7 @@ export default function MetricsDashboard({ userId }: MetricsDashboardProps) {
         </div>
       </div>
 
-      {chartData.length > 1 && (
+      {chartData.length > 1 && !isBasicAnalytics && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="font-medium text-gray-900 mb-4">
             Score Trend ({filters.days ? getTimePeriodLabel(filters.days) : 'Last 10 Quizzes'})
