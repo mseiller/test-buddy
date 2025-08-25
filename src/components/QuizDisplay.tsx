@@ -31,7 +31,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   useEffect(() => {
     const initialAnswers: UserAnswer[] = questions.map(q => ({
       questionId: q.id,
-      answer: '',
+      answer: q.type === 'MSQ' ? [] : '', // Initialize MSQ questions with empty array
       isCorrect: false,
     }));
     setAnswers(initialAnswers);
@@ -41,12 +41,34 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
     return answers.find(a => a.questionId === currentQuestion.id);
   };
 
-  const updateAnswer = (answer: string | number) => {
+  const updateAnswer = (answer: string | number | number[]) => {
     setAnswers(prev => prev.map(a => 
       a.questionId === currentQuestion.id 
         ? { ...a, answer } 
         : a
     ));
+  };
+
+  // Helper function for MSQ questions to toggle selection
+  const toggleMSQOption = (optionIndex: number) => {
+    const currentAnswer = getCurrentAnswer();
+    const currentSelections = Array.isArray(currentAnswer?.answer) ? currentAnswer.answer : [];
+    
+    let newSelections: number[];
+    if (currentSelections.includes(optionIndex)) {
+      // Remove selection
+      newSelections = currentSelections.filter(index => index !== optionIndex);
+    } else {
+      // Add selection (check limit if specified)
+      if (currentQuestion.selectCount && currentSelections.length >= currentQuestion.selectCount) {
+        // If at limit, replace first selection with new one (or could show warning)
+        newSelections = [...currentSelections.slice(1), optionIndex];
+      } else {
+        newSelections = [...currentSelections, optionIndex];
+      }
+    }
+    
+    updateAnswer(newSelections);
   };
 
   const toggleMarkForReview = () => {
@@ -128,6 +150,15 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
       if (question && question.type !== 'Essay') {
         if (question.type === 'MCQ' || question.type === 'True-False') {
           isCorrect = userAnswer.answer === question.correctAnswer;
+        } else if (question.type === 'MSQ') {
+          // For MSQ, compare arrays of selected indices
+          const userSelections = Array.isArray(userAnswer.answer) ? userAnswer.answer : [];
+          const correctSelections = Array.isArray(question.correctAnswer) ? question.correctAnswer : [];
+          
+          // Check if arrays are the same length and contain the same elements
+          isCorrect = userSelections.length === correctSelections.length &&
+                     userSelections.every(selection => correctSelections.includes(selection)) &&
+                     correctSelections.every(selection => userSelections.includes(selection));
         } else if (question.type === 'Fill-in-the-blank') {
           const userText = String(userAnswer.answer).toLowerCase().trim();
           const correctText = String(question.correctAnswer).toLowerCase().trim();
@@ -193,12 +224,65 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
           </div>
         );
 
+      case 'MSQ':
+        const selectedOptions = Array.isArray(currentAnswer?.answer) ? currentAnswer.answer : [];
+        const selectCountText = currentQuestion.selectCount 
+          ? `Select exactly ${currentQuestion.selectCount} answer${currentQuestion.selectCount !== 1 ? 's' : ''}`
+          : 'Select all that apply';
+        
+        return (
+          <div className="space-y-3">
+            <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded-lg mb-4">
+              {selectCountText} ({selectedOptions.length} selected)
+            </div>
+            {currentQuestion.options?.map((option, index) => {
+              const isSelected = selectedOptions.includes(index);
+              const isDisabled = !!(currentQuestion.selectCount && 
+                                    !isSelected && 
+                                    selectedOptions.length >= currentQuestion.selectCount);
+              
+              return (
+                <label
+                  key={index}
+                  className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : isDisabled
+                      ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    disabled={isDisabled}
+                    onChange={() => toggleMSQOption(index)}
+                    className="sr-only"
+                  />
+                  <div className={`w-4 h-4 border-2 mr-3 flex items-center justify-center ${
+                    isSelected
+                      ? 'border-indigo-500 bg-indigo-500'
+                      : 'border-gray-300'
+                  }`}>
+                    {isSelected && (
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className={`text-gray-900 ${isDisabled ? 'opacity-60' : ''}`}>{option}</span>
+                </label>
+              );
+            })}
+          </div>
+        );
+
       case 'Fill-in-the-blank':
         return (
           <div>
             <input
               type="text"
-              value={currentAnswer?.answer || ''}
+              value={Array.isArray(currentAnswer?.answer) ? '' : (currentAnswer?.answer || '')}
               onChange={(e) => updateAnswer(e.target.value)}
               placeholder="Type your answer here..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
@@ -213,7 +297,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
               <label
                 key={option}
                 className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  currentAnswer?.answer === index
+                  !Array.isArray(currentAnswer?.answer) && currentAnswer?.answer === index
                     ? 'border-indigo-500 bg-indigo-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
@@ -222,16 +306,16 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
                   type="radio"
                   name={`question-${currentQuestion.id}`}
                   value={index}
-                  checked={currentAnswer?.answer === index}
+                  checked={!Array.isArray(currentAnswer?.answer) && currentAnswer?.answer === index}
                   onChange={() => updateAnswer(index)}
                   className="sr-only"
                 />
                 <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
-                  currentAnswer?.answer === index
+                  !Array.isArray(currentAnswer?.answer) && currentAnswer?.answer === index
                     ? 'border-indigo-500 bg-indigo-500'
                     : 'border-gray-300'
                 }`}>
-                  {currentAnswer?.answer === index && (
+                  {!Array.isArray(currentAnswer?.answer) && currentAnswer?.answer === index && (
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   )}
                 </div>
@@ -245,7 +329,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
         return (
           <div>
             <textarea
-              value={currentAnswer?.answer || ''}
+              value={Array.isArray(currentAnswer?.answer) ? '' : (currentAnswer?.answer || '')}
               onChange={(e) => updateAnswer(e.target.value)}
               placeholder="Write your essay answer here..."
               rows={8}

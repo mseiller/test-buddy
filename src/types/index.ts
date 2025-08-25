@@ -6,21 +6,23 @@ export interface User {
   createdAt?: Date;
 }
 
-export type QuizType = 'MCQ' | 'Fill-in-the-blank' | 'Essay' | 'Mixed';
+export type QuizType = 'MCQ' | 'MSQ' | 'Fill-in-the-blank' | 'Essay' | 'Mixed';
 
 export interface Question {
   id: string;
-  type: 'MCQ' | 'Fill-in-the-blank' | 'Essay' | 'True-False';
+  type: 'MCQ' | 'MSQ' | 'Fill-in-the-blank' | 'Essay' | 'True-False';
   question: string;
-  options?: string[]; // For MCQ
-  correctAnswer?: string | number | boolean; // For MCQ (index), Fill-in-the-blank (text), or True-False (boolean)
+  options?: string[]; // For MCQ and MSQ
+  correctAnswer?: string | number | boolean | number[]; // MCQ (index), MSQ (array of indices), Fill-in-the-blank (text), True-False (boolean)
   explanation?: string;
   points: number;
+  // For MSQ questions - specify how many answers to select
+  selectCount?: number; // e.g., "Select 2 answers", "Select all that apply" (undefined = all that apply)
 }
 
 export interface UserAnswer {
   questionId: string;
-  answer: string | number;
+  answer: string | number | number[]; // Support multiple selections for MSQ
   isCorrect?: boolean;
   timeSpent?: number;
   markedForReview?: boolean; // Track if question is marked for review

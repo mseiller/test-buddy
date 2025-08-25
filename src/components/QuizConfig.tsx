@@ -25,9 +25,16 @@ export default function QuizConfig({ onConfigSubmit, loading = false, isRetake =
     {
       type: 'MCQ' as QuizType,
       label: 'Multiple Choice',
-      description: 'Questions with 4 answer options',
+      description: 'Questions with 4 answer options (select one)',
       icon: CheckSquare,
       color: 'bg-blue-500',
+    },
+    {
+      type: 'MSQ' as QuizType,
+      label: 'Multiple Select',
+      description: 'Questions requiring multiple answers (select 2+)',
+      icon: CheckSquare,
+      color: 'bg-indigo-500',
     },
     {
       type: 'Fill-in-the-blank' as QuizType,

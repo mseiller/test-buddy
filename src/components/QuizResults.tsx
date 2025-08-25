@@ -128,6 +128,18 @@ export default function QuizResults({
               <p className="text-gray-900">
                 {question.options?.[userAnswer.answer as number] || 'No answer selected'}
               </p>
+            ) : question.type === 'MSQ' ? (
+              <div className="text-gray-900">
+                {Array.isArray(userAnswer.answer) && userAnswer.answer.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {userAnswer.answer.map((index: number) => (
+                      <li key={index}>{question.options?.[index] || `Option ${index + 1}`}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No answers selected</p>
+                )}
+              </div>
             ) : (
               <p className="text-gray-900 whitespace-pre-wrap">
                 {userAnswer.answer || 'No answer provided'}
@@ -141,12 +153,27 @@ export default function QuizResults({
           <div className="mb-4">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Correct Answer:</h4>
             <div className="p-3 bg-green-100 rounded-lg">
-              <p className="text-gray-900">
-                {question.type === 'MCQ' 
-                  ? question.options?.[question.correctAnswer as number]
-                  : question.correctAnswer
-                }
-              </p>
+              {question.type === 'MCQ' ? (
+                <p className="text-gray-900">
+                  {question.options?.[question.correctAnswer as number]}
+                </p>
+              ) : question.type === 'MSQ' ? (
+                <div className="text-gray-900">
+                  {Array.isArray(question.correctAnswer) ? (
+                    <ul className="list-disc list-inside space-y-1">
+                      {question.correctAnswer.map((index: number) => (
+                        <li key={index}>{question.options?.[index] || `Option ${index + 1}`}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No correct answers defined</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-gray-900">
+                  {question.correctAnswer}
+                </p>
+              )}
             </div>
           </div>
         )}

@@ -82,6 +82,7 @@ Your job is to create dynamic practice tests from the provided study material.
 Rules:
 1. Mix up question types:
    - Multiple choice (4–5 options, with 1 correct answer).
+   - Multiple select (4–5 options, with 2+ correct answers - specify how many to select).
    - True/False.
    - Fill-in-the-blank (with short answers).
    - Short essay/analysis questions.
@@ -106,7 +107,17 @@ Rules:
     "points": 1
   },
   {
-    "id": "q2", 
+    "id": "q2",
+    "type": "MSQ", 
+    "question": "Which of the following are core principles of information security? (Select 2 answers)",
+    "options": ["Confidentiality", "Complexity", "Integrity", "Availability", "Authentication"],
+    "correctAnswer": [0, 2],
+    "selectCount": 2,
+    "explanation": "Confidentiality and Integrity are two of the three core CIA principles.",
+    "points": 1
+  },
+  {
+    "id": "q3", 
     "type": "Essay",
     "question": "A company's database was accidentally exposed. Analyze which principle of CIA is most impacted and propose three remediation steps.",
     "correctAnswer": "Confidentiality is most impacted. Steps: 1) Immediate containment, 2) Impact assessment, 3) Notification procedures",
@@ -271,6 +282,9 @@ CRITICAL OUTPUT FORMAT:
       case 'MCQ':
         typeInstruction = 'IMPORTANT: Create ONLY multiple choice questions with exactly 4-5 options each. Do NOT create any other question types.';
         break;
+      case 'MSQ':
+        typeInstruction = 'IMPORTANT: Create ONLY multiple select questions with exactly 4-5 options each where 2 or more options are correct. Include "selectCount" field specifying how many answers to select. Do NOT create any other question types.';
+        break;
       case 'Fill-in-the-blank':
         typeInstruction = 'IMPORTANT: Create ONLY fill-in-the-blank questions with clear, concise answers. Do NOT create any other question types.';
         break;
@@ -278,7 +292,7 @@ CRITICAL OUTPUT FORMAT:
         typeInstruction = 'IMPORTANT: Create ONLY essay questions that require analysis and critical thinking. Do NOT create any other question types.';
         break;
       case 'Mixed':
-        typeInstruction = 'Create a balanced mix of question types: multiple choice, true/false, fill-in-the-blank, and essay questions. Vary the difficulty levels.';
+        typeInstruction = 'Create a balanced mix of question types: multiple choice, multiple select, true/false, fill-in-the-blank, and essay questions. Vary the difficulty levels.';
         break;
       default:
         typeInstruction = 'Create a variety of question types appropriate for the content.';
