@@ -81,8 +81,7 @@ Your job is to create dynamic practice tests from the provided study material.
 
 Rules:
 1. Mix up question types:
-   - Multiple choice (4–5 options, with 1 correct answer).
-   - Multiple select (4–5 options, with 2+ correct answers - specify how many to select).
+   - Multiple choice (4–5 options, usually 1 correct answer, but use multiple correct answers when the question naturally requires it).
    - True/False.
    - Fill-in-the-blank (with short answers).
    - Short essay/analysis questions.
@@ -125,6 +124,12 @@ Rules:
     "points": 1
   }
 ]
+
+IMPORTANT: Use MSQ (multiple select) type ONLY when the question naturally requires multiple correct answers. Most questions should be regular MCQ (single answer). Only use MSQ for questions like:
+- "Select all that apply"
+- "Choose the 2 most important..."
+- "Which of these are valid..." (when multiple are correct)
+- "Identify all correct statements"
 
 5. Be creative but accurate. The goal is to challenge the learner and prevent rote memorization.
 
@@ -280,10 +285,7 @@ CRITICAL OUTPUT FORMAT:
     
     switch (quizType) {
       case 'MCQ':
-        typeInstruction = 'IMPORTANT: Create ONLY multiple choice questions with exactly 4-5 options each. Do NOT create any other question types.';
-        break;
-      case 'MSQ':
-        typeInstruction = 'IMPORTANT: Create ONLY multiple select questions with exactly 4-5 options each where 2 or more options are correct. Include "selectCount" field specifying how many answers to select. Do NOT create any other question types.';
+        typeInstruction = 'IMPORTANT: Create ONLY multiple choice questions with exactly 4-5 options each. Most questions should have 1 correct answer (type: "MCQ"), but when a question naturally requires multiple correct answers, use type: "MSQ" with correctAnswer as an array and include selectCount. Do NOT create any other question types.';
         break;
       case 'Fill-in-the-blank':
         typeInstruction = 'IMPORTANT: Create ONLY fill-in-the-blank questions with clear, concise answers. Do NOT create any other question types.';
@@ -292,7 +294,7 @@ CRITICAL OUTPUT FORMAT:
         typeInstruction = 'IMPORTANT: Create ONLY essay questions that require analysis and critical thinking. Do NOT create any other question types.';
         break;
       case 'Mixed':
-        typeInstruction = 'Create a balanced mix of question types: multiple choice, multiple select, true/false, fill-in-the-blank, and essay questions. Vary the difficulty levels.';
+        typeInstruction = 'Create a balanced mix of question types: multiple choice (mostly single answer, occasionally multiple select when appropriate), true/false, fill-in-the-blank, and essay questions. Vary the difficulty levels.';
         break;
       default:
         typeInstruction = 'Create a variety of question types appropriate for the content.';

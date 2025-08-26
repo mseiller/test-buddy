@@ -6,7 +6,7 @@ export interface User {
   createdAt?: Date;
 }
 
-export type QuizType = 'MCQ' | 'MSQ' | 'Fill-in-the-blank' | 'Essay' | 'Mixed';
+export type QuizType = 'MCQ' | 'Fill-in-the-blank' | 'Essay' | 'Mixed';
 
 export interface Question {
   id: string;
