@@ -7,6 +7,8 @@ export interface PlanFeatures {
   aiFeedback: boolean;
   metrics: false | "basic" | "advanced";
   model: string;
+  imageUpload: boolean;
+  imageModel: string;
   name: string;
   price: string;
   description: string;
@@ -20,6 +22,8 @@ export const PLAN_FEATURES: Record<UserPlan, PlanFeatures> = {
     aiFeedback: false,
     metrics: false,
     model: "qwen/qwen3-235b-a22b:free",
+    imageUpload: false,
+    imageModel: "",
     name: "Freemium",
     price: "Free",
     description: "Perfect for trying out Test Buddy"
@@ -31,6 +35,8 @@ export const PLAN_FEATURES: Record<UserPlan, PlanFeatures> = {
     aiFeedback: false,
     metrics: "basic",
     model: "qwen/qwen3-235b-a22b:free",
+    imageUpload: false,
+    imageModel: "",
     name: "Student",
     price: "$5/month",
     description: "Great for students with regular testing needs"
@@ -42,9 +48,11 @@ export const PLAN_FEATURES: Record<UserPlan, PlanFeatures> = {
     aiFeedback: true,
     metrics: "advanced",
     model: "openai/gpt-4o-mini",
+    imageUpload: true,
+    imageModel: "mistralai/mistral-small-3.2-24b-instruct:free",
     name: "Pro",
     price: "$15/month",
-    description: "Full access to all Test Buddy features"
+    description: "Full access to all Test Buddy features including image upload"
   }
 };
 

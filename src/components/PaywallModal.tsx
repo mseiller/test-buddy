@@ -74,6 +74,10 @@ export default function PaywallModal({
       items.push('GPT-4 powered questions');
     }
     
+    if (features.imageUpload) {
+      items.push('Image upload & OCR text extraction');
+    }
+    
     return items;
   };
 
@@ -81,6 +85,10 @@ export default function PaywallModal({
     if (currentPlan === 'free') {
       if (triggerFeature === 'retakes' || triggerFeature === 'usage') {
         return 'student';
+      }
+      // Image upload, folders, AI feedback require Pro
+      if (triggerFeature === 'imageUpload' || triggerFeature === 'folders' || triggerFeature === 'aiFeedback') {
+        return 'pro';
       }
       return 'pro'; // Default to pro for most features
     }

@@ -145,12 +145,19 @@ export default function Home() {
     setRetakeTestName('');
 
     try {
-      // Use plan-specific model
+      // Detect if this is an image-based upload
+      const isImageBased = uploadedFile.fileType === 'image' || 
+                          Boolean(uploadedFile.fileName.toLowerCase().match(/\.(jpg|jpeg|png)$/));
+      
+      // Use plan-specific model, or image model if image-based
+      const modelToUse = isImageBased ? planFeatures.imageModel || planFeatures.model : planFeatures.model;
+      
       const generatedQuestions = await OpenRouterService.generateQuiz(
         uploadedFile.extractedText,
         quizType,
         questionCount,
-        planFeatures.model // Pass the plan-specific model
+        modelToUse,
+        isImageBased
       );
       
       // Only increment usage counter AFTER successful generation
@@ -632,10 +639,11 @@ export default function Home() {
                 Upload a document and let AI generate personalized quiz questions for you
               </p>
             </div>
-            <FileUpload 
+                        <FileUpload
               onFileProcessed={handleFileProcessed}
               onError={handleFileError}
               selectedFolder={selectedFolder}
+              onUpgradeClick={() => showUpgradePrompt('imageUpload')}
             />
           </div>
         )}

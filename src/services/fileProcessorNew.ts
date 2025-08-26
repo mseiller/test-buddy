@@ -19,6 +19,10 @@ export class FileProcessorNew {
       case 'xls':
       case 'xlsx':
         return this.extractFromExcel(file);
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        return this.extractFromImage(file);
       default:
         throw new Error(`Unsupported file type: ${fileType}`);
     }
@@ -200,8 +204,53 @@ export class FileProcessorNew {
     });
   }
 
-  static validateFileType(fileName: string): boolean {
-    const supportedTypes = ['txt', 'pdf', 'doc', 'docx', 'csv', 'xls', 'xlsx'];
+  private static async extractFromImage(file: File): Promise<string> {
+    console.log('NEW IMAGE PROCESSOR - Starting image OCR for file:', file.name, 'Size:', file.size);
+    
+    // Check file size (max 10MB for images)
+    if (file.size > 10 * 1024 * 1024) {
+      console.log('NEW IMAGE PROCESSOR - File is larger than 10MB, cannot process');
+      throw new Error('Image file is too large (over 10MB). Please compress your image or use a smaller file.');
+    }
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      console.log('NEW IMAGE PROCESSOR - Sending image to OCR API endpoint...');
+      const response = await fetch('/api/extract-image', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      console.log('NEW IMAGE PROCESSOR - OCR API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('NEW IMAGE PROCESSOR - OCR API error response:', errorData);
+        throw new Error(errorData.error || 'Failed to extract text from image');
+      }
+      
+      const result = await response.json();
+      console.log('NEW IMAGE PROCESSOR - OCR extraction successful. Text length:', result.text?.length || 0);
+      
+      if (!result.text || result.text.trim().length === 0) {
+        console.warn('NEW IMAGE PROCESSOR - Image processed but contains no text content');
+        throw new Error('No text content found in the image. Please ensure the image contains readable text.');
+      }
+      
+      return result.text;
+    } catch (error) {
+      console.error('NEW IMAGE PROCESSOR - Image OCR failed:', error);
+      throw new Error(`Image text extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  static validateFileType(fileName: string, allowImages: boolean = false): boolean {
+    let supportedTypes = ['txt', 'pdf', 'doc', 'docx', 'csv', 'xls', 'xlsx'];
+    if (allowImages) {
+      supportedTypes = [...supportedTypes, 'jpg', 'jpeg', 'png'];
+    }
     const fileType = this.getFileType(fileName);
     return supportedTypes.includes(fileType);
   }

@@ -1,21 +1,28 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, File, X, CheckCircle, AlertCircle, Image } from 'lucide-react';
 import { FileProcessorNew } from '@/services/fileProcessorNew';
 import { FileUpload as FileUploadType } from '@/types';
+import { useUserPlan } from '@/contexts/UserPlanContext';
+import { getPlanFeatures } from '@/config/plans';
 
 interface FileUploadProps {
   onFileProcessed: (fileUpload: FileUploadType) => void;
   onError: (error: string) => void;
   selectedFolder?: { id: string; name: string; color?: string } | null;
+  onUpgradeClick?: () => void;
 }
 
-export default function FileUpload({ onFileProcessed, onError, selectedFolder }: FileUploadProps) {
+export default function FileUpload({ onFileProcessed, onError, selectedFolder, onUpgradeClick }: FileUploadProps) {
   const [dragOver, setDragOver] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { plan } = useUserPlan();
+  const planFeatures = getPlanFeatures(plan);
+  const canUploadImages = planFeatures.imageUpload;
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -60,13 +67,27 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder }:
   const handleMultipleFiles = async (files: File[]) => {
     // Validate all files
     for (const file of files) {
-      if (!FileProcessorNew.validateFileType(file.name)) {
-        onError(`Unsupported file type: ${file.name}. Please upload .txt, .pdf, .doc, .docx, .csv, .xls, or .xlsx files.`);
+      const isImage = file.type.startsWith('image/');
+      
+      // Check if image upload is allowed for this plan
+      if (isImage && !canUploadImages) {
+        onError(`Image upload is a Pro feature. ${file.name} requires a Pro subscription to process.`);
+        if (onUpgradeClick) onUpgradeClick();
+        return;
+      }
+      
+      if (!FileProcessorNew.validateFileType(file.name, canUploadImages)) {
+        const supportedTypes = canUploadImages 
+          ? '.txt, .pdf, .doc, .docx, .csv, .xls, .xlsx, .jpg, .jpeg, .png'
+          : '.txt, .pdf, .doc, .docx, .csv, .xls, .xlsx';
+        onError(`Unsupported file type: ${file.name}. Please upload ${supportedTypes} files.`);
         return;
       }
 
-      if (file.size > FileProcessorNew.getMaxFileSize()) {
-                  onError(`File too large: ${file.name}. Please upload files smaller than 15MB.`);
+      const maxSize = isImage ? 10 * 1024 * 1024 : FileProcessorNew.getMaxFileSize(); // 10MB for images, 15MB for others
+      if (file.size > maxSize) {
+        const sizeLimit = isImage ? '10MB' : '15MB';
+        onError(`File too large: ${file.name}. Please upload files smaller than ${sizeLimit}.`);
         return;
       }
     }
@@ -90,11 +111,23 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder }:
         return;
       }
 
+      // Determine file type
+      let fileType = 'multiple';
+      if (files.length === 1) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+          fileType = 'image';
+        } else {
+          const extension = file.name.split('.').pop()?.toLowerCase() || '';
+          fileType = extension;
+        }
+      }
+
       const fileUpload: FileUploadType = {
         file: files[0], // Use first file as representative
         extractedText: combinedText,
         fileName: files.length === 1 ? files[0].name : `${files.length} files: ${fileNames.join(', ')}`,
-        fileType: 'multiple',
+        fileType: fileType,
       };
 
       setUploadedFile(fileUpload);
@@ -118,7 +151,11 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder }:
   };
 
   const getSupportedFormats = () => {
-    return ['.txt', '.pdf', '.doc', '.docx', '.csv', '.xls', '.xlsx'];
+    const baseFormats = ['.txt', '.pdf', '.doc', '.docx', '.csv', '.xls', '.xlsx'];
+    if (canUploadImages) {
+      return [...baseFormats, '.jpg', '.jpeg', '.png'];
+    }
+    return baseFormats;
   };
 
   if (uploadedFile) {
@@ -215,8 +252,21 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder }:
               <div className="mt-4 text-xs text-gray-500">
                 <p className="mb-1">Supported formats:</p>
                 <p>{getSupportedFormats().join(', ')}</p>
-                <p className="mt-1">Maximum file size: 15MB (PDFs limited to 4MB)</p>
-                <p className="mt-1 text-indigo-600">Note: Multiple files will be combined</p>
+                <div className="mt-1 space-y-1">
+                  <p>Maximum file size: 15MB (PDFs limited to 4MB{canUploadImages ? ', Images limited to 10MB' : ''})</p>
+                  {canUploadImages && (
+                    <p className="text-green-600 flex items-center">
+                      <Image className="h-3 w-3 mr-1" />
+                      Pro Feature: Image text extraction enabled
+                    </p>
+                  )}
+                  {!canUploadImages && (
+                    <p className="text-amber-600">
+                      📸 Image upload (.jpg, .png) available with Pro plan
+                    </p>
+                  )}
+                  <p className="mt-1 text-indigo-600">Note: Multiple files will be combined</p>
+                </div>
               </div>
             </>
           )}
