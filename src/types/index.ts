@@ -22,7 +22,7 @@ export interface Question {
 
 export interface UserAnswer {
   questionId: string;
-  answer: string | number | number[]; // Support multiple selections for MSQ
+  answer: string | number | number[] | boolean; // Support multiple selections for MSQ and boolean for True-False
   isCorrect?: boolean;
   timeSpent?: number;
   markedForReview?: boolean; // Track if question is marked for review
