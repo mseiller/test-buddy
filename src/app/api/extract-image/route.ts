@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     const base64Image = buffer.toString('base64');
 
     // Use OpenRouter's vision model to extract text
-    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    const openRouterApiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
     if (!openRouterApiKey) {
-      console.error('OPENROUTER_API_KEY not configured');
+      console.error('NEXT_PUBLIC_OPENROUTER_API_KEY not configured');
       return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
     }
 
