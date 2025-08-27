@@ -568,4 +568,32 @@ export class CacheService {
       metadata: error ? { error } : undefined
     });
   }
+
+  /**
+   * Update cache configuration
+   */
+  async updateCacheConfig(config: Partial<CacheServiceConfig>): Promise<void> {
+    this.config = { ...this.config, ...config };
+    console.log('Cache configuration updated:', config);
+  }
+
+  /**
+   * Enable cache warming
+   */
+  async enableCacheWarming(): Promise<void> {
+    if (this.warmingService) {
+      await this.warmingService.enableWarming();
+      console.log('Cache warming enabled');
+    }
+  }
+
+  /**
+   * Disable cache warming
+   */
+  async disableCacheWarming(): Promise<void> {
+    if (this.warmingService) {
+      await this.warmingService.disableWarming();
+      console.log('Cache warming disabled');
+    }
+  }
 }

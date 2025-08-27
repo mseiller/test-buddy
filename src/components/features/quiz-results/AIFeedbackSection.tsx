@@ -106,7 +106,7 @@ export default function AIFeedbackSection({
               <h3 className="text-lg font-medium text-green-700 mb-2">Strengths</h3>
               <ul className="list-disc list-inside space-y-1">
                 {feedback.strengths.map((strength, index) => (
-                  <li key={index} className="text-sm text-gray-700">{strength}</li>
+                  <li key={`strength-${index}`} className="text-sm text-gray-700">{strength}</li>
                 ))}
               </ul>
             </div>
@@ -118,7 +118,7 @@ export default function AIFeedbackSection({
               <h3 className="text-lg font-medium text-orange-700 mb-2">Areas to Focus On</h3>
               <div className="space-y-4">
                 {feedback.focus_areas.map((area, index) => (
-                  <div key={index} className="border-l-4 border-orange-200 pl-4">
+                  <div key={`focus-area-${index}`} className="border-l-4 border-orange-200 pl-4">
                     <h4 className="font-medium text-gray-900 mb-1">{area.topic}</h4>
                     <p className="text-sm text-gray-600 mb-2">{area.why}</p>
                     {area.examples && area.examples.length > 0 && (
@@ -126,7 +126,7 @@ export default function AIFeedbackSection({
                         <p className="text-xs font-medium text-gray-500 mb-1">Examples:</p>
                         <ul className="list-disc list-inside text-xs text-gray-600">
                           {area.examples.map((example, exIndex) => (
-                            <li key={exIndex}>{example}</li>
+                            <li key={`example-${exIndex}`}>{example}</li>
                           ))}
                         </ul>
                       </div>
@@ -136,7 +136,7 @@ export default function AIFeedbackSection({
                         <p className="text-xs font-medium text-gray-500 mb-1">Study Actions:</p>
                         <ul className="list-disc list-inside text-xs text-gray-600">
                           {area.study_actions.map((action, actionIndex) => (
-                            <li key={actionIndex}>{action}</li>
+                            <li key={`action-${actionIndex}`}>{action}</li>
                           ))}
                         </ul>
                       </div>

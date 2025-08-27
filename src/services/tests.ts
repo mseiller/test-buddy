@@ -138,7 +138,7 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
       // Fallback to current time if createdAt is invalid
       timestamp = new Date().getTime();
     }
-    return t.testName + '_' + timestamp;
+    return `${t.testName  }_${  timestamp}`;
   }));
   
   let migratedCount = 0;
@@ -148,7 +148,7 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
     
     // Create unique key to avoid duplicates
     const createdAt = data.createdAt?.toDate() || new Date();
-    const uniqueKey = data.testName + '_' + createdAt.getTime();
+    const uniqueKey = `${data.testName  }_${  createdAt.getTime()}`;
     
     if (existingTestNames.has(uniqueKey)) {
       console.log(`Skipping duplicate test: ${data.testName}`);
@@ -166,7 +166,7 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
       questions: data.questions || [],
       answers: data.answers || [],
       folderId: null, // Default to null for unorganized tests
-      createdAt: createdAt,
+      createdAt,
       updatedAt: createdAt,
     };
 

@@ -20,6 +20,11 @@ import TestHistory from '@/components/TestHistory';
 import FolderManager from '@/components/FolderManager';
 import MetricsDashboard from '@/components/MetricsDashboard';
 import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen, Folder as FolderIcon, BarChart3, Crown } from 'lucide-react';
+import { ErrorManagementService } from '@/services/errors';
+import SecurityManager from '@/services/security';
+import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
+import { AccessibilityToggle, AccessibilityStatusBar } from '@/components/AccessibilityToggle';
+import { SkipLinks } from '@/components/SkipLink';
 
 type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history' | 'folders' | 'metrics';
 
@@ -28,6 +33,19 @@ export default function Home() {
   const { plan, planFeatures, loading: planLoading, refreshUsage, refreshProfile } = useUserPlan();
   const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
   const { isPaywallOpen, triggerFeature, showPaywall, hidePaywall, showUpgradePrompt } = usePaywall();
+  
+  // Initialize error management service
+  const errorManager = ErrorManagementService.getInstance({
+    enableErrorHandler: true,
+    enableReporting: true,
+    enableFallbacks: true,
+    enableBreadcrumbs: true,
+    enablePerformanceData: true,
+    logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'error'
+  });
+
+  // Initialize security manager
+  const securityManager = SecurityManager.getInstance();
   const [showPlanManager, setShowPlanManager] = useState(false);
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
@@ -44,6 +62,20 @@ export default function Home() {
   const [selectedFolder, setSelectedFolder] = useState<Folder | null | undefined>(undefined);
   const [showFolderSelection, setShowFolderSelection] = useState(false);
   const [availableFolders, setAvailableFolders] = useState<Folder[]>([]);
+
+  // Helper function to track navigation changes
+  const navigateToState = (newState: AppState) => {
+    errorManager.addNavigationBreadcrumb(appState, newState);
+    if (user?.uid) {
+      securityManager.logSecurityEvent({
+        userId: user.uid,
+        eventType: 'navigation',
+        details: { from: appState, to: newState },
+        severity: 'low'
+      });
+    }
+    setAppState(newState);
+  };
 
   // Check authentication state on mount
   useEffect(() => {
@@ -145,6 +177,14 @@ export default function Home() {
     setRetakeTestName('');
 
     try {
+      // Add breadcrumb for quiz generation start
+      errorManager.addUserActionBreadcrumb('start-quiz-generation', 'quiz-config', {
+        quizType,
+        questionCount,
+        fileName: uploadedFile.fileName,
+        fileType: uploadedFile.fileType
+      });
+
       // Detect if this is an image-based upload
       const isImageBased = uploadedFile.fileType === 'image' || 
                           Boolean(uploadedFile.fileName.toLowerCase().match(/\.(jpg|jpeg|png)$/));
@@ -152,13 +192,66 @@ export default function Home() {
       // Use plan-specific model, or image model if image-based
       const modelToUse = isImageBased ? planFeatures.imageModel || planFeatures.model : planFeatures.model;
       
-      const generatedQuestions = await OpenRouterService.generateQuiz(
-        uploadedFile.extractedText,
-        quizType,
-        questionCount,
-        modelToUse,
-        isImageBased
+      // Execute quiz generation with error protection and fallback
+      const generatedQuestions = await errorManager.executeWithProtection(
+        async () => {
+          return await OpenRouterService.generateQuiz(
+            uploadedFile.extractedText,
+            quizType,
+            questionCount,
+            modelToUse,
+            isImageBased
+          );
+        },
+        {
+          operationName: 'quiz-generation',
+          component: 'QuizConfig',
+          userId: user.uid,
+          maxRetries: 2,
+          enableCircuitBreaker: true,
+          severity: 'high',
+          category: 'business',
+          fallbackValue: [] // Empty array as fallback
+        }
       );
+
+      // If no questions were generated, try with fallback strategy
+      if (!generatedQuestions || generatedQuestions.length === 0) {
+        const fallbackResult = await errorManager.handleError(
+          new Error('No questions generated'),
+          {
+            operation: 'quiz-generation-fallback',
+            component: 'QuizConfig',
+            userId: user.uid,
+            severity: 'high',
+            category: 'business',
+            enableFallback: true,
+            fallbackData: {
+              questionCount: Math.min(questionCount, 10), // Fallback to fewer questions
+              simplified: true
+            }
+          }
+        );
+
+        if (fallbackResult.success && fallbackResult.data) {
+          setError('Using simplified quiz generation due to service limitations. Generating fewer questions.');
+          // Try again with simplified parameters
+          const fallbackQuestions = await OpenRouterService.generateQuiz(
+            uploadedFile.extractedText,
+            quizType,
+            Math.min(questionCount, 10),
+            modelToUse,
+            isImageBased
+          );
+          if (fallbackQuestions && fallbackQuestions.length > 0) {
+            setQuestions(fallbackQuestions);
+            setAppState('quiz');
+            return;
+          }
+        }
+        
+        throw new Error('Failed to generate quiz questions even with fallback strategies');
+      }
       
       // Only increment usage counter AFTER successful generation
       await incrementTestUsage(user.uid);
@@ -173,8 +266,41 @@ export default function Home() {
       
       // Refresh usage data to update UI
       await refreshUsage();
+
+      // Add success breadcrumb
+      errorManager.addUserActionBreadcrumb('quiz-generation-success', 'quiz-config', {
+        questionsGenerated: generatedQuestions.length,
+        requestedCount: questionCount
+      });
     } catch (error: any) {
-      setError(error.message || 'Failed to generate quiz questions');
+      // Handle error with comprehensive error management
+      const errorResult = await errorManager.handleError(error, {
+        operation: 'quiz-generation',
+        component: 'QuizConfig',
+        userId: user.uid,
+        severity: 'high',
+        category: 'business'
+      });
+
+      if (errorResult.success && errorResult.data) {
+        // Use fallback data if available
+        setError('Using fallback quiz generation method');
+        if (Array.isArray(errorResult.data) && errorResult.data.length > 0) {
+          setQuestions(errorResult.data);
+          setAppState('quiz');
+          return;
+        }
+      }
+
+      // Set user-friendly error message
+      const userMessage = error.message || 'Failed to generate quiz questions. Please try again or contact support if the problem persists.';
+      setError(userMessage);
+      
+      // Add error breadcrumb
+      errorManager.addUserActionBreadcrumb('quiz-generation-failed', 'quiz-config', {
+        errorMessage: error.message,
+        errorType: error.constructor.name
+      });
     } finally {
       setLoading(false);
     }
@@ -224,7 +350,7 @@ export default function Home() {
         try {
           await logResult(user.uid, {
             testName,
-            folderId: selectedFolder?.id,
+            folderId: selectedFolder?.id || '',
             score: calculatedScore,
             timeTaken,
             quizType: inferQuizTypeFrom(questions),
@@ -389,8 +515,15 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <AccessibilityProvider>
+      <div className="min-h-screen bg-gray-50" data-testid="app-container">
+        {/* Skip Links for Accessibility */}
+        <SkipLinks />
+        
+        {/* Accessibility Status Bar */}
+        <AccessibilityStatusBar />
+        
+        {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -400,6 +533,9 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Accessibility Toggle */}
+              <AccessibilityToggle />
+              
               {/* Plan and Usage Display */}
               {!planLoading && (
                 <div className="hidden lg:flex items-center space-x-3">
@@ -642,7 +778,7 @@ export default function Home() {
                         <FileUpload
               onFileProcessed={handleFileProcessed}
               onError={handleFileError}
-              selectedFolder={selectedFolder}
+              selectedFolder={selectedFolder || null}
               onUpgradeClick={() => showUpgradePrompt('imageUpload')}
             />
           </div>
@@ -897,5 +1033,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
+    </AccessibilityProvider>
   );
 }

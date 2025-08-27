@@ -4,7 +4,7 @@
  */
 
 import { FirebaseError, FirebaseErrorCode } from './FirebaseError';
-import { TestHistory, User, Folder, Question, UserAnswer } from '@/types';
+import { TestHistory, Folder, Question, UserAnswer } from '@/types';
 
 export class FirebaseValidation {
   /**

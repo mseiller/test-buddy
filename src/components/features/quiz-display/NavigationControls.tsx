@@ -49,9 +49,7 @@ export default function NavigationControls({
     ? reviewQuestions.indexOf(currentQuestionId) === 0 
     : isFirstQuestion;
   
-  const isNextDisabled = isReviewing 
-    ? reviewQuestions.indexOf(currentQuestionId) === reviewQuestions.length - 1
-    : isLastQuestion;
+
 
   return (
     <div className="flex items-center justify-between">

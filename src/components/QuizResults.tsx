@@ -27,7 +27,6 @@ interface QuizResultsProps {
 export default function QuizResults({ 
   questions, 
   answers, 
-  score, 
   timeTaken, 
   testName, 
   onRetakeQuiz, 

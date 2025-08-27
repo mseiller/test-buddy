@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { History, Clock, FileText, Trophy, Trash2, Eye, Calendar, RotateCcw } from 'lucide-react';
+import { History, FileText, Trophy, Trash2, Eye, Calendar, RotateCcw } from 'lucide-react';
 import { TestHistory as TestHistoryType } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
 
@@ -18,7 +18,7 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
 
   useEffect(() => {
     loadTestHistory();
-  }, [userId]);
+  }, [userId, loadTestHistory]);
 
   const loadTestHistory = async () => {
     try {
@@ -55,11 +55,7 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
     }).format(date);
   };
 
-  const formatDuration = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
+
 
   const calculateScore = (test: TestHistoryType) => {
     if (!test.answers || test.answers.length === 0) return 0;

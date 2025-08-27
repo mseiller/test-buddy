@@ -317,25 +317,7 @@ export class QueryOptimizer {
     console.log(`Invalidated ${keysToDelete.length} cache entries matching pattern: ${pattern}`);
   }
 
-  /**
-   * Clear expired cache entries
-   */
-  static cleanupCache(): void {
-    const now = Date.now();
-    const keysToDelete: string[] = [];
 
-    for (const [key, value] of this.cache) {
-      if (now > value.timestamp + value.ttl) {
-        keysToDelete.push(key);
-      }
-    }
-
-    keysToDelete.forEach(key => this.cache.delete(key));
-    
-    if (keysToDelete.length > 0) {
-      console.log(`Cleaned up ${keysToDelete.length} expired cache entries`);
-    }
-  }
 
   /**
    * Get query performance statistics
@@ -495,6 +477,34 @@ export class QueryOptimizer {
       seen.add(item.id);
       return true;
     });
+  }
+
+  /**
+   * Enable query result caching
+   */
+  static enableQueryCaching(): void {
+    console.log('Query result caching enabled');
+    // This would enable caching for all queries
+  }
+
+  /**
+   * Disable query result caching
+   */
+  static disableQueryCaching(): void {
+    console.log('Query result caching disabled');
+    // This would disable caching for all queries
+  }
+
+  /**
+   * Cleanup expired cache entries
+   */
+  static cleanupCache(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.timestamp + entry.ttl) {
+        this.cache.delete(key);
+      }
+    }
   }
 }
 

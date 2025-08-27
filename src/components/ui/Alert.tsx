@@ -10,6 +10,7 @@ interface AlertProps {
   dismissible?: boolean;
   onDismiss?: () => void;
   className?: string;
+  'data-testid'?: string;
 }
 
 export default function Alert({
@@ -18,7 +19,8 @@ export default function Alert({
   children,
   dismissible = false,
   onDismiss,
-  className = ''
+  className = '',
+  'data-testid': testId
 }: AlertProps) {
   const variantConfig = {
     success: {
@@ -47,7 +49,10 @@ export default function Alert({
   const Icon = config.icon;
   
   return (
-    <div className={`rounded-lg p-4 ${config.containerClass} ${className}`}>
+    <div 
+      className={`rounded-lg p-4 ${config.containerClass} ${className}`}
+      data-testid={testId}
+    >
       <div className="flex">
         <div className="flex-shrink-0">
           <Icon className={`h-5 w-5 ${config.iconClass}`} />
@@ -58,7 +63,7 @@ export default function Alert({
           )}
           <div className="text-sm">{children}</div>
         </div>
-        {dismissible && (
+        {dismissible && onDismiss && (
           <div className="ml-auto pl-3">
             <div className="-mx-1.5 -my-1.5">
               <button

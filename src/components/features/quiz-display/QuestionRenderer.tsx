@@ -43,7 +43,7 @@ export default function QuestionRenderer({
         return (
           <div className="space-y-3">
             {question.options?.map((option, index) => (
-              <label key={index} className="flex items-center space-x-3 cursor-pointer group">
+              <label key={`${question.id}-option-${index}`} className="flex items-center space-x-3 cursor-pointer group">
                 <input
                   type="radio"
                   name={`question-${question.id}`}
@@ -77,7 +77,7 @@ export default function QuestionRenderer({
               const isDisabled = !!(selectCount && !isSelected && currentSelections.length >= selectCount);
               
               return (
-                <label key={index} className={`flex items-center space-x-3 cursor-pointer group ${isDisabled ? 'opacity-50' : ''}`}>
+                <label key={`${question.id}-option-${index}`} className={`flex items-center space-x-3 cursor-pointer group ${isDisabled ? 'opacity-50' : ''}`}>
                   <input
                     type="checkbox"
                     checked={isSelected}

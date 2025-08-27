@@ -1,0 +1,34 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/__tests__/**",
+    "**/node_modules/**"
+  ],
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "includeVersion": true,
+  "theme": "default",
+  "name": "Test Buddy API Documentation",
+  "readme": "README.md",
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Core Services",
+    "Firebase Services",
+    "Security Services",
+    "Performance Services",
+    "Error Handling",
+    "Validation Services",
+    "Components",
+    "Hooks",
+    "Types",
+    "*"
+  ],
+  "hideGenerator": true,
+  "sort": ["source-order"]
+}

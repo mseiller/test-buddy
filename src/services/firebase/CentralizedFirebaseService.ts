@@ -8,8 +8,6 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  User as FirebaseUser,
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
@@ -26,7 +24,6 @@ import {
   query,
   where,
   orderBy,
-  Timestamp,
   writeBatch,
   runTransaction,
   serverTimestamp,
@@ -38,7 +35,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { TestHistory, User, Folder } from '@/types';
 import { UserPlan } from '@/config/plans';
-import { FirebaseError, FirebaseErrorCode } from './FirebaseError';
+import { FirebaseError } from './FirebaseError';
 import { FirebaseRetry, RetryOptions } from './FirebaseRetry';
 import { FirebaseValidation } from './FirebaseValidation';
 
@@ -322,7 +319,6 @@ export class CentralizedFirebaseService {
         const {
           orderByField = 'createdAt',
           orderDirection = 'desc',
-          limitCount = 20,
           filters = [],
           pageSize = 20,
           lastDoc

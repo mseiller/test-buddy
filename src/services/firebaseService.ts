@@ -146,7 +146,7 @@ export class FirebaseService {
         throw new Error('Network error - unable to save test history');
       } else {
         console.error('Unknown Firestore error:', error.code, error.message);
-        throw new Error('Failed to save test history: ' + error.message);
+        throw new Error(`Failed to save test history: ${  error.message}`);
       }
     }
   }

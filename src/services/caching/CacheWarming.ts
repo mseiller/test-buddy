@@ -759,4 +759,39 @@ export class CacheWarming {
   private generateJobId(): string {
     return `warming_job_${Date.now()}_${Math.random().toString(36).substring(2)}`;
   }
+
+  /**
+   * Enable cache warming
+   */
+  async enableWarming(): Promise<void> {
+    console.log('Cache warming enabled');
+    this.isProcessing = true;
+    
+    // Start job processor if not already running
+    this.startJobProcessor();
+    
+    // Enable all rules
+    for (const rule of this.rules.values()) {
+      rule.enabled = true;
+    }
+  }
+
+  /**
+   * Disable cache warming
+   */
+  async disableWarming(): Promise<void> {
+    console.log('Cache warming disabled');
+    this.isProcessing = false;
+    
+    // Disable all rules
+    for (const rule of this.rules.values()) {
+      rule.enabled = false;
+    }
+    
+    // Cancel all scheduled jobs
+    for (const timeout of this.scheduledJobs.values()) {
+      clearTimeout(timeout);
+    }
+    this.scheduledJobs.clear();
+  }
 }

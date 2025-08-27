@@ -1,18 +1,146 @@
-rules_version='2'
+rules_version='2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidEmail(email) {
+      return email.matches('^[^@]+@[^@]+\\.[^@]+$');
+    }
+    
+    function isValidPlan(plan) {
+      return plan in ['student', 'pro', 'enterprise'];
+    }
+    
+    function isValidTimestamp(timestamp) {
+      return timestamp is timestamp && timestamp <= request.time;
+    }
+    
+    function isValidUsageRecord(usage) {
+      return usage is map &&
+             usage.testsGenerated is number &&
+             usage.testsGenerated >= 0 &&
+             usage.lastReset is timestamp &&
+             isValidTimestamp(usage.lastReset);
+    }
+    
+    function isValidUserProfile(profile) {
+      return profile is map &&
+             profile.email is string &&
+             isValidEmail(profile.email) &&
+             profile.plan is string &&
+             isValidPlan(profile.plan) &&
+             profile.createdAt is timestamp &&
+             isValidTimestamp(profile.createdAt) &&
+             (!('updatedAt' in profile) || isValidTimestamp(profile.updatedAt));
+    }
+    
+    function isValidTest(test) {
+      return test is map &&
+             test.name is string &&
+             test.name.size() > 0 &&
+             test.name.size() <= 200 &&
+             test.questions is list &&
+             test.questions.size() > 0 &&
+             test.questions.size() <= 200 &&
+             test.createdAt is timestamp &&
+             isValidTimestamp(test.createdAt) &&
+             (!('completedAt' in test) || isValidTimestamp(test.completedAt)) &&
+             (!('folderId' in test) || test.folderId is string || test.folderId == null);
+    }
+    
+    function isValidFolder(folder) {
+      return folder is map &&
+             folder.name is string &&
+             folder.name.size() > 0 &&
+             folder.name.size() <= 100 &&
+             folder.createdAt is timestamp &&
+             isValidTimestamp(folder.createdAt) &&
+             (!('updatedAt' in folder) || isValidTimestamp(folder.updatedAt));
+    }
+    
+    function isValidTestHistory(history) {
+      return history is map &&
+             history.testName is string &&
+             history.testName.size() > 0 &&
+             history.testName.size() <= 200 &&
+             history.score is number &&
+             history.score >= 0 &&
+             history.score <= 100 &&
+             history.totalQuestions is number &&
+             history.totalQuestions > 0 &&
+             history.correctAnswers is number &&
+             history.correctAnswers >= 0 &&
+             history.correctAnswers <= history.totalQuestions &&
+             history.completedAt is timestamp &&
+             isValidTimestamp(history.completedAt) &&
+             (!('timeTaken' in history) || history.timeTaken is number && history.timeTaken >= 0);
+    }
+
+    // User profiles - users can only read/write their own profile
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUserProfile(resource.data);
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUserProfile(resource.data);
+    }
+    
+    // Usage records - users can only read/write their own usage
+    match /users/{userId}/usage/{usageId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUsageRecord(resource.data);
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUsageRecord(resource.data);
+    }
+    
+    // Tests - users can only access their own tests
+    match /users/{userId}/tests/{testId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) && isValidTest(resource.data);
+      allow update: if isAuthenticated() && isOwner(userId) && isValidTest(resource.data);
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Test history - users can only access their own history
+    match /users/{userId}/testHistory/{historyId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) && isValidTestHistory(resource.data);
+      allow update: if isAuthenticated() && isOwner(userId) && isValidTestHistory(resource.data);
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Global folders - users can only access their own folders
+    match /folders/{folderId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidFolder(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && isValidFolder(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Global test history - users can only access their own history
+    match /testHistory/{historyId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidTestHistory(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && isValidTestHistory(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Global results - users can only access their own results
+    match /results/{resultId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Deny all other access
     match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2025, 9, 20);
+      allow read, write: if false;
     }
   }
 }

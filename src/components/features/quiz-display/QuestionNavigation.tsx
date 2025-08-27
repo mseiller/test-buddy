@@ -44,7 +44,7 @@ export default function QuestionNavigation({
           
           return (
             <button
-              key={index}
+              key={question.id}
               onClick={() => onGoToQuestion(index)}
               disabled={isReviewing && !isInReviewList}
               className={`w-10 h-10 rounded-lg text-sm font-medium transition-all relative ${

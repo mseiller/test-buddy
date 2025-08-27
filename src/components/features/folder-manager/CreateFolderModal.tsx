@@ -37,7 +37,7 @@ export default function CreateFolderModal({
       setDescription('');
       setSelectedColor(colorOptions[0]);
       onClose();
-    } catch (error) {
+    } catch {
       // Error handling is done in parent component
     }
   };

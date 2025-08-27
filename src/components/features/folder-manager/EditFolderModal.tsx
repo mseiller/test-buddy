@@ -45,7 +45,7 @@ export default function EditFolderModal({
     try {
       await onSubmit(folder.id, name.trim(), description.trim(), selectedColor);
       onClose();
-    } catch (error) {
+    } catch {
       // Error handling is done in parent component
     }
   };

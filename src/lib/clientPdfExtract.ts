@@ -37,7 +37,7 @@ export async function extractPdfText(file: File): Promise<ClientPdfResult> {
         .map((item: any) => item.str)
         .join(' ');
       
-      fullText += pageText + '\n';
+      fullText += `${pageText  }\n`;
       
       console.log(`Page ${pageNum} text length:`, pageText.length);
     }

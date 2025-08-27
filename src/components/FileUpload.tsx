@@ -127,7 +127,7 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
         file: files[0], // Use first file as representative
         extractedText: combinedText,
         fileName: files.length === 1 ? files[0].name : `${files.length} files: ${fileNames.join(', ')}`,
-        fileType: fileType,
+        fileType,
       };
 
       setUploadedFile(fileUpload);

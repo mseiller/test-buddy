@@ -6,12 +6,14 @@ interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   color?: 'primary' | 'white' | 'gray';
   className?: string;
+  'data-testid'?: string;
 }
 
 export default function LoadingSpinner({ 
   size = 'md', 
   color = 'primary', 
-  className = '' 
+  className = '',
+  'data-testid': testId
 }: LoadingSpinnerProps) {
   const sizeClasses = {
     sm: 'h-4 w-4',
@@ -27,5 +29,5 @@ export default function LoadingSpinner({
   
   const classes = `animate-spin rounded-full border-2 border-t-transparent ${sizeClasses[size]} ${colorClasses[color]} ${className}`.trim();
   
-  return <div className={classes} />;
+  return <div className={classes} data-testid={testId} />;
 }

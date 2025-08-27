@@ -1,10 +1,55 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidFileType(contentType) {
+      return contentType.matches('^(text/|application/pdf|application/vnd.openxmlformats-officedocument|application/vnd.ms-excel|image/(jpeg|jpg|png))');
+    }
+    
+    function isValidFileSize(size) {
+      // Max 50MB for documents, 10MB for images
+      return size <= 50 * 1024 * 1024;
+    }
+    
+    function isValidFileName(name) {
+      return name.matches('^[a-zA-Z0-9._-]+$') && name.size() <= 255;
+    }
+    
+    function isUserFile(path) {
+      return path.matches('^users/{userId}/.*');
+    }
+    
+    function extractUserId(path) {
+      return path.split('/')[1];
+    }
+
+    // User files - users can only access their own files
+    match /users/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      isValidFileType(request.resource.contentType) &&
+                      isValidFileSize(request.resource.size) &&
+                      isValidFileName(request.resource.name);
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Temporary uploads - allow authenticated users to upload to temp directory
+    match /temp/{userId}/{allPaths=**} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Deny all other access
     match /{allPaths=**} {
       allow read, write: if false;
     }

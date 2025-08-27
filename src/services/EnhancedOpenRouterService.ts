@@ -117,7 +117,7 @@ export class EnhancedOpenRouterService {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: model,
+          model,
           messages: [
             {
               role: 'system',

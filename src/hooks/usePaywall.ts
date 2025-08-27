@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { UserPlan } from '@/config/plans';
 
 interface PaywallState {
   isOpen: boolean;

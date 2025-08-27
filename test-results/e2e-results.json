@@ -1,0 +1,3501 @@
+{
+  "config": {
+    "configFile": "/Users/seiller/Projects/Test Buddy/test-buddy/playwright.config.ts",
+    "rootDir": "/Users/seiller/Projects/Test Buddy/test-buddy/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "/Users/seiller/Projects/Test Buddy/test-buddy/tests/e2e/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/e2e-results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results/e2e-results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/seiller/Projects/Test Buddy/test-buddy/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/seiller/Projects/Test Buddy/test-buddy/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/seiller/Projects/Test Buddy/test-buddy/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/seiller/Projects/Test Buddy/test-buddy/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/seiller/Projects/Test Buddy/test-buddy/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/seiller/Projects/Test Buddy/test-buddy/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/seiller/Projects/Test Buddy/test-buddy/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/Users/seiller/Projects/Test Buddy/test-buddy/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/seiller/Projects/Test Buddy/test-buddy/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "/Users/seiller/Projects/Test Buddy/test-buddy/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.0",
+    "workers": 4,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "components/QuizComponent.test.ts",
+      "file": "components/QuizComponent.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Quiz Component E2E Tests",
+          "file": "components/QuizComponent.test.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Quiz generation and configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-c51848a7015bb9b92de2",
+              "file": "components/QuizComponent.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Taking different question types",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-aa996d34f12ae9211439",
+              "file": "components/QuizComponent.test.ts",
+              "line": 104,
+              "column": 7
+            },
+            {
+              "title": "Quiz navigation and progress tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-d18553e6bb9189616963",
+              "file": "components/QuizComponent.test.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "Quiz timer and time management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-768658512955e1510c32",
+              "file": "components/QuizComponent.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Quiz results and analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-303a984ad2a2b31e474f",
+              "file": "components/QuizComponent.test.ts",
+              "line": 213,
+              "column": 7
+            },
+            {
+              "title": "Quiz saving and sharing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-14ff60c27d43d87d6e5e",
+              "file": "components/QuizComponent.test.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "Quiz accessibility and keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-bd43dac1ce852984d31b",
+              "file": "components/QuizComponent.test.ts",
+              "line": 314,
+              "column": 7
+            },
+            {
+              "title": "Quiz performance and responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-a32858546be6d8691113",
+              "file": "components/QuizComponent.test.ts",
+              "line": 373,
+              "column": 7
+            },
+            {
+              "title": "Quiz generation and configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-402485edc8aeb1cbd738",
+              "file": "components/QuizComponent.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Taking different question types",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-11fe3d209954d2c9e418",
+              "file": "components/QuizComponent.test.ts",
+              "line": 104,
+              "column": 7
+            },
+            {
+              "title": "Quiz navigation and progress tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-f5ba7c84f610a236f82e",
+              "file": "components/QuizComponent.test.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "Quiz timer and time management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-b89b65ead194f6dbb10a",
+              "file": "components/QuizComponent.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Quiz results and analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-aef820210e2212ea1d7d",
+              "file": "components/QuizComponent.test.ts",
+              "line": 213,
+              "column": 7
+            },
+            {
+              "title": "Quiz saving and sharing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-0fe4944f823b037f5661",
+              "file": "components/QuizComponent.test.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "Quiz accessibility and keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-98cd24ed670b16e876e5",
+              "file": "components/QuizComponent.test.ts",
+              "line": 314,
+              "column": 7
+            },
+            {
+              "title": "Quiz performance and responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-75c09a6ee94bfd41065d",
+              "file": "components/QuizComponent.test.ts",
+              "line": 373,
+              "column": 7
+            },
+            {
+              "title": "Quiz generation and configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-46cf67b30512f9bf94c3",
+              "file": "components/QuizComponent.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Taking different question types",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-013901a6c7fe16523567",
+              "file": "components/QuizComponent.test.ts",
+              "line": 104,
+              "column": 7
+            },
+            {
+              "title": "Quiz navigation and progress tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-18650ad3ff3880fae198",
+              "file": "components/QuizComponent.test.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "Quiz timer and time management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-b2d752e8de5d20a5d6b7",
+              "file": "components/QuizComponent.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Quiz results and analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-fb3108c674d2b77ea62b",
+              "file": "components/QuizComponent.test.ts",
+              "line": 213,
+              "column": 7
+            },
+            {
+              "title": "Quiz saving and sharing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-3bb64dc09f57605e6872",
+              "file": "components/QuizComponent.test.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "Quiz accessibility and keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-040ed23234ae22c14c41",
+              "file": "components/QuizComponent.test.ts",
+              "line": 314,
+              "column": 7
+            },
+            {
+              "title": "Quiz performance and responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-f93d9bfac9568465df06",
+              "file": "components/QuizComponent.test.ts",
+              "line": 373,
+              "column": 7
+            },
+            {
+              "title": "Quiz generation and configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-1c68ce95972739e94690",
+              "file": "components/QuizComponent.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Taking different question types",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-38b13718ec56e6ef25b9",
+              "file": "components/QuizComponent.test.ts",
+              "line": 104,
+              "column": 7
+            },
+            {
+              "title": "Quiz navigation and progress tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-3ca513b8a4bc92a8790c",
+              "file": "components/QuizComponent.test.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "Quiz timer and time management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-4e797a3b2f29afed12ce",
+              "file": "components/QuizComponent.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Quiz results and analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-087847701540e10aede5",
+              "file": "components/QuizComponent.test.ts",
+              "line": 213,
+              "column": 7
+            },
+            {
+              "title": "Quiz saving and sharing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-09ca8ffbf0c22d544749",
+              "file": "components/QuizComponent.test.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "Quiz accessibility and keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-72d193725bae87c1b208",
+              "file": "components/QuizComponent.test.ts",
+              "line": 314,
+              "column": 7
+            },
+            {
+              "title": "Quiz performance and responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-1ec1b8655d57660e6424",
+              "file": "components/QuizComponent.test.ts",
+              "line": 373,
+              "column": 7
+            },
+            {
+              "title": "Quiz generation and configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-bd0572f9eb8486f9d17e",
+              "file": "components/QuizComponent.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Taking different question types",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-4e1d1e08bdcc1063b107",
+              "file": "components/QuizComponent.test.ts",
+              "line": 104,
+              "column": 7
+            },
+            {
+              "title": "Quiz navigation and progress tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-2f7db06895727549b9e2",
+              "file": "components/QuizComponent.test.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "Quiz timer and time management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-9d5a1828fb881141eec7",
+              "file": "components/QuizComponent.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Quiz results and analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-bf755e9c17cde9f6558b",
+              "file": "components/QuizComponent.test.ts",
+              "line": 213,
+              "column": 7
+            },
+            {
+              "title": "Quiz saving and sharing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-382ea24d5d40cd50124e",
+              "file": "components/QuizComponent.test.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "Quiz accessibility and keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-63140a198bcb3dca8eae",
+              "file": "components/QuizComponent.test.ts",
+              "line": 314,
+              "column": 7
+            },
+            {
+              "title": "Quiz performance and responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f5190ce5a8987f72ed8b-4327272086705b2ec8a3",
+              "file": "components/QuizComponent.test.ts",
+              "line": 373,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows/AppFlow.test.ts",
+      "file": "flows/AppFlow.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Application Flow E2E Tests",
+          "file": "flows/AppFlow.test.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Complete user journey: File upload to quiz completion",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-2c4f28f23e30062510e9",
+              "file": "flows/AppFlow.test.ts",
+              "line": 28,
+              "column": 7
+            },
+            {
+              "title": "Navigation between different app states",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-ac991db85c97c49109b9",
+              "file": "flows/AppFlow.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Error handling and edge cases",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-ee2cd30bbc1fc1b880cf",
+              "file": "flows/AppFlow.test.ts",
+              "line": 101,
+              "column": 7
+            },
+            {
+              "title": "Responsive design and mobile compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-662b98610f369e07541a",
+              "file": "flows/AppFlow.test.ts",
+              "line": 117,
+              "column": 7
+            },
+            {
+              "title": "Performance under load",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-c7d5b7a265b0f69e578d",
+              "file": "flows/AppFlow.test.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "Accessibility features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-cb99b09d0a5c93383127",
+              "file": "flows/AppFlow.test.ts",
+              "line": 150,
+              "column": 7
+            },
+            {
+              "title": "Cross-browser compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-37d5b42bbe3a45e0b6cf",
+              "file": "flows/AppFlow.test.ts",
+              "line": 169,
+              "column": 7
+            },
+            {
+              "title": "Complete user journey: File upload to quiz completion",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-b4c0e7e29ecee3ea9d7a",
+              "file": "flows/AppFlow.test.ts",
+              "line": 28,
+              "column": 7
+            },
+            {
+              "title": "Navigation between different app states",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-5e486a68e0fea9d060c8",
+              "file": "flows/AppFlow.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Error handling and edge cases",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-64197b9d7984cc426fee",
+              "file": "flows/AppFlow.test.ts",
+              "line": 101,
+              "column": 7
+            },
+            {
+              "title": "Responsive design and mobile compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-9c16530e78ef7f96633d",
+              "file": "flows/AppFlow.test.ts",
+              "line": 117,
+              "column": 7
+            },
+            {
+              "title": "Performance under load",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-99de64f8c52828261cef",
+              "file": "flows/AppFlow.test.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "Accessibility features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-d51a569c84ef6282350f",
+              "file": "flows/AppFlow.test.ts",
+              "line": 150,
+              "column": 7
+            },
+            {
+              "title": "Cross-browser compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-22c5eaf005096b70a5a3",
+              "file": "flows/AppFlow.test.ts",
+              "line": 169,
+              "column": 7
+            },
+            {
+              "title": "Complete user journey: File upload to quiz completion",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-6470b5d677b3137d7622",
+              "file": "flows/AppFlow.test.ts",
+              "line": 28,
+              "column": 7
+            },
+            {
+              "title": "Navigation between different app states",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-589bd1ba2bc99f3b669f",
+              "file": "flows/AppFlow.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Error handling and edge cases",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-b219cb8a43d920d4833c",
+              "file": "flows/AppFlow.test.ts",
+              "line": 101,
+              "column": 7
+            },
+            {
+              "title": "Responsive design and mobile compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-3bc3b40fe400b62d1972",
+              "file": "flows/AppFlow.test.ts",
+              "line": 117,
+              "column": 7
+            },
+            {
+              "title": "Performance under load",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-5c6a505a6a7db4c7da02",
+              "file": "flows/AppFlow.test.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "Accessibility features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-948e8008a3ec52a44b2c",
+              "file": "flows/AppFlow.test.ts",
+              "line": 150,
+              "column": 7
+            },
+            {
+              "title": "Cross-browser compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-8d69b6814222c6b48b84",
+              "file": "flows/AppFlow.test.ts",
+              "line": 169,
+              "column": 7
+            },
+            {
+              "title": "Complete user journey: File upload to quiz completion",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-be3f111377ce3d7d0017",
+              "file": "flows/AppFlow.test.ts",
+              "line": 28,
+              "column": 7
+            },
+            {
+              "title": "Navigation between different app states",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-8d73bbcd3d660f87d900",
+              "file": "flows/AppFlow.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Error handling and edge cases",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-0f720267b4cc049aabc6",
+              "file": "flows/AppFlow.test.ts",
+              "line": 101,
+              "column": 7
+            },
+            {
+              "title": "Responsive design and mobile compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-059f2c6dc335d9f5e93a",
+              "file": "flows/AppFlow.test.ts",
+              "line": 117,
+              "column": 7
+            },
+            {
+              "title": "Performance under load",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-6d159a8335c673b1b870",
+              "file": "flows/AppFlow.test.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "Accessibility features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-1e32f93c3fdc5cfe9252",
+              "file": "flows/AppFlow.test.ts",
+              "line": 150,
+              "column": 7
+            },
+            {
+              "title": "Cross-browser compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-4b20000ad9d279ae29ac",
+              "file": "flows/AppFlow.test.ts",
+              "line": 169,
+              "column": 7
+            },
+            {
+              "title": "Complete user journey: File upload to quiz completion",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-5e5288c409c975855901",
+              "file": "flows/AppFlow.test.ts",
+              "line": 28,
+              "column": 7
+            },
+            {
+              "title": "Navigation between different app states",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-d25c86e731fc39d3675e",
+              "file": "flows/AppFlow.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Error handling and edge cases",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-7c127c99b124713d854a",
+              "file": "flows/AppFlow.test.ts",
+              "line": 101,
+              "column": 7
+            },
+            {
+              "title": "Responsive design and mobile compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-9777c4784993f0284e5e",
+              "file": "flows/AppFlow.test.ts",
+              "line": 117,
+              "column": 7
+            },
+            {
+              "title": "Performance under load",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-4c7ce745792650709365",
+              "file": "flows/AppFlow.test.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "Accessibility features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-508ead97ae4d327747f7",
+              "file": "flows/AppFlow.test.ts",
+              "line": 150,
+              "column": 7
+            },
+            {
+              "title": "Cross-browser compatibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "643705cd49eae09c0004-f0d84f4ab100cf647cb8",
+              "file": "flows/AppFlow.test.ts",
+              "line": 169,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows/FolderManagement.test.ts",
+      "file": "flows/FolderManagement.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Folder Management E2E Tests",
+          "file": "flows/FolderManagement.test.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Create and organize folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-a33fb0dc0fceb5980163",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "Edit existing folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-91c0aecd82f36f928154",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Delete folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-e79f0b17d74b5dd81bfe",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "Organize tests into folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-180694083d2f17fb3ea5",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "Search and filter folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-2e60d0684e08e873f9b8",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "Folder sharing and collaboration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-c2948a2cbc7fe75011c8",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 165,
+              "column": 7
+            },
+            {
+              "title": "Folder statistics and analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-5de3b7e6d34518a3d127",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 183,
+              "column": 7
+            },
+            {
+              "title": "Bulk folder operations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-9ea6335e11ed3030bf8f",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 198,
+              "column": 7
+            },
+            {
+              "title": "Folder import and export",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-07efc4f5d251b3c83b81",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 226,
+              "column": 7
+            },
+            {
+              "title": "Create and organize folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-d8794c867fba93ef976c",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "Edit existing folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-5ffec70fd6e6e9bb15f3",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Delete folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-2bd68e522f395da4a999",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "Organize tests into folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-228f8a23457ba989ca09",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "Search and filter folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-309c7a3dfc7b0de81b29",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "Folder sharing and collaboration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-f159df0eb16f067b6d84",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 165,
+              "column": 7
+            },
+            {
+              "title": "Folder statistics and analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-ffb81d72d989a30909ca",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 183,
+              "column": 7
+            },
+            {
+              "title": "Bulk folder operations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-6106cb9d10388be84bf7",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 198,
+              "column": 7
+            },
+            {
+              "title": "Folder import and export",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-df969e20a5f04a5b33b4",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 226,
+              "column": 7
+            },
+            {
+              "title": "Create and organize folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-ce7b820461acf415d805",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "Edit existing folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-4663759f559018d40f04",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Delete folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-da972b554a409ef7553f",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "Organize tests into folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-1ce936b6709336aa0b07",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "Search and filter folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-fa8b20478fa258516edc",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "Folder sharing and collaboration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-06c4fe169d315f85dad5",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 165,
+              "column": 7
+            },
+            {
+              "title": "Folder statistics and analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-1438c40daa9a9f0170cf",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 183,
+              "column": 7
+            },
+            {
+              "title": "Bulk folder operations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-4734eb6d63d8f2492b77",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 198,
+              "column": 7
+            },
+            {
+              "title": "Folder import and export",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-c60a35d53d235669065c",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 226,
+              "column": 7
+            },
+            {
+              "title": "Create and organize folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-0d539c205f47a20087b5",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "Edit existing folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-564647a25ea2941cefab",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Delete folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-2a4ac14f02e27d6f755a",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "Organize tests into folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-78826b5c749c892d0812",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "Search and filter folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-085ec962d9e4cada5a2a",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "Folder sharing and collaboration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-ccef5a4b3c5a7942f00d",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 165,
+              "column": 7
+            },
+            {
+              "title": "Folder statistics and analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-9da8113d4496e640fef7",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 183,
+              "column": 7
+            },
+            {
+              "title": "Bulk folder operations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-55a76e7fa22113643f13",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 198,
+              "column": 7
+            },
+            {
+              "title": "Folder import and export",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-24fabddb4b127a37692b",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 226,
+              "column": 7
+            },
+            {
+              "title": "Create and organize folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-3c653939af27e0ef911c",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "Edit existing folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-6b3ad88ee779dc697050",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "Delete folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-2f490a82ded07bf8de0d",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "Organize tests into folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-b7ed221a8518861f0d96",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "Search and filter folders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-324eb3266ae0442c9584",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "Folder sharing and collaboration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-5f0a4f54f4ecef1cadf4",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 165,
+              "column": 7
+            },
+            {
+              "title": "Folder statistics and analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-e1f05a6c92b60b895067",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 183,
+              "column": 7
+            },
+            {
+              "title": "Bulk folder operations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-0579a3417a81297819b7",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 198,
+              "column": 7
+            },
+            {
+              "title": "Folder import and export",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "df1a6a2d8fd2ed436311-d4a21475858be7e974e5",
+              "file": "flows/FolderManagement.test.ts",
+              "line": 226,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows/PlanManagement.test.ts",
+      "file": "flows/PlanManagement.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Plan Management E2E Tests",
+          "file": "flows/PlanManagement.test.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Free plan limitations and upgrade prompts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-cbea88ee8b6536375e18",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "Plan upgrade flow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-6e7c64a74fc4347adf99",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Feature gating based on plan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-1530d646ee4b88d4899c",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 115,
+              "column": 7
+            },
+            {
+              "title": "Usage tracking and limits",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-f4ef00f8118b3b532dfc",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 141,
+              "column": 7
+            },
+            {
+              "title": "Plan downgrade and cancellation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-6339059b17c1eccda552",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Billing and subscription management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-a320c30d55bedbd2a068",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "Student plan verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-0f23fb780c84c7fc2843",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 250,
+              "column": 7
+            },
+            {
+              "title": "Promotional offers and discounts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-0ff5755639b61d3f82c1",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 296,
+              "column": 7
+            },
+            {
+              "title": "Plan comparison and features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-4d00e3532de7a070a5af",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 319,
+              "column": 7
+            },
+            {
+              "title": "Free plan limitations and upgrade prompts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-761d7e681ea5c5f70ab4",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "Plan upgrade flow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-81fcb7de145f6fe774cd",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Feature gating based on plan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-bfd72fe42a412c093e95",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 115,
+              "column": 7
+            },
+            {
+              "title": "Usage tracking and limits",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-38b13d8e96a6cd3f47a5",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 141,
+              "column": 7
+            },
+            {
+              "title": "Plan downgrade and cancellation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-ddffa834b4a8f1dd09a2",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Billing and subscription management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-4ae2bfc0af0b0aa0eff5",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "Student plan verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-bf30b3eadf09481143cf",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 250,
+              "column": 7
+            },
+            {
+              "title": "Promotional offers and discounts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-4f90fc2a234264601326",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 296,
+              "column": 7
+            },
+            {
+              "title": "Plan comparison and features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-c8c1daf5e6ebbe2db20f",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 319,
+              "column": 7
+            },
+            {
+              "title": "Free plan limitations and upgrade prompts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-db7415427777df987966",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "Plan upgrade flow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-8c6d76d7f7830dab64c4",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Feature gating based on plan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-4219f4134e3eb483e71e",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 115,
+              "column": 7
+            },
+            {
+              "title": "Usage tracking and limits",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-f664f5521e804006f6a9",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 141,
+              "column": 7
+            },
+            {
+              "title": "Plan downgrade and cancellation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-7a7da2f0f1adc0c19374",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Billing and subscription management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-6d017943c39bf3a6b1d8",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "Student plan verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-082875e92d545fc8762e",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 250,
+              "column": 7
+            },
+            {
+              "title": "Promotional offers and discounts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-e97fccc336aced2e848e",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 296,
+              "column": 7
+            },
+            {
+              "title": "Plan comparison and features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-8ddaaca2507ed530fd1f",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 319,
+              "column": 7
+            },
+            {
+              "title": "Free plan limitations and upgrade prompts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-dd4d16095a3ad1b1b540",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "Plan upgrade flow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-a7c426538c5da25f9d0a",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Feature gating based on plan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-69c4014cdfa2c9a16c23",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 115,
+              "column": 7
+            },
+            {
+              "title": "Usage tracking and limits",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-6342c0b83b8200e18533",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 141,
+              "column": 7
+            },
+            {
+              "title": "Plan downgrade and cancellation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-32296a7685079698c96c",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Billing and subscription management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-af40528b311be3bef887",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "Student plan verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-690a062622392ae067b0",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 250,
+              "column": 7
+            },
+            {
+              "title": "Promotional offers and discounts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-6e9b414474b53bd8e5d1",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 296,
+              "column": 7
+            },
+            {
+              "title": "Plan comparison and features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-bc4076935470b83a78a5",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 319,
+              "column": 7
+            },
+            {
+              "title": "Free plan limitations and upgrade prompts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-082fd2a43270a75a4152",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "Plan upgrade flow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-56dda7001ffa20530a52",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "Feature gating based on plan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-0464ea4da05a7e41aa0e",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 115,
+              "column": 7
+            },
+            {
+              "title": "Usage tracking and limits",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-a2fcb526c5c08cadbae5",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 141,
+              "column": 7
+            },
+            {
+              "title": "Plan downgrade and cancellation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-1b26664096dbd41b7e6b",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Billing and subscription management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-657b6ef49c3d16d59d6a",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "Student plan verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-6b283aa08a438487feb3",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 250,
+              "column": 7
+            },
+            {
+              "title": "Promotional offers and discounts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-8f6169f4e8a86092826e",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 296,
+              "column": 7
+            },
+            {
+              "title": "Plan comparison and features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73be17e9632738e91011-30097273902556de8b25",
+              "file": "flows/PlanManagement.test.ts",
+              "line": 319,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-08-26T22:52:33.125Z",
+    "duration": 105.58899999999994,
+    "expected": 0,
+    "skipped": 165,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
