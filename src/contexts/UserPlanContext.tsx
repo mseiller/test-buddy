@@ -29,26 +29,43 @@ const UserPlanContext = createContext<UserPlanContextType | undefined>(undefined
 
 export function UserPlanProvider({ children }: { children: React.ReactNode }) {
   const [user, authLoading] = useAuthState(auth);
+  
+  // Check if we're in bypass mode (no real Firebase user but we want to test)
+  const isBypassMode = !user && !authLoading && typeof window !== 'undefined' && window.location.search.includes('bypass=true');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [usage, setUsage] = useState<UsageRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Bypass check for testing - give Pro features to bypass user
-  const isBypassUser = user?.uid === 'bypass-user-123';
+  const isBypassUser = user?.uid === 'bypass-user-123' || isBypassMode;
   const plan = isBypassUser ? 'pro' : (userProfile?.plan || DEFAULT_PLAN);
   const planFeatures = getPlanFeatures(plan);
 
   // Load user profile
   const loadUserProfile = async () => {
-    if (!user) {
+    if (!user && !isBypassMode) {
       setUserProfile(null);
       setLoading(false);
       return;
     }
 
+    // For bypass mode, create mock profile
+    if (isBypassMode) {
+      setUserProfile({
+        userId: 'bypass-user-123',
+        email: 'bypass@test.com',
+        displayName: 'Bypass User (Pro)',
+        plan: 'pro',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      setLoading(false);
+      return;
+    }
+
     // For bypass user, create mock profile
-    if (user.uid === 'bypass-user-123') {
+    if (user?.uid === 'bypass-user-123') {
       setUserProfile({
         userId: user.uid,
         email: user.email || '',
@@ -82,10 +99,20 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
 
   // Load usage data
   const loadUsage = async () => {
-    if (!user) return;
+    if (!user && !isBypassMode) return;
+
+    // For bypass mode, create mock usage data
+    if (isBypassMode) {
+      setUsage({
+        testsGenerated: 5,
+        lastReset: new Date().toISOString(),
+        userId: 'bypass-user-123'
+      });
+      return;
+    }
 
     // For bypass user, create mock usage data
-    if (user.uid === 'bypass-user-123') {
+    if (user?.uid === 'bypass-user-123') {
       setUsage({
         testsGenerated: 5,
         lastReset: new Date().toISOString(),
