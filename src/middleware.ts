@@ -20,11 +20,11 @@ export function middleware(request: NextRequest) {
   // Content Security Policy
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://www.googleapis.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://www.googleapis.com https://apis.google.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https:",
-    "connect-src 'self' https://openrouter.ai https://firestore.googleapis.com https://identitytoolkit.googleapis.com",
+    "connect-src 'self' https://openrouter.ai https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://apis.google.com",
     "frame-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
