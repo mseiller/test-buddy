@@ -66,26 +66,7 @@ export default function Home() {
 
 
 
-  // BYPASS AUTH - GO DIRECTLY TO MAIN APP WITH PRO FEATURES
-  useEffect(() => {
-    // Check if we're in bypass mode
-    const isBypassMode = typeof window !== 'undefined' && window.location.search.includes('bypass=true');
-    
-    if (isBypassMode) {
-      // Create a mock user to bypass authentication with Pro features
-      const mockUser: User = {
-        uid: 'bypass-user-123',
-        email: 'bypass@test.com',
-        displayName: 'Bypass User (Pro)'
-      };
-      
-      setUser(mockUser);
-      setAppState('home');
-      setAuthLoading(false);
-      
-      console.log('AUTH BYPASS: Going directly to main app with Pro features');
-    }
-  }, []);
+
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -518,7 +499,22 @@ export default function Home() {
     );
   }
 
-  if (!user) {
+  // Check if we're in bypass mode
+  const isBypassMode = typeof window !== 'undefined' && window.location.search.includes('bypass=true');
+  
+  if (!user && !isBypassMode) {
+    return <AuthForm onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  // Use bypass user if in bypass mode and no real user
+  const currentUser = user || (isBypassMode ? {
+    uid: 'bypass-user-123',
+    email: 'bypass@test.com',
+    displayName: 'Bypass User (Pro)'
+  } as User : null);
+
+  // If no user and not in bypass mode, show auth form
+  if (!currentUser) {
     return <AuthForm onAuthSuccess={handleAuthSuccess} />;
   }
 
@@ -575,12 +571,12 @@ export default function Home() {
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-medium text-indigo-600">
-                        {(user.displayName || user.email).charAt(0).toUpperCase()}
+                        {(currentUser.displayName || currentUser.email).charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="hidden sm:block text-left">
                       <div className="text-sm font-medium text-gray-900">
-                        {user.displayName || user.email}
+                        {currentUser.displayName || currentUser.email}
                       </div>
                       <div className="text-xs text-gray-500">
                         {planFeatures.name} Plan
@@ -598,7 +594,7 @@ export default function Home() {
                     {/* User Info */}
                     <div className="px-4 py-3 border-b border-gray-100">
                       <div className="text-sm font-medium text-gray-900">
-                        {user.displayName || user.email}
+                        {currentUser.displayName || currentUser.email}
                       </div>
                       <div className="text-xs text-gray-500">
                         {planFeatures.name} Plan
