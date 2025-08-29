@@ -29,12 +29,13 @@ import { SkipLinks } from '@/components/SkipLink';
 type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history' | 'folders' | 'metrics';
 
 export default function Home() {
+  // CACHE BUST v4 - FORCE NEW BUNDLE HASH
   const [user, setUser] = useState<User | null>(null);
   const { plan, planFeatures, loading: planLoading, refreshUsage, refreshProfile } = useUserPlan();
   const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
   const { isPaywallOpen, triggerFeature, hidePaywall, showUpgradePrompt } = usePaywall();
   
-  // Initialize error management service - CACHE BUST v3
+  // Initialize error management service - CACHE BUST v4 - FORCE NEW BUNDLE
   const errorManager = ErrorManagementService.getInstance({
     enableErrorHandler: true,
     enableReporting: true,
@@ -64,7 +65,7 @@ export default function Home() {
 
 
 
-  // Check authentication state on mount
+  // Check authentication state on mount - CACHE BUST v4
   useEffect(() => {
     const unsubscribe = FirebaseService.onAuthStateChange((user) => {
       setUser(user);
