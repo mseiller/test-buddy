@@ -65,24 +65,20 @@ export default function Home() {
 
 
 
-  // Check authentication state on mount - CACHE BUST v4
+  // BYPASS AUTH - GO DIRECTLY TO MAIN APP
   useEffect(() => {
-    const unsubscribe = FirebaseService.onAuthStateChange((user) => {
-      setUser(user);
-      setAppState(user ? 'home' : 'auth');
-      setAuthLoading(false);
-      
-      // Test Firestore connection when user is authenticated
-      if (user) {
-        FirebaseService.testFirestoreConnection().then(isConnected => {
-          if (!isConnected) {
-            console.warn('Firestore connection test failed - test history may not save');
-          }
-        });
-      }
-    });
-
-    return () => unsubscribe();
+    // Create a mock user to bypass authentication
+    const mockUser: User = {
+      uid: 'bypass-user-123',
+      email: 'bypass@test.com',
+      displayName: 'Bypass User'
+    };
+    
+    setUser(mockUser);
+    setAppState('home');
+    setAuthLoading(false);
+    
+    console.log('AUTH BYPASS: Going directly to main app');
   }, []);
 
   // Handle URL parameters for folder selection
