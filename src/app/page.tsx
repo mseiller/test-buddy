@@ -34,7 +34,7 @@ export default function Home() {
   const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
   const { isPaywallOpen, triggerFeature, hidePaywall, showUpgradePrompt } = usePaywall();
   
-  // Initialize error management service
+  // Initialize error management service - CACHE BUST v3
   const errorManager = ErrorManagementService.getInstance({
     enableErrorHandler: true,
     enableReporting: true,
