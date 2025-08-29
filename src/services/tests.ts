@@ -138,7 +138,7 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
       // Fallback to current time if createdAt is invalid
       timestamp = new Date().getTime();
     }
-    return `${t.testName  }_${  timestamp}`;
+    return t.testName + '_' + timestamp;
   }));
   
   let migratedCount = 0;
@@ -148,14 +148,14 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
     
     // Create unique key to avoid duplicates
     const createdAt = data.createdAt?.toDate() || new Date();
-    const uniqueKey = `${data.testName  }_${  createdAt.getTime()}`;
+    const uniqueKey = data.testName + '_' + createdAt.getTime();
     
     if (existingTestNames.has(uniqueKey)) {
       console.log(`Skipping duplicate test: ${data.testName}`);
       continue;
     }
     
-    // Convert to new format - include all required fields
+    // Convert to new format - only include fields that have values
     const testDoc: any = {
       userId: uid,
       testName: data.testName,
@@ -165,8 +165,7 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
       quizType: data.quizType,
       questions: data.questions || [],
       answers: data.answers || [],
-      folderId: null, // Default to null for unorganized tests
-      createdAt,
+      createdAt: createdAt,
       updatedAt: createdAt,
     };
 
@@ -174,18 +173,11 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
     if (data.score !== undefined && data.score !== null) {
       testDoc.score = data.score;
     }
-    // Override folderId if one is provided
     if (data.folderId) {
       testDoc.folderId = data.folderId;
     }
-    // Handle completedAt more carefully - it might be undefined, null, or a Firestore Timestamp
-    if (data.completedAt !== undefined && data.completedAt !== null) {
-      if (typeof data.completedAt.toDate === 'function') {
-        testDoc.completedAt = data.completedAt.toDate();
-      } else if (data.completedAt instanceof Date) {
-        testDoc.completedAt = data.completedAt;
-      }
-      // If it's neither a Timestamp nor a Date, we skip adding completedAt
+    if (data.completedAt) {
+      testDoc.completedAt = data.completedAt.toDate();
     }
     
     // Add to new collection

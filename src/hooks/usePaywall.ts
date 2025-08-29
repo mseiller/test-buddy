@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { UserPlan } from '@/config/plans';
 
 interface PaywallState {
   isOpen: boolean;
@@ -13,14 +14,14 @@ export function usePaywall() {
   const showPaywall = (triggerFeature?: string) => {
     setPaywallState({
       isOpen: true,
-      triggerFeature: triggerFeature || '',
+      triggerFeature,
     });
   };
 
   const hidePaywall = () => {
     setPaywallState({
       isOpen: false,
-      triggerFeature: '',
+      triggerFeature: undefined,
     });
   };
 

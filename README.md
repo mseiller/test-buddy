@@ -2,7 +2,7 @@
 
 Test Buddy is a React-based web application that allows users to upload documents (.doc, .txt, .pdf, .csv, .xls files) and automatically generate personalized quiz questions using AI. The app supports multiple question types including Multiple Choice, Fill-in-the-blank, Essay questions, and Mixed formats.
 
-## 🚀 Features
+## Features
 
 - **File Upload & Processing**: Support for .doc/.txt/.pdf/.csv/.xls files with automatic text extraction
 - **AI-Powered Quiz Generation**: Uses OpenRouter API to generate intelligent quiz questions
@@ -16,12 +16,10 @@ Test Buddy is a React-based web application that allows users to upload document
 - **User Authentication**: Firebase-based user authentication
 - **Test History**: Save and track all quiz attempts with detailed analytics
 - **Responsive Design**: Works on desktop and mobile devices
-- **Advanced Security**: Comprehensive security infrastructure with encryption and monitoring
-- **Performance Optimization**: Advanced caching, monitoring, and optimization features
 
-## 🛠 Tech Stack
+## Tech Stack
 
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
 - **Authentication**: Firebase Auth
 - **Database**: Firestore
 - **File Processing**: 
@@ -31,246 +29,170 @@ Test Buddy is a React-based web application that allows users to upload document
   - Native processing for text and CSV files
 - **AI Integration**: OpenRouter API
 - **Icons**: Lucide React
-- **Testing**: Jest, React Testing Library
-- **Code Quality**: ESLint, Prettier, TypeScript strict mode
 - **Deployment**: Vercel-ready
 
-## 📋 Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-- Firebase project
-- OpenRouter API key
-
-## 🚀 Quick Start
+## Setup Instructions
 
 ### 1. Clone the Repository
 
-```bash
+\`\`\`bash
 git clone <repository-url>
 cd test-buddy
-```
+\`\`\`
 
 ### 2. Install Dependencies
 
-```bash
+\`\`\`bash
 npm install
-```
+\`\`\`
 
 ### 3. Environment Configuration
 
-Create a `.env.local` file in the root directory with the following variables:
+Create a \`.env.local\` file in the root directory with the following variables:
 
-```env
+\`\`\`env
 # Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 
-# OpenRouter API
+# OpenRouter API Configuration
 NEXT_PUBLIC_OPENROUTER_API_KEY=your_openrouter_api_key_here
+\`\`\`
 
-# Optional: Encryption Secret (for enhanced security)
-NEXT_PUBLIC_ENCRYPTION_SECRET=your_encryption_secret_here
-```
+### 4. Firebase Setup
 
-### 4. Run Development Server
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create a new project or use an existing one
+3. Enable the following services:
+   - **Authentication**: Enable Email/Password sign-in method
+   - **Firestore Database**: Create in production mode
+4. Go to Project Settings > General > Your apps
+5. Register a web app and copy the configuration values
+6. Update your \`.env.local\` file with these values
 
-```bash
+### 5. OpenRouter Setup
+
+1. Visit [OpenRouter](https://openrouter.ai/)
+2. Create an account and verify your email
+3. Go to API Keys section and generate a new API key
+4. Add credits to your account for API usage
+5. Update your \`.env.local\` file with the API key
+
+### 6. Run the Development Server
+
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 🧪 Testing
+## Project Structure
 
-### Run Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-### Test Structure
-
-- **Unit Tests**: `src/**/*.test.{ts,tsx}`
-- **Integration Tests**: `src/**/*.spec.{ts,tsx}`
-- **Test Utilities**: `src/__tests__/`
-
-## 🔧 Development
-
-### Code Quality
-
-```bash
-# Lint code
-npm run lint
-
-# Fix linting issues
-npm run lint:fix
-
-# Type checking
-npm run type-check
-
-# Format code
-npm run format
-
-# Check formatting
-npm run format:check
-```
-
-### Pre-commit Hooks
-
-The project uses Husky and lint-staged to ensure code quality:
-
-- ESLint checks on staged files
-- Prettier formatting on staged files
-- TypeScript type checking
-
-### Project Structure
-
-```
+\`\`\`
 src/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
-├── components/            # React components
-│   ├── features/          # Feature-specific components
-│   ├── ui/               # Reusable UI components
-│   └── errors/           # Error handling components
-├── contexts/             # React contexts
-├── hooks/                # Custom React hooks
-├── services/             # Business logic and external services
-│   ├── firebase/         # Firebase services
-│   ├── security/         # Security services
-│   ├── caching/          # Caching services
-│   ├── errors/           # Error handling services
-│   ├── monitoring/       # Performance monitoring
-│   └── validation/       # Data validation
-├── types/                # TypeScript type definitions
-└── utils/                # Utility functions
-```
+├── app/
+│   ├── api/
+│   │   └── extract-pdf/
+│   │       └── route.ts          # PDF text extraction API
+│   ├── globals.css               # Global styles
+│   ├── layout.tsx               # Root layout
+│   └── page.tsx                 # Main application page
+├── components/
+│   ├── AuthForm.tsx             # Authentication form
+│   ├── FileUpload.tsx           # File upload component
+│   ├── QuizConfig.tsx           # Quiz configuration
+│   ├── QuizDisplay.tsx          # Quiz taking interface
+│   ├── QuizResults.tsx          # Results and review
+│   └── TestHistory.tsx          # Test history display
+├── lib/
+│   └── firebase.ts              # Firebase configuration
+├── services/
+│   ├── fileProcessor.ts         # File processing logic
+│   ├── firebaseService.ts       # Firebase operations
+│   └── openRouter.ts            # OpenRouter API integration
+├── types/
+│   └── index.ts                 # TypeScript type definitions
+└── utils/                       # Utility functions
+\`\`\`
 
-## 📚 API Documentation
+## Usage Guide
 
-### OpenRouter Integration
+### 1. Sign Up / Sign In
+- Create a new account or sign in with existing credentials
+- All test history is saved per user account
 
-The app uses OpenRouter API for generating quiz questions:
+### 2. Upload a Document
+- Drag and drop or click to select a file
+- Supported formats: .txt, .pdf, .doc, .docx, .csv, .xls, .xlsx
+- Maximum file size: 10MB
 
-```typescript
-// Generate quiz from text content
-const quiz = await OpenRouterService.generateQuiz({
-  text: extractedText,
-  quizType: 'MCQ',
-  questionCount: 10,
-  isImageBased: false
-});
+### 3. Configure Your Quiz
+- Choose quiz type: MCQ, Fill-in-the-blank, Essay, or Mixed
+- Set number of questions (5-15)
+- Optionally name your test
 
-// Generate AI feedback
-const feedback = await OpenRouterService.generateFeedbackSummary(
-  testName,
-  score,
-  questions,
-  answers
-);
-```
+### 4. Take the Quiz
+- Navigate through questions using the sidebar or navigation buttons
+- Flag questions for review
+- Track your progress with the progress bar
 
-### Firebase Services
+### 5. Review Results
+- View your score and detailed breakdown
+- Review answers with explanations
+- Access test history for future reference
 
-```typescript
-// User authentication
-const user = await FirebaseService.signIn(email, password);
+## API Integration
 
-// Save test results
-await FirebaseService.saveTestResult(testData);
+### OpenRouter
+The app uses OpenRouter API for generating quiz questions. The service:
+- Sends extracted text content to the AI model
+- Requests specific question types and quantities
+- Parses structured JSON responses
+- Handles error cases and validation
 
-// Get user history
-const history = await FirebaseService.getTestHistory(userId);
-```
+### Firebase
+Firebase provides:
+- User authentication and session management
+- Firestore database for storing test history
+- Real-time data synchronization
+- Offline support
 
-## 🔒 Security Features
-
-- **Input Validation**: Comprehensive validation for all user inputs
-- **Data Sanitization**: Protection against XSS and injection attacks
-- **Rate Limiting**: Configurable rate limiting with blocking capabilities
-- **Encryption**: AES-GCM encryption for sensitive data
-- **Audit Logging**: Complete security event tracking
-- **Firebase Security Rules**: Granular access control for Firestore and Storage
-
-## 📊 Performance Features
-
-- **Smart Caching**: Multi-strategy caching with intelligent invalidation
-- **Query Optimization**: Optimized Firestore queries with indexing
-- **Performance Monitoring**: Real-time metrics and health scoring
-- **Error Handling**: Advanced error handling with recovery strategies
-- **Circuit Breaker**: Resilience patterns for external service calls
-
-## 🚀 Deployment
-
-### Vercel Deployment
-
-1. Connect your repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Environment Variables
-
-Ensure all required environment variables are set in your deployment platform:
-
-- `NEXT_PUBLIC_FIREBASE_API_KEY`
-- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-- `NEXT_PUBLIC_OPENROUTER_API_KEY`
-- `NEXT_PUBLIC_ENCRYPTION_SECRET` (optional)
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes following the coding standards
-4. Run tests and ensure they pass
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+2. Create a feature branch (\`git checkout -b feature/amazing-feature\`)
+3. Commit your changes (\`git commit -m 'Add amazing feature'\`)
+4. Push to the branch (\`git push origin feature/amazing-feature\`)
+5. Open a Pull Request
 
-### Coding Standards
-
-- Follow TypeScript strict mode
-- Use ESLint and Prettier for code formatting
-- Write unit tests for new features
-- Follow React best practices
-- Use proper error handling
-- Document complex functions and components
-
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🆘 Support
+## Support
 
 If you encounter any issues or have questions:
-
 1. Check the console for error messages
 2. Verify your environment variables are correctly set
-3. Review the Firebase and OpenRouter documentation
-4. Check the test coverage for related functionality
-5. Open an issue with detailed information
+3. Ensure you have sufficient credits in your OpenRouter account
+4. Check Firebase console for authentication and database issues
 
-## 🔄 Changelog
+## Deployment
 
-### Version 0.1.0
-- Initial release with core quiz generation functionality
-- Firebase authentication and data persistence
-- Basic file upload and processing
-- Multiple question type support
-- Comprehensive security infrastructure
-- Performance optimization and monitoring
-- Advanced error handling and recovery
+### Vercel Deployment
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy automatically on push to main branch
+
+### Environment Variables for Production
+
+Make sure to set all environment variables in your deployment platform:
+- All Firebase configuration variables
+- OpenRouter API key
+- Any additional production-specific settings

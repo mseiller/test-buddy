@@ -1,38 +1,8 @@
 import { Question, QuizType, UserAnswer, FeedbackSummary } from '@/types';
 
-/**
- * Service for interacting with the OpenRouter API to generate quizzes and feedback.
- * 
- * This service handles all communication with the OpenRouter API, including:
- * - Quiz generation from text content
- * - AI feedback generation for quiz results
- * - Model selection based on quiz type and requirements
- * - Token usage optimization and monitoring
- * - Error handling and retry logic
- * 
- * @example
- * ```typescript
- * // Generate a quiz
- * const quiz = await OpenRouterService.generateQuiz({
- *   text: 'Sample content',
- *   quizType: 'MCQ',
- *   questionCount: 10,
- *   isImageBased: false
- * });
- * 
- * // Generate feedback
- * const feedback = await OpenRouterService.generateFeedbackSummary(
- *   'Test Name',
- *   85,
- *   questions,
- *   answers
- * );
- * ```
- */
 export class OpenRouterService {
   private static readonly API_URL = 'https://openrouter.ai/api/v1/chat/completions';
   private static readonly API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
-  private static readonly debug = process.env.NODE_ENV !== 'production';
 
   static async generateQuiz(
     text: string,
@@ -69,25 +39,23 @@ export class OpenRouterService {
     let defaultModel = 'qwen/qwen3-235b-a22b:free';
     if (isImageBased) {
       defaultModel = 'mistralai/mistral-small-3.2-24b-instruct:free';
-      if (this.debug) console.log('OpenRouter: Using image-optimized model for image-based content');
+      console.log('OpenRouter: Using image-optimized model for image-based content');
     }
     const model = modelOverride || defaultModel;
     
-    if (this.debug) {
-      console.log('OpenRouter: Starting API request to:', this.API_URL);
-      console.log('OpenRouter: API Key configured:', !!this.API_KEY);
-      console.log('OpenRouter: Selected model:', model, 'for', adjustedQuestionCount, 'questions', adjustedQuestionCount !== questionCount ? `(reduced from ${questionCount})` : '');
-      console.log('OpenRouter: Max tokens:', maxTokens);
-      console.log('OpenRouter: Request payload size:', JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: '...' },
-          { role: 'user', content: `${prompt.substring(0, 100)  }...` }
-        ],
-        temperature: 0.5,
-        max_tokens: maxTokens,
-      }).length, 'characters');
-    }
+    console.log('OpenRouter: Starting API request to:', this.API_URL);
+    console.log('OpenRouter: API Key configured:', !!this.API_KEY);
+    console.log('OpenRouter: Selected model:', model, 'for', adjustedQuestionCount, 'questions', adjustedQuestionCount !== questionCount ? `(reduced from ${questionCount})` : '');
+    console.log('OpenRouter: Max tokens:', maxTokens);
+    console.log('OpenRouter: Request payload size:', JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: '...' },
+        { role: 'user', content: prompt.substring(0, 100) + '...' }
+      ],
+      temperature: 0.5,
+      max_tokens: maxTokens,
+    }).length, 'characters');
     
     // Retry logic for network issues
     let lastError: Error | null = null;
@@ -95,7 +63,7 @@ export class OpenRouterService {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        if (this.debug) console.log(`OpenRouter: Attempt ${attempt}/${maxRetries}`);
+        console.log(`OpenRouter: Attempt ${attempt}/${maxRetries}`);
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
@@ -110,7 +78,7 @@ export class OpenRouterService {
           },
           signal: controller.signal,
           body: JSON.stringify({
-            model,
+            model: model,
           messages: [
             {
               role: 'system',
@@ -370,19 +338,19 @@ Requirements:
       
       // First, try to extract JSON from markdown code blocks
       const markdownMatch = content.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
-      if (markdownMatch && markdownMatch[1]) {
+      if (markdownMatch) {
         jsonString = markdownMatch[1];
         console.log('OpenRouter: Found JSON in markdown code block');
       } else {
         // Try to find JSON array in the content
         const jsonMatch = content.match(/\[[\s\S]*\]/);
-        if (jsonMatch && jsonMatch[0]) {
+        if (jsonMatch) {
           jsonString = jsonMatch[0];
           console.log('OpenRouter: Found JSON array in content');
         } else {
           // If no array found, try to find JSON object and wrap it
           const objectMatch = content.match(/\{[\s\S]*\}/);
-          if (objectMatch && objectMatch[0]) {
+          if (objectMatch) {
             jsonString = `[${objectMatch[0]}]`;
             console.log('OpenRouter: Found JSON object, wrapped in array');
           } else {
@@ -417,7 +385,7 @@ Requirements:
         .trim();
 
       console.log('OpenRouter: Attempting to parse cleaned JSON...');
-      console.log('OpenRouter: JSON preview (first 300 chars):', `${jsonString.substring(0, 300)  }...`);
+      console.log('OpenRouter: JSON preview (first 300 chars):', jsonString.substring(0, 300) + '...');
       
       const questions = JSON.parse(jsonString);
       
@@ -446,7 +414,7 @@ Requirements:
       });
     } catch (error) {
       console.error('OpenRouter: Failed to parse quiz response:', error);
-      console.error('OpenRouter: Raw content (first 1000 chars):', `${content.substring(0, 1000)  }...`);
+      console.error('OpenRouter: Raw content (first 1000 chars):', content.substring(0, 1000) + '...');
       
       // Check for common issues
       if (error instanceof SyntaxError) {
@@ -472,9 +440,7 @@ Requirements:
           for (let i = 0; i < questionMatches.length; i++) {
             try {
               const questionJson = questionMatches[i];
-              if (!questionJson) continue;
-              
-              console.log('OpenRouter: Attempting to parse question', i + 1, ':', `${questionJson.substring(0, 100)  }...`);
+              console.log('OpenRouter: Attempting to parse question', i + 1, ':', questionJson.substring(0, 100) + '...');
               
               // Clean the question JSON
               let cleanedQuestion = questionJson
@@ -740,7 +706,7 @@ Remember: ONLY return the JSON object, nothing else.`;
     try {
       // Extract overall_assessment if present
       const assessmentMatch = truncatedText.match(/"overall_assessment":\s*"([^"]+)"/);
-      if (assessmentMatch && assessmentMatch[1]) {
+      if (assessmentMatch) {
         partialData.overall_assessment = assessmentMatch[1];
       }
       
@@ -748,12 +714,12 @@ Remember: ONLY return the JSON object, nothing else.`;
       const strengthsMatch = truncatedText.match(/"strengths":\s*\[([\s\S]*?)\]/);
       if (strengthsMatch) {
         try {
-          const strengthsStr = `[${  strengthsMatch[1]  }]`;
+          const strengthsStr = '[' + strengthsMatch[1] + ']';
           partialData.strengths = JSON.parse(strengthsStr);
         } catch {
           // Extract individual strength strings
           const strengthItems = truncatedText.match(/"strengths":\s*\[\s*"([^"]+)"/);
-          if (strengthItems && strengthItems[1]) {
+          if (strengthItems) {
             partialData.strengths = [strengthItems[1]];
           }
         }
@@ -772,18 +738,13 @@ Remember: ONLY return the JSON object, nothing else.`;
           const minLength = Math.min(topicMatches.length, whyMatches.length);
           
           for (let i = 0; i < minLength; i++) {
-            const topicMatch = topicMatches[i];
-            const whyMatch = whyMatches[i];
-            
-            if (!topicMatch || !whyMatch) continue;
-            
-            const topic = topicMatch.match(/"topic":\s*"([^"]+)"/)?.[1];
-            const why = whyMatch.match(/"why":\s*"([^"]+)"/)?.[1];
+            const topic = topicMatches[i].match(/"topic":\s*"([^"]+)"/)?.[1];
+            const why = whyMatches[i].match(/"why":\s*"([^"]+)"/)?.[1];
             
             if (topic && why) {
               focusAreas.push({
-                topic,
-                why,
+                topic: topic,
+                why: why,
                 examples: [],
                 study_actions: [
                   `Review the fundamentals of ${topic}`,
@@ -824,7 +785,7 @@ Remember: ONLY return the JSON object, nothing else.`;
   }
 
   private static safeParseFeedbackJSON(text: string): FeedbackSummary {
-    console.log('OpenRouter: Raw feedback response:', `${text.substring(0, 300)  }...`);
+    console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
     
     // Check for truncation indicators
     const trimmed = text.trim();
@@ -852,7 +813,7 @@ Remember: ONLY return the JSON object, nothing else.`;
     }
     
     let cleaned = this.stripReasoningAndFences(text);
-    console.log('OpenRouter: After cleaning reasoning/fences:', `${cleaned.substring(0, 200)  }...`);
+    console.log('OpenRouter: After cleaning reasoning/fences:', cleaned.substring(0, 200) + '...');
     
     // Try direct parsing of cleaned text first
     if (cleaned.trim().startsWith('{')) {
@@ -889,7 +850,7 @@ Remember: ONLY return the JSON object, nothing else.`;
       };
     }
 
-    console.log('OpenRouter: Extracted JSON string:', `${jsonString.substring(0, 200)  }...`);
+    console.log('OpenRouter: Extracted JSON string:', jsonString.substring(0, 200) + '...');
 
     try {
       const parsed = JSON.parse(jsonString);
@@ -949,7 +910,7 @@ Remember: ONLY return the JSON object, nothing else.`;
           messages: [
             { 
               role: 'system', 
-              content: `${system  }\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text. Keep responses concise to avoid truncation.` 
+              content: system + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text. Keep responses concise to avoid truncation.' 
             },
             { role: 'user', content: user }
           ],
@@ -1004,7 +965,7 @@ Remember: ONLY return the JSON object, nothing else.`;
           messages: [
             { 
               role: 'system', 
-              content: `${systemPrompt  }\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text. Keep responses concise.` 
+              content: systemPrompt + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text. Keep responses concise.' 
             },
             { role: 'user', content: userPrompt }
           ],
@@ -1066,7 +1027,7 @@ Remember: ONLY return the JSON object, nothing else.`;
           { role: 'system', content: system },
           { role: 'user', content: user }
         ],
-        temperature,
+        temperature: temperature,
         max_tokens: maxTokens,
         top_p: 0.9
       })
@@ -1096,7 +1057,7 @@ Remember: ONLY return the JSON object, nothing else.`;
         throw new Error('AI model returned empty response. This might be due to content filtering or model issues.');
       }
       
-      console.log('OpenRouter: Raw feedback response:', `${text.substring(0, 300)  }...`);
+      console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
       
       // Try multiple strategies to extract JSON
       let jsonString = text;
@@ -1135,7 +1096,7 @@ Remember: ONLY return the JSON object, nothing else.`;
         .replace(/<\/?think>/gi, '') // Remove any remaining think tags
         .trim();
 
-      console.log('OpenRouter: Cleaned JSON string:', `${jsonString.substring(0, 200)  }...`);
+      console.log('OpenRouter: Cleaned JSON string:', jsonString.substring(0, 200) + '...');
 
       let parsed: FeedbackSummary = {
         overall_assessment: 'Unable to generate detailed feedback at this time.',

@@ -20,34 +20,15 @@ import TestHistory from '@/components/TestHistory';
 import FolderManager from '@/components/FolderManager';
 import MetricsDashboard from '@/components/MetricsDashboard';
 import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen, Folder as FolderIcon, BarChart3, Crown } from 'lucide-react';
-import { ErrorManagementService } from '@/services/errors';
-
-import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
-import { SkipLinks } from '@/components/SkipLink';
 
 type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history' | 'folders' | 'metrics';
 
 export default function Home() {
-  // CACHE BUST v4 - FORCE NEW BUNDLE HASH
   const [user, setUser] = useState<User | null>(null);
   const { plan, planFeatures, loading: planLoading, refreshUsage, refreshProfile } = useUserPlan();
   const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
-  const { isPaywallOpen, triggerFeature, hidePaywall, showUpgradePrompt } = usePaywall();
-  
-  // Initialize error management service - CACHE BUST v4 - FORCE NEW BUNDLE
-  const errorManager = ErrorManagementService.getInstance({
-    enableErrorHandler: true,
-    enableReporting: true,
-    enableFallbacks: true,
-    enableBreadcrumbs: true,
-    enablePerformanceData: true,
-    logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'error'
-  });
-
-
+  const { isPaywallOpen, triggerFeature, showPaywall, hidePaywall, showUpgradePrompt } = usePaywall();
   const [showPlanManager, setShowPlanManager] = useState(false);
-  const [showAccessibilitySettings, setShowAccessibilitySettings] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -64,24 +45,25 @@ export default function Home() {
   const [showFolderSelection, setShowFolderSelection] = useState(false);
   const [availableFolders, setAvailableFolders] = useState<Folder[]>([]);
 
-
-
-
-
-  // Close dropdown when clicking outside
+  // Check authentication state on mount
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (userDropdownOpen && !target.closest('.user-dropdown')) {
-        setUserDropdownOpen(false);
+    const unsubscribe = FirebaseService.onAuthStateChange((user) => {
+      setUser(user);
+      setAppState(user ? 'home' : 'auth');
+      setAuthLoading(false);
+      
+      // Test Firestore connection when user is authenticated
+      if (user) {
+        FirebaseService.testFirestoreConnection().then(isConnected => {
+          if (!isConnected) {
+            console.warn('Firestore connection test failed - test history may not save');
+          }
+        });
       }
-    };
+    });
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [userDropdownOpen]);
+    return () => unsubscribe();
+  }, []);
 
   // Handle URL parameters for folder selection
   useEffect(() => {
@@ -116,9 +98,8 @@ export default function Home() {
       setUser(null);
       setAppState('auth');
       resetAppState();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
+    } catch (error: any) {
+      setError(error.message);
     }
   };
 
@@ -164,14 +145,6 @@ export default function Home() {
     setRetakeTestName('');
 
     try {
-      // Add breadcrumb for quiz generation start
-      errorManager.addUserActionBreadcrumb('start-quiz-generation', 'quiz-config', {
-        quizType,
-        questionCount,
-        fileName: uploadedFile.fileName,
-        fileType: uploadedFile.fileType
-      });
-
       // Detect if this is an image-based upload
       const isImageBased = uploadedFile.fileType === 'image' || 
                           Boolean(uploadedFile.fileName.toLowerCase().match(/\.(jpg|jpeg|png)$/));
@@ -179,66 +152,13 @@ export default function Home() {
       // Use plan-specific model, or image model if image-based
       const modelToUse = isImageBased ? planFeatures.imageModel || planFeatures.model : planFeatures.model;
       
-      // Execute quiz generation with error protection and fallback
-      const generatedQuestions = await errorManager.executeWithProtection(
-        async () => {
-          return await OpenRouterService.generateQuiz(
-            uploadedFile.extractedText,
-            quizType,
-            questionCount,
-            modelToUse,
-            isImageBased
-          );
-        },
-        {
-          operationName: 'quiz-generation',
-          component: 'QuizConfig',
-          userId: user.uid,
-          maxRetries: 2,
-          enableCircuitBreaker: true,
-          severity: 'high',
-          category: 'business',
-          fallbackValue: [] // Empty array as fallback
-        }
+      const generatedQuestions = await OpenRouterService.generateQuiz(
+        uploadedFile.extractedText,
+        quizType,
+        questionCount,
+        modelToUse,
+        isImageBased
       );
-
-      // If no questions were generated, try with fallback strategy
-      if (!generatedQuestions || generatedQuestions.length === 0) {
-        const fallbackResult = await errorManager.handleError(
-          new Error('No questions generated'),
-          {
-            operation: 'quiz-generation-fallback',
-            component: 'QuizConfig',
-            userId: user.uid,
-            severity: 'high',
-            category: 'business',
-            enableFallback: true,
-            fallbackData: {
-              questionCount: Math.min(questionCount, 10), // Fallback to fewer questions
-              simplified: true
-            }
-          }
-        );
-
-        if (fallbackResult.success && fallbackResult.data) {
-          setError('Using simplified quiz generation due to service limitations. Generating fewer questions.');
-          // Try again with simplified parameters
-          const fallbackQuestions = await OpenRouterService.generateQuiz(
-            uploadedFile.extractedText,
-            quizType,
-            Math.min(questionCount, 10),
-            modelToUse,
-            isImageBased
-          );
-          if (fallbackQuestions && fallbackQuestions.length > 0) {
-            setQuestions(fallbackQuestions);
-            setAppState('quiz');
-            return;
-          }
-        }
-        
-        throw new Error('Failed to generate quiz questions even with fallback strategies');
-      }
       
       // Only increment usage counter AFTER successful generation
       await incrementTestUsage(user.uid);
@@ -253,42 +173,8 @@ export default function Home() {
       
       // Refresh usage data to update UI
       await refreshUsage();
-
-      // Add success breadcrumb
-      errorManager.addUserActionBreadcrumb('quiz-generation-success', 'quiz-config', {
-        questionsGenerated: generatedQuestions.length,
-        requestedCount: questionCount
-      });
-    } catch (err: unknown) {
-      // Handle error with comprehensive error management
-      const error = err instanceof Error ? err : new Error(String(err));
-      const errorResult = await errorManager.handleError(error, {
-        operation: 'quiz-generation',
-        component: 'QuizConfig',
-        userId: user.uid,
-        severity: 'high',
-        category: 'business'
-      });
-
-      if (errorResult.success && errorResult.data) {
-        // Use fallback data if available
-        setError('Using fallback quiz generation method');
-        if (Array.isArray(errorResult.data) && errorResult.data.length > 0) {
-          setQuestions(errorResult.data);
-          setAppState('quiz');
-          return;
-        }
-      }
-
-      // Set user-friendly error message
-      const userMessage = error.message || 'Failed to generate quiz questions. Please try again or contact support if the problem persists.';
-      setError(userMessage);
-      
-      // Add error breadcrumb
-      errorManager.addUserActionBreadcrumb('quiz-generation-failed', 'quiz-config', {
-        errorMessage: error.message,
-        errorType: error.constructor.name
-      });
+    } catch (error: any) {
+      setError(error.message || 'Failed to generate quiz questions');
     } finally {
       setLoading(false);
     }
@@ -319,8 +205,8 @@ export default function Home() {
         fileName: uploadedFile.fileName,
         fileType: uploadedFile.fileType,
         extractedText: uploadedFile.extractedText, // Store for retaking
-        quizType: questions.length > 0 && questions.every(q => q.type === questions[0]?.type) 
-          ? questions[0]?.type as QuizType 
+        quizType: questions.every(q => q.type === questions[0].type) 
+          ? questions[0].type as QuizType 
           : 'Mixed',
         questions,
         answers: userAnswers,
@@ -338,12 +224,12 @@ export default function Home() {
         try {
           await logResult(user.uid, {
             testName,
-            folderId: selectedFolder?.id || '',
+            folderId: selectedFolder?.id,
             score: calculatedScore,
             timeTaken,
             quizType: inferQuizTypeFrom(questions),
             questionCount: questions.length,
-            retakeOf: isRetaking ? retakeTestName : '', // TODO: Track retakes properly
+            retakeOf: isRetaking ? undefined : undefined, // TODO: Track retakes properly
             topics: [] // TODO: Extract from AI feedback later
           });
           console.log('Result metrics logged successfully');
@@ -356,14 +242,13 @@ export default function Home() {
       if (isIncomplete) {
         setError('Progress saved! You can continue this test later from your history.');
       }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error('Failed to save test history:', message);
+    } catch (error: any) {
+      console.error('Failed to save test history:', error);
       // Show a non-intrusive message to the user
-      const displayMessage = isIncomplete 
+      const message = isIncomplete 
         ? 'Progress saved locally but may not have been saved to the cloud due to a connection issue.'
         : 'Quiz completed successfully! Note: Test history may not have been saved due to a connection issue.';
-      setError(displayMessage);
+      setError(message);
     }
   };
 
@@ -499,34 +384,13 @@ export default function Home() {
     );
   }
 
-  // Check if we're in bypass mode
-  const isBypassMode = typeof window !== 'undefined' && window.location.search.includes('bypass=true');
-  
-  if (!user && !isBypassMode) {
-    return <AuthForm onAuthSuccess={handleAuthSuccess} />;
-  }
-
-  // Use bypass user if in bypass mode and no real user
-  const currentUser = user || (isBypassMode ? {
-    uid: 'bypass-user-123',
-    email: 'bypass@test.com',
-    displayName: 'Bypass User (Pro)'
-  } as User : null);
-
-  // If no user and not in bypass mode, show auth form
-  if (!currentUser) {
+  if (!user) {
     return <AuthForm onAuthSuccess={handleAuthSuccess} />;
   }
 
   return (
-    <AccessibilityProvider>
-      <div className="min-h-screen bg-gray-50" data-testid="app-container">
-        {/* Skip Links for Accessibility */}
-        <SkipLinks />
-        
-
-        
-        {/* Header */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -536,18 +400,67 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Home Button */}
-              <button
-                onClick={handleGoHome}
-                className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
-                  appState === 'home' 
-                    ? 'text-indigo-600 bg-indigo-50 rounded-lg' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <HomeIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Home</span>
-              </button>
+              {/* Plan and Usage Display */}
+              {!planLoading && (
+                <div className="hidden lg:flex items-center space-x-3">
+                  <button
+                    onClick={() => setShowPlanManager(true)}
+                    className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-medium hover:bg-blue-200 transition-colors cursor-pointer"
+                    title="Click to manage plan"
+                  >
+                    {planFeatures.name}
+                  </button>
+                  {usage && limit !== Infinity && (
+                    <span className="text-xs text-gray-500">
+                      {testsRemaining} tests left
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              <span className="text-sm text-gray-600">
+                Welcome, {user.displayName || user.email}
+              </span>
+              
+              {appState !== 'home' && (
+                <button
+                  onClick={handleGoHome}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <HomeIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Home</span>
+                </button>
+              )}
+              
+              {appState !== 'history' && (
+                <button
+                  onClick={handleViewHistory}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <History className="h-4 w-4" />
+                  <span className="hidden sm:inline">History</span>
+                </button>
+              )}
+              
+              {appState !== 'folders' && planFeatures.folders && (
+                <button
+                  onClick={() => setAppState('folders')}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <FolderIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Folders</span>
+                </button>
+              )}
+              
+              {appState !== 'metrics' && planFeatures.metrics && (
+                <button
+                  onClick={() => setAppState('metrics')}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Analytics</span>
+                </button>
+              )}
               
               {/* Upgrade Button - Show for free and student plans */}
               {(plan === 'free' || plan === 'student') && (
@@ -562,144 +475,13 @@ export default function Home() {
                 </button>
               )}
               
-                             {/* User Dropdown */}
-               <div className="relative user-dropdown">
-                <button
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-indigo-600">
-                        {(currentUser.displayName || currentUser.email).charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="hidden sm:block text-left">
-                      <div className="text-sm font-medium text-gray-900">
-                        {currentUser.displayName || currentUser.email}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {planFeatures.name} Plan
-                      </div>
-                    </div>
-                  </div>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                {/* Dropdown Menu */}
-                {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    {/* User Info */}
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <div className="text-sm font-medium text-gray-900">
-                        {currentUser.displayName || currentUser.email}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {planFeatures.name} Plan
-                      </div>
-                      {usage && limit !== Infinity && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {testsRemaining} tests remaining
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Navigation Items */}
-                    <div className="py-1">
-                                             <button
-                         onClick={handleViewHistory}
-                         className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                           appState === 'history' 
-                             ? 'text-indigo-600 bg-indigo-50' 
-                             : 'text-gray-900 hover:bg-gray-50'
-                         }`}
-                       >
-                        <div className="flex items-center space-x-3">
-                          <History className="h-4 w-4" />
-                          <span>History</span>
-                        </div>
-                      </button>
-                      
-                      {planFeatures.folders && (
-                        <button
-                          onClick={() => setAppState('folders')}
-                                                   className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                           appState === 'folders' 
-                             ? 'text-indigo-600 bg-indigo-50' 
-                             : 'text-gray-900 hover:bg-gray-50'
-                         }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <FolderIcon className="h-4 w-4" />
-                            <span>Folders</span>
-                          </div>
-                        </button>
-                      )}
-                      
-                      {planFeatures.metrics && (
-                        <button
-                          onClick={() => setAppState('metrics')}
-                                                   className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                           appState === 'metrics' 
-                             ? 'text-indigo-600 bg-indigo-50' 
-                             : 'text-gray-900 hover:bg-gray-50'
-                         }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <BarChart3 className="h-4 w-4" />
-                            <span>Analytics</span>
-                          </div>
-                        </button>
-                      )}
-                    </div>
-                    
-                    {/* Settings & Account */}
-                    <div className="py-1 border-t border-gray-100">
-                      <button
-                        onClick={() => setShowPlanManager(true)}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Crown className="h-4 w-4" />
-                          <span>Plan Settings</span>
-                        </div>
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          // Toggle accessibility settings modal
-                          setShowAccessibilitySettings(!showAccessibilitySettings);
-                          setUserDropdownOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <span>Accessibility Settings</span>
-                        </div>
-                      </button>
-                    </div>
-                    
-                    {/* Sign Out */}
-                    <div className="py-1 border-t border-gray-100">
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <LogOut className="h-4 w-4" />
-                          <span>Sign Out</span>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
             </div>
           </div>
         </div>
@@ -860,7 +642,7 @@ export default function Home() {
                         <FileUpload
               onFileProcessed={handleFileProcessed}
               onError={handleFileError}
-              selectedFolder={selectedFolder || null}
+              selectedFolder={selectedFolder}
               onUpgradeClick={() => showUpgradePrompt('imageUpload')}
             />
           </div>
@@ -977,7 +759,7 @@ export default function Home() {
               <FolderManager
                 userId={user.uid}
                 onFolderSelect={setSelectedFolder}
-                selectedFolder={selectedFolder || null}
+                selectedFolder={selectedFolder}
                 onTestSelect={handleViewTest}
               />
             </FeatureGate>
@@ -1010,8 +792,8 @@ export default function Home() {
           onClose={hidePaywall}
           currentPlan={plan}
           userId={user.uid}
-                          triggerFeature={triggerFeature || ''}
-          onUpgrade={async (_newPlan) => {
+          triggerFeature={triggerFeature}
+          onUpgrade={async (newPlan) => {
             await refreshProfile();
             await refreshUsage();
           }}
@@ -1106,57 +888,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Accessibility Settings Modal */}
-      {showAccessibilitySettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Accessibility Settings</h2>
-              <button
-                onClick={() => setShowAccessibilitySettings(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-900 font-medium">High Contrast Mode</span>
-                <button className="w-12 h-6 bg-gray-200 rounded-full relative">
-                  <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1 transition-transform"></div>
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-gray-900 font-medium">Large Text</span>
-                <button className="w-12 h-6 bg-gray-200 rounded-full relative">
-                  <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1 transition-transform"></div>
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-gray-900 font-medium">Screen Reader Support</span>
-                <button className="w-12 h-6 bg-indigo-600 rounded-full relative">
-                  <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1 transition-transform"></div>
-                </button>
-              </div>
-            </div>
-            
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setShowAccessibilitySettings(false)}
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -1166,6 +897,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-    </AccessibilityProvider>
   );
 }

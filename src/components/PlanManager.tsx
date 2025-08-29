@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Crown, Star, Settings, Check } from 'lucide-react';
+import { Crown, Star, Zap, Settings, Check } from 'lucide-react';
 import { useUserPlan, useUsageStatus } from '@/contexts/UserPlanContext';
-import { UserPlan, PLAN_FEATURES } from '@/config/plans';
+import { UserPlan, PLAN_FEATURES, getPlanFeatures } from '@/config/plans';
 import { updateUserPlan } from '@/services/userService';
 import { UsageLimit } from './FeatureGate';
 

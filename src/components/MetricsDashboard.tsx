@@ -102,7 +102,7 @@ export default function MetricsDashboard({ userId, plan = 'free' }: MetricsDashb
                   value={filters.days || 'all'}
                   onChange={(e) => setFilters(prev => ({ 
                     ...prev, 
-                    days: e.target.value === 'all' ? 365 : parseInt(e.target.value)
+                    days: e.target.value === 'all' ? undefined : parseInt(e.target.value)
                   }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
@@ -125,7 +125,7 @@ export default function MetricsDashboard({ userId, plan = 'free' }: MetricsDashb
                   value={filters.folderId || 'all'}
                   onChange={(e) => setFilters(prev => ({ 
                     ...prev, 
-                    folderId: e.target.value === 'all' ? '' : e.target.value
+                    folderId: e.target.value === 'all' ? undefined : e.target.value
                   }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >

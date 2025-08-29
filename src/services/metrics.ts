@@ -203,7 +203,7 @@ export async function migrateTestHistoryToResults(uid: string): Promise<number> 
     
     // Get existing results to avoid duplicates
     const snapResults = await getDocs(resultsBase);
-    const existingResults = new Set(snapResults.docs.map(d => `${d.data().testName  }_${  d.data().createdAt?.seconds}`));
+    const existingResults = new Set(snapResults.docs.map(d => d.data().testName + '_' + d.data().createdAt?.seconds));
     
     let migratedCount = 0;
     
@@ -213,7 +213,7 @@ export async function migrateTestHistoryToResults(uid: string): Promise<number> 
       // Skip if no score (incomplete test) or already migrated
       if (data.score == null || isNaN(data.score)) continue;
       
-      const uniqueKey = `${data.testName  }_${  data.completedAt?.seconds || data.createdAt?.seconds}`;
+      const uniqueKey = data.testName + '_' + (data.completedAt?.seconds || data.createdAt?.seconds);
       if (existingResults.has(uniqueKey)) continue;
       
       // Convert to results format

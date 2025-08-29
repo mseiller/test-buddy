@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: errorMessage,
-          originalError,
+          originalError: originalError,
           suggestion: 'Try converting the PDF to a different format or removing any password protection.'
         },
         { status: statusCode }

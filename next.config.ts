@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: { ignoreDuringBuilds: true },          // Stop ESLint from breaking builds while we clean up
-  typescript: { ignoreBuildErrors: true },       // TEMP: Ignore TS errors while we clean up - remove once stable
   // Optimize for Vercel deployment
   experimental: {
     // Reduce memory usage during build

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { History, FileText, Trophy, Trash2, Eye, Calendar, RotateCcw } from 'lucide-react';
+import { History, Clock, FileText, Trophy, Trash2, Eye, Calendar, RotateCcw } from 'lucide-react';
 import { TestHistory as TestHistoryType } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
 
@@ -16,22 +16,21 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    loadTestHistory();
+  }, [userId]);
+
   const loadTestHistory = async () => {
     try {
       setLoading(true);
       const history = await FirebaseService.getUserTestHistory(userId);
       setTests(history);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
+    } catch (error: any) {
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadTestHistory();
-  }, [userId]);
 
   const handleDeleteTest = async (testId: string) => {
     if (!confirm('Are you sure you want to delete this test? This action cannot be undone.')) {
@@ -41,9 +40,8 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
     try {
       await FirebaseService.deleteTestHistory(testId);
       setTests(prev => prev.filter(test => test.id !== testId));
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
+    } catch (error: any) {
+      setError(error.message);
     }
   };
 
@@ -57,7 +55,11 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
     }).format(date);
   };
 
-
+  const formatDuration = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   const calculateScore = (test: TestHistoryType) => {
     if (!test.answers || test.answers.length === 0) return 0;

@@ -29,56 +29,18 @@ const UserPlanContext = createContext<UserPlanContextType | undefined>(undefined
 
 export function UserPlanProvider({ children }: { children: React.ReactNode }) {
   const [user, authLoading] = useAuthState(auth);
-  
-  // Check if we're in bypass mode (no real Firebase user but we want to test)
-  const isBypassMode = typeof window !== 'undefined' && window.location.search.includes('bypass=true');
-  
-  // Debug logging
-  if (isBypassMode) {
-    console.log('BYPASS MODE DETECTED in UserPlanContext');
-  }
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [usage, setUsage] = useState<UsageRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Bypass check for testing - give Pro features to bypass user
-  const isBypassUser = user?.uid === 'bypass-user-123' || isBypassMode;
-  const plan = isBypassUser ? 'pro' : (userProfile?.plan || DEFAULT_PLAN);
+  const plan = userProfile?.plan || DEFAULT_PLAN;
   const planFeatures = getPlanFeatures(plan);
 
   // Load user profile
   const loadUserProfile = async () => {
-    if (!user && !isBypassMode) {
+    if (!user) {
       setUserProfile(null);
-      setLoading(false);
-      return;
-    }
-
-    // For bypass mode, create mock profile
-    if (isBypassMode) {
-      setUserProfile({
-        userId: 'bypass-user-123',
-        email: 'bypass@test.com',
-        displayName: 'Bypass User (Pro)',
-        plan: 'pro',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-      setLoading(false);
-      return;
-    }
-
-    // For bypass user, create mock profile
-    if (user?.uid === 'bypass-user-123') {
-      setUserProfile({
-        userId: user.uid,
-        email: user.email || '',
-        displayName: user.displayName || '',
-        plan: 'pro',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
       setLoading(false);
       return;
     }
@@ -104,29 +66,7 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
 
   // Load usage data
   const loadUsage = async () => {
-    if (!user && !isBypassMode) return;
-
-    // For bypass mode, create mock usage data
-    if (isBypassMode) {
-      setUsage({
-        testsGenerated: 5,
-        lastReset: new Date().toISOString(),
-        userId: 'bypass-user-123'
-      });
-      return;
-    }
-
-    // For bypass user, create mock usage data
-    if (user?.uid === 'bypass-user-123') {
-      setUsage({
-        testsGenerated: 5,
-        lastReset: new Date().toISOString(),
-        userId: user.uid
-      });
-      return;
-    }
-
-    if (!userProfile) return;
+    if (!user || !userProfile) return;
 
     try {
       const usageCheck = await canGenerateTest(user.uid, userProfile.plan);
@@ -136,35 +76,28 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Load profile on auth state change or bypass mode
+  // Load profile on auth state change
   useEffect(() => {
-    if (isBypassMode || !authLoading) {
+    if (!authLoading) {
       loadUserProfile();
     }
-  }, [user, authLoading, isBypassMode]);
-
-  // Handle bypass mode loading state
-  useEffect(() => {
-    if (isBypassMode && !loading) {
-      setLoading(false);
-    }
-  }, [isBypassMode, loading]);
+  }, [user, authLoading]);
 
   // Load usage when profile is available
   useEffect(() => {
-    if (userProfile || isBypassMode) {
+    if (userProfile) {
       loadUsage();
     }
-  }, [userProfile, isBypassMode]);
+  }, [userProfile]);
 
   // Calculate derived values
   const canCreateTest = usage ? 
     (planFeatures.maxTestsPerMonth === Infinity || usage.testsGenerated < planFeatures.maxTestsPerMonth) : 
-    (isBypassMode ? true : false);
+    false;
 
   const testsRemaining = usage && planFeatures.maxTestsPerMonth !== Infinity ? 
     Math.max(0, planFeatures.maxTestsPerMonth - usage.testsGenerated) : 
-    (isBypassMode ? Infinity : 0);
+    Infinity;
 
   const refreshProfile = async () => {
     await loadUserProfile();
@@ -178,7 +111,7 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
     userProfile,
     plan,
     planFeatures,
-    loading: isBypassMode ? loading : (loading || authLoading),
+    loading: loading || authLoading,
     error,
     usage,
     canCreateTest,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, File, X, CheckCircle, Image } from 'lucide-react';
+import { Upload, File, X, CheckCircle, AlertCircle, Image } from 'lucide-react';
 import { FileProcessorNew } from '@/services/fileProcessorNew';
 import { FileUpload as FileUploadType } from '@/types';
 import { useUserPlan } from '@/contexts/UserPlanContext';
@@ -115,34 +115,33 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
       let fileType = 'multiple';
       if (files.length === 1) {
         const file = files[0];
-        if (file && file.type.startsWith('image/')) {
+        if (file.type.startsWith('image/')) {
           fileType = 'image';
-        } else if (file) {
+        } else {
           const extension = file.name.split('.').pop()?.toLowerCase() || '';
           fileType = extension;
         }
       }
 
       const fileUpload: FileUploadType = {
-        file: files[0]!, // Use first file as representative - we know it exists since we're in this function
+        file: files[0], // Use first file as representative
         extractedText: combinedText,
-        fileName: files.length === 1 ? files[0]!.name : `${files.length} files: ${fileNames.join(', ')}`,
-        fileType,
+        fileName: files.length === 1 ? files[0].name : `${files.length} files: ${fileNames.join(', ')}`,
+        fileType: fileType,
       };
 
       setUploadedFile(fileUpload);
       onFileProcessed(fileUpload);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      onError(message || 'Failed to process files');
+    } catch (error: any) {
+      onError(error.message || 'Failed to process files');
     } finally {
       setProcessing(false);
     }
   };
 
-  // const handleFile = async (file: File) => {
-  //   await handleMultipleFiles([file]);
-  // };
+  const handleFile = async (file: File) => {
+    await handleMultipleFiles([file]);
+  };
 
   const removeFile = () => {
     setUploadedFile(null);
