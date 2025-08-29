@@ -31,7 +31,12 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
   const [user, authLoading] = useAuthState(auth);
   
   // Check if we're in bypass mode (no real Firebase user but we want to test)
-  const isBypassMode = !user && !authLoading && typeof window !== 'undefined' && window.location.search.includes('bypass=true');
+  const isBypassMode = typeof window !== 'undefined' && window.location.search.includes('bypass=true');
+  
+  // Debug logging
+  if (isBypassMode) {
+    console.log('BYPASS MODE DETECTED in UserPlanContext');
+  }
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [usage, setUsage] = useState<UsageRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,7 +138,7 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
 
   // Load profile on auth state change or bypass mode
   useEffect(() => {
-    if (!authLoading || isBypassMode) {
+    if (isBypassMode || !authLoading) {
       loadUserProfile();
     }
   }, [user, authLoading, isBypassMode]);
@@ -173,7 +178,7 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
     userProfile,
     plan,
     planFeatures,
-    loading: loading || authLoading,
+    loading: isBypassMode ? loading : (loading || authLoading),
     error,
     usage,
     canCreateTest,
