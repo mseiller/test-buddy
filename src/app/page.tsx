@@ -545,40 +545,52 @@ export default function Home() {
                 Welcome, {user.displayName || user.email}
               </span>
               
-              {appState !== 'home' && (
-                <button
-                  onClick={handleGoHome}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <HomeIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Home</span>
-                </button>
-              )}
+              <button
+                onClick={handleGoHome}
+                className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
+                  appState === 'home' 
+                    ? 'text-indigo-600 bg-indigo-50 rounded-lg' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <HomeIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Home</span>
+              </button>
               
-              {appState !== 'history' && (
-                <button
-                  onClick={handleViewHistory}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <History className="h-4 w-4" />
-                  <span className="hidden sm:inline">History</span>
-                </button>
-              )}
+              <button
+                onClick={handleViewHistory}
+                className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
+                  appState === 'history' 
+                    ? 'text-indigo-600 bg-indigo-50 rounded-lg' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <History className="h-4 w-4" />
+                <span className="hidden sm:inline">History</span>
+              </button>
               
-              {appState !== 'folders' && planFeatures.folders && (
+              {planFeatures.folders && (
                 <button
                   onClick={() => setAppState('folders')}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
+                    appState === 'folders' 
+                      ? 'text-indigo-600 bg-indigo-50 rounded-lg' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
                   <FolderIcon className="h-4 w-4" />
                   <span className="hidden sm:inline">Folders</span>
                 </button>
               )}
               
-              {appState !== 'metrics' && planFeatures.metrics && (
+              {planFeatures.metrics && (
                 <button
                   onClick={() => setAppState('metrics')}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
+                    appState === 'metrics' 
+                      ? 'text-indigo-600 bg-indigo-50 rounded-lg' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Analytics</span>
