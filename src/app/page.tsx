@@ -47,6 +47,7 @@ export default function Home() {
 
 
   const [showPlanManager, setShowPlanManager] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -80,6 +81,20 @@ export default function Home() {
     
     console.log('AUTH BYPASS: Going directly to main app');
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userDropdownOpen) {
+        setUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userDropdownOpen]);
 
   // Handle URL parameters for folder selection
   useEffect(() => {
@@ -520,31 +535,7 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Accessibility Toggle */}
-              <AccessibilityToggle />
-              
-              {/* Plan and Usage Display */}
-              {!planLoading && (
-                <div className="hidden lg:flex items-center space-x-3">
-                  <button
-                    onClick={() => setShowPlanManager(true)}
-                    className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-medium hover:bg-blue-200 transition-colors cursor-pointer"
-                    title="Click to manage plan"
-                  >
-                    {planFeatures.name}
-                  </button>
-                  {usage && limit !== Infinity && (
-                    <span className="text-xs text-gray-500">
-                      {testsRemaining} tests left
-                    </span>
-                  )}
-                </div>
-              )}
-              
-              <span className="text-sm text-gray-600">
-                Welcome, {user.displayName || user.email}
-              </span>
-              
+              {/* Home Button */}
               <button
                 onClick={handleGoHome}
                 className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
@@ -556,46 +547,6 @@ export default function Home() {
                 <HomeIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Home</span>
               </button>
-              
-              <button
-                onClick={handleViewHistory}
-                className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
-                  appState === 'history' 
-                    ? 'text-indigo-600 bg-indigo-50 rounded-lg' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <History className="h-4 w-4" />
-                <span className="hidden sm:inline">History</span>
-              </button>
-              
-              {planFeatures.folders && (
-                <button
-                  onClick={() => setAppState('folders')}
-                  className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
-                    appState === 'folders' 
-                      ? 'text-indigo-600 bg-indigo-50 rounded-lg' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <FolderIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Folders</span>
-                </button>
-              )}
-              
-              {planFeatures.metrics && (
-                <button
-                  onClick={() => setAppState('metrics')}
-                  className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
-                    appState === 'metrics' 
-                      ? 'text-indigo-600 bg-indigo-50 rounded-lg' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Analytics</span>
-                </button>
-              )}
               
               {/* Upgrade Button - Show for free and student plans */}
               {(plan === 'free' || plan === 'student') && (
@@ -610,13 +561,137 @@ export default function Home() {
                 </button>
               )}
               
-              <button
-                onClick={handleSignOut}
-                className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </button>
+              {/* User Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-50"
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-indigo-600">
+                        {(user.displayName || user.email).charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="hidden sm:block text-left">
+                      <div className="text-sm font-medium text-gray-900">
+                        {user.displayName || user.email}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {planFeatures.name} Plan
+                      </div>
+                    </div>
+                  </div>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* Dropdown Menu */}
+                {userDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="text-sm font-medium text-gray-900">
+                        {user.displayName || user.email}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {planFeatures.name} Plan
+                      </div>
+                      {usage && limit !== Infinity && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {testsRemaining} tests remaining
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Navigation Items */}
+                    <div className="py-1">
+                      <button
+                        onClick={handleViewHistory}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          appState === 'history' 
+                            ? 'text-indigo-600 bg-indigo-50' 
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <History className="h-4 w-4" />
+                          <span>History</span>
+                        </div>
+                      </button>
+                      
+                      {planFeatures.folders && (
+                        <button
+                          onClick={() => setAppState('folders')}
+                          className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                            appState === 'folders' 
+                              ? 'text-indigo-600 bg-indigo-50' 
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <FolderIcon className="h-4 w-4" />
+                            <span>Folders</span>
+                          </div>
+                        </button>
+                      )}
+                      
+                      {planFeatures.metrics && (
+                        <button
+                          onClick={() => setAppState('metrics')}
+                          className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                            appState === 'metrics' 
+                              ? 'text-indigo-600 bg-indigo-50' 
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <BarChart3 className="h-4 w-4" />
+                            <span>Analytics</span>
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Settings & Account */}
+                    <div className="py-1 border-t border-gray-100">
+                      <button
+                        onClick={() => setShowPlanManager(true)}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Crown className="h-4 w-4" />
+                          <span>Plan Settings</span>
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-4 h-4" />
+                          <AccessibilityToggle />
+                        </div>
+                      </button>
+                    </div>
+                    
+                    {/* Sign Out */}
+                    <div className="py-1 border-t border-gray-100">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <LogOut className="h-4 w-4" />
+                          <span>Sign Out</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
