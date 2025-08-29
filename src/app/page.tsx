@@ -46,6 +46,7 @@ export default function Home() {
 
 
   const [showPlanManager, setShowPlanManager] = useState(false);
+  const [showAccessibilitySettings, setShowAccessibilitySettings] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
@@ -606,14 +607,14 @@ export default function Home() {
                     
                     {/* Navigation Items */}
                     <div className="py-1">
-                      <button
-                        onClick={handleViewHistory}
-                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                          appState === 'history' 
-                            ? 'text-indigo-600 bg-indigo-50' 
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
+                                             <button
+                         onClick={handleViewHistory}
+                         className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                           appState === 'history' 
+                             ? 'text-indigo-600 bg-indigo-50' 
+                             : 'text-gray-900 hover:bg-gray-50'
+                         }`}
+                       >
                         <div className="flex items-center space-x-3">
                           <History className="h-4 w-4" />
                           <span>History</span>
@@ -623,11 +624,11 @@ export default function Home() {
                       {planFeatures.folders && (
                         <button
                           onClick={() => setAppState('folders')}
-                          className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                            appState === 'folders' 
-                              ? 'text-indigo-600 bg-indigo-50' 
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
+                                                   className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                           appState === 'folders' 
+                             ? 'text-indigo-600 bg-indigo-50' 
+                             : 'text-gray-900 hover:bg-gray-50'
+                         }`}
                         >
                           <div className="flex items-center space-x-3">
                             <FolderIcon className="h-4 w-4" />
@@ -639,11 +640,11 @@ export default function Home() {
                       {planFeatures.metrics && (
                         <button
                           onClick={() => setAppState('metrics')}
-                          className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                            appState === 'metrics' 
-                              ? 'text-indigo-600 bg-indigo-50' 
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
+                                                   className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                           appState === 'metrics' 
+                             ? 'text-indigo-600 bg-indigo-50' 
+                             : 'text-gray-900 hover:bg-gray-50'
+                         }`}
                         >
                           <div className="flex items-center space-x-3">
                             <BarChart3 className="h-4 w-4" />
@@ -657,7 +658,7 @@ export default function Home() {
                     <div className="py-1 border-t border-gray-100">
                       <button
                         onClick={() => setShowPlanManager(true)}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-center space-x-3">
                           <Crown className="h-4 w-4" />
@@ -667,10 +668,11 @@ export default function Home() {
                       
                       <button
                         onClick={() => {
-                          // Toggle accessibility settings
+                          // Toggle accessibility settings modal
+                          setShowAccessibilitySettings(!showAccessibilitySettings);
                           setUserDropdownOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-center space-x-3">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1097,6 +1099,57 @@ export default function Home() {
                 className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Accessibility Settings Modal */}
+      {showAccessibilitySettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Accessibility Settings</h2>
+              <button
+                onClick={() => setShowAccessibilitySettings(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-900 font-medium">High Contrast Mode</span>
+                <button className="w-12 h-6 bg-gray-200 rounded-full relative">
+                  <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1 transition-transform"></div>
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-gray-900 font-medium">Large Text</span>
+                <button className="w-12 h-6 bg-gray-200 rounded-full relative">
+                  <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1 transition-transform"></div>
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-gray-900 font-medium">Screen Reader Support</span>
+                <button className="w-12 h-6 bg-indigo-600 rounded-full relative">
+                  <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1 transition-transform"></div>
+                </button>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowAccessibilitySettings(false)}
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
