@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, File, X, CheckCircle, AlertCircle, Image } from 'lucide-react';
+import { Upload, File, X, CheckCircle, Image } from 'lucide-react';
 import { FileProcessorNew } from '@/services/fileProcessorNew';
 import { FileUpload as FileUploadType } from '@/types';
 import { useUserPlan } from '@/contexts/UserPlanContext';
@@ -115,18 +115,18 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
       let fileType = 'multiple';
       if (files.length === 1) {
         const file = files[0];
-        if (file.type.startsWith('image/')) {
+        if (file && file.type.startsWith('image/')) {
           fileType = 'image';
-        } else {
+        } else if (file) {
           const extension = file.name.split('.').pop()?.toLowerCase() || '';
           fileType = extension;
         }
       }
 
       const fileUpload: FileUploadType = {
-        file: files[0], // Use first file as representative
+        file: files[0]!, // Use first file as representative - we know it exists since we're in this function
         extractedText: combinedText,
-        fileName: files.length === 1 ? files[0].name : `${files.length} files: ${fileNames.join(', ')}`,
+        fileName: files.length === 1 ? files[0]!.name : `${files.length} files: ${fileNames.join(', ')}`,
         fileType,
       };
 
@@ -139,9 +139,9 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
     }
   };
 
-  const handleFile = async (file: File) => {
-    await handleMultipleFiles([file]);
-  };
+  // const handleFile = async (file: File) => {
+  //   await handleMultipleFiles([file]);
+  // };
 
   const removeFile = () => {
     setUploadedFile(null);

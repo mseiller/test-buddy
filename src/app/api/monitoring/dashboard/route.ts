@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MonitoringAPI } from '@/services/monitoring/MonitoringAPI';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const monitoringAPI = MonitoringAPI.getInstance();
     const response = await monitoringAPI.getDashboardData();

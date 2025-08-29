@@ -180,7 +180,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             retryCount: this.state.retryCount
           },
           timestamp: Date.now(),
-          stackTrace: error.stack
+          stackTrace: error.stack || ''
         },
         recoveryStrategy: 'retry',
         retryCount: this.state.retryCount,
@@ -431,7 +431,7 @@ export function withErrorBoundary<P extends object>(
  * Hook for manually triggering error boundary
  */
 export function useErrorHandler() {
-  return (error: Error, errorInfo?: Partial<ErrorInfo>) => {
+  return (error: Error, _errorInfo?: Partial<ErrorInfo>) => {
     throw error;
   };
 }

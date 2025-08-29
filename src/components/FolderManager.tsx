@@ -90,10 +90,10 @@ export default function FolderManager({
           quizType: test.quizType as any,
           questions: test.questions as any,
           answers: test.answers as any,
-          score: test.score,
+          score: test.score || 0,
           createdAt: test.createdAt,
-          completedAt: test.completedAt,
-          folderId: test.folderId || undefined
+          completedAt: test.completedAt || new Date(),
+          folderId: test.folderId || ''
         }));
       
       setTests(convertedTests);
@@ -125,10 +125,10 @@ export default function FolderManager({
           quizType: test.quizType as any,
           questions: test.questions as any,
           answers: test.answers as any,
-          score: test.score,
+          score: test.score || 0,
           createdAt: test.createdAt,
-          completedAt: test.completedAt,
-          folderId: test.folderId || undefined
+          completedAt: test.completedAt || new Date(),
+          folderId: test.folderId || ''
         }));
       
       setTests(convertedTests);
@@ -209,7 +209,7 @@ export default function FolderManager({
       
       // Update local state
       setTests(prev => prev.map(test =>
-        test.id === testId ? { ...test, folderId: folderId || undefined } : test
+        test.id === testId ? { ...test, folderId: folderId || '' } : test
       ));
       
       // Reload the current view to reflect changes
@@ -234,7 +234,7 @@ export default function FolderManager({
       {/* Folder List */}
       <FolderList
         folders={folders}
-        selectedFolder={selectedFolder}
+        selectedFolder={selectedFolder || null}
         onFolderSelect={onFolderSelect}
         onEditFolder={handleEditFolderClick}
         onDeleteFolder={handleDeleteFolder}
@@ -245,7 +245,7 @@ export default function FolderManager({
       <TestList
         tests={tests}
         folders={folders}
-        selectedFolder={selectedFolder}
+        selectedFolder={selectedFolder || null}
         onTestSelect={onTestSelect}
         onMoveTest={handleMoveTest}
       />

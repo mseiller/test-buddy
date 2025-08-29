@@ -31,7 +31,7 @@ export default function CreateFolderModal({
     if (!name.trim()) return;
     
     try {
-      await onSubmit(name.trim(), description.trim(), selectedColor);
+      await onSubmit(name.trim(), description.trim(), selectedColor || 'blue');
       // Reset form
       setName('');
       setDescription('');

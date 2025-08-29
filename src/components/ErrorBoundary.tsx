@@ -171,7 +171,7 @@ export function withErrorBoundary<P extends object>(
   onError?: (error: Error, errorInfo: ErrorInfo) => void
 ) {
   const WrappedComponent = (props: P) => (
-    <ErrorBoundary fallback={fallback} onError={onError}>
+    <ErrorBoundary fallback={fallback} onError={onError || (() => {})}>
       <Component {...props} />
     </ErrorBoundary>
   );

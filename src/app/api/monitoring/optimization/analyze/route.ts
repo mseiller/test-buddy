@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PerformanceOptimizer } from '@/services/performance/PerformanceOptimizer';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const optimizer = PerformanceOptimizer.getInstance();
     const analysis = await optimizer.analyzePerformance();

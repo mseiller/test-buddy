@@ -36,7 +36,7 @@ export function FeatureGate({
     return null;
   }
   
-  return <LockedFeature feature={feature} currentPlan={plan} onUpgradeClick={onUpgradeClick} />;
+  return <LockedFeature feature={feature} currentPlan={plan} onUpgradeClick={onUpgradeClick || (() => {})} />;
 }
 
 interface LockedFeatureProps {

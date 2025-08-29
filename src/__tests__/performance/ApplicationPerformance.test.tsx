@@ -4,7 +4,8 @@ import {
   testComponentPerformance, 
   expectPerformance, 
   analyzeBundleSize,
-  performanceMonitor 
+  performanceMonitor,
+  PerformanceTester
 } from '../../utils/performance-test-utils';
 
 // Mock components for testing
@@ -292,7 +293,7 @@ describe('Application Performance Tests', () => {
 
   describe('Performance Monitoring and Reporting', () => {
     it('should provide comprehensive performance metrics', () => {
-      const tester = new (require('../../utils/performance-test-utils').PerformanceTester)();
+      const tester = new PerformanceTester();
       
       // Test multiple components
       tester.measureRenderTime('Component1', <MockButton>Test 1</MockButton>, 10);
@@ -309,7 +310,7 @@ describe('Application Performance Tests', () => {
     });
 
     it('should track performance trends', () => {
-      const tester = new (require('../../utils/performance-test-utils').PerformanceTester)();
+      const tester = new PerformanceTester();
       
       // Simulate performance degradation
       const component = <MockButton>Trend Test</MockButton>;

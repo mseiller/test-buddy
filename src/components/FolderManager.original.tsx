@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Folder, TestHistory } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
-import { getAllTests, getTestsInFolder, getUnorganizedTests, moveTest, migrateFromTestHistory } from '@/services/tests';
-import { Plus, Folder as FolderIcon, Edit, Trash2, MoreHorizontal, X } from 'lucide-react';
+import { getAllTests, getTestsInFolder, moveTest, migrateFromTestHistory } from '@/services/tests';
+import { Plus, MoreHorizontal, X } from 'lucide-react';
 
 interface FolderManagerProps {
   userId: string;
@@ -128,10 +128,10 @@ export default function FolderManager({
         quizType: test.quizType as any,
         questions: test.questions,
         answers: test.answers,
-        score: test.score,
+        score: test.score || 0,
         createdAt: test.createdAt,
-        completedAt: test.completedAt,
-        folderId: test.folderId || undefined
+        completedAt: test.completedAt || new Date(),
+        folderId: test.folderId || ''
       }));
       
       setTests(convertedTests);
@@ -165,10 +165,10 @@ export default function FolderManager({
         quizType: test.quizType as any,
         questions: test.questions,
         answers: test.answers,
-        score: test.score,
+        score: test.score || 0,
         createdAt: test.createdAt,
-        completedAt: test.completedAt,
-        folderId: test.folderId || undefined
+        completedAt: test.completedAt || new Date(),
+        folderId: test.folderId || ''
       }));
       
       setTests(convertedTests);
@@ -265,7 +265,7 @@ export default function FolderManager({
       // Update local state
       setFolders(folders.filter(f => f.id !== folderId));
       setTests(tests.map(test => 
-        test.folderId === folderId ? { ...test, folderId: undefined } : test
+        test.folderId === folderId ? { ...test, folderId: '' } : test
       ));
       
       if (selectedFolder?.id === folderId) {
@@ -297,7 +297,7 @@ export default function FolderManager({
       
       // Update local state
       setTests(tests.map(test => 
-        test.id === testId ? { ...test, folderId: folderId || undefined } : test
+        test.id === testId ? { ...test, folderId: folderId || '' } : test
       ));
       console.log('Local state updated for test move');
       

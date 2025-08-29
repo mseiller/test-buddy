@@ -93,6 +93,9 @@ export default function PerformanceDashboard() {
       const interval = setInterval(fetchPerformanceData, 30000);
       return () => clearInterval(interval);
     }
+    
+    // Return empty cleanup function when autoRefresh is false
+    return () => {};
   }, [autoRefresh]);
 
   // Get health score color

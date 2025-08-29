@@ -50,6 +50,7 @@ export const AccessibilityToggle: React.FC = () => {
             <div className="font-medium mb-1">Active Features:</div>
             <div className="space-y-1">
               {activeFeatures.map((feature, index) => {
+                if (!feature) return null;
                 const Icon = feature.icon;
                 return (
                   <div key={index} className="flex items-center gap-2">

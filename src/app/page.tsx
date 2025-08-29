@@ -21,7 +21,7 @@ import FolderManager from '@/components/FolderManager';
 import MetricsDashboard from '@/components/MetricsDashboard';
 import { LogOut, History, Home as HomeIcon, AlertCircle, BookOpen, Folder as FolderIcon, BarChart3, Crown } from 'lucide-react';
 import { ErrorManagementService } from '@/services/errors';
-import SecurityManager from '@/services/security';
+
 import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
 import { AccessibilityToggle, AccessibilityStatusBar } from '@/components/AccessibilityToggle';
 import { SkipLinks } from '@/components/SkipLink';
@@ -32,7 +32,7 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const { plan, planFeatures, loading: planLoading, refreshUsage, refreshProfile } = useUserPlan();
   const { usage, canCreateTest, testsRemaining, limit } = useUsageStatus();
-  const { isPaywallOpen, triggerFeature, showPaywall, hidePaywall, showUpgradePrompt } = usePaywall();
+  const { isPaywallOpen, triggerFeature, hidePaywall, showUpgradePrompt } = usePaywall();
   
   // Initialize error management service
   const errorManager = ErrorManagementService.getInstance({
@@ -44,8 +44,7 @@ export default function Home() {
     logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'error'
   });
 
-  // Initialize security manager
-  const securityManager = SecurityManager.getInstance();
+
   const [showPlanManager, setShowPlanManager] = useState(false);
   const [appState, setAppState] = useState<AppState>('auth');
   const [uploadedFile, setUploadedFile] = useState<FileUploadType | null>(null);
@@ -63,19 +62,7 @@ export default function Home() {
   const [showFolderSelection, setShowFolderSelection] = useState(false);
   const [availableFolders, setAvailableFolders] = useState<Folder[]>([]);
 
-  // Helper function to track navigation changes
-  const navigateToState = (newState: AppState) => {
-    errorManager.addNavigationBreadcrumb(appState, newState);
-    if (user?.uid) {
-      securityManager.logSecurityEvent({
-        userId: user.uid,
-        eventType: 'navigation',
-        details: { from: appState, to: newState },
-        severity: 'low'
-      });
-    }
-    setAppState(newState);
-  };
+
 
   // Check authentication state on mount
   useEffect(() => {
@@ -331,8 +318,8 @@ export default function Home() {
         fileName: uploadedFile.fileName,
         fileType: uploadedFile.fileType,
         extractedText: uploadedFile.extractedText, // Store for retaking
-        quizType: questions.every(q => q.type === questions[0].type) 
-          ? questions[0].type as QuizType 
+        quizType: questions.length > 0 && questions.every(q => q.type === questions[0]?.type) 
+          ? questions[0]?.type as QuizType 
           : 'Mixed',
         questions,
         answers: userAnswers,
@@ -355,7 +342,7 @@ export default function Home() {
             timeTaken,
             quizType: inferQuizTypeFrom(questions),
             questionCount: questions.length,
-            retakeOf: isRetaking ? undefined : undefined, // TODO: Track retakes properly
+            retakeOf: isRetaking ? retakeTestName : '', // TODO: Track retakes properly
             topics: [] // TODO: Extract from AI feedback later
           });
           console.log('Result metrics logged successfully');
@@ -895,7 +882,7 @@ export default function Home() {
               <FolderManager
                 userId={user.uid}
                 onFolderSelect={setSelectedFolder}
-                selectedFolder={selectedFolder}
+                selectedFolder={selectedFolder || null}
                 onTestSelect={handleViewTest}
               />
             </FeatureGate>
@@ -928,8 +915,8 @@ export default function Home() {
           onClose={hidePaywall}
           currentPlan={plan}
           userId={user.uid}
-          triggerFeature={triggerFeature}
-          onUpgrade={async (newPlan) => {
+                          triggerFeature={triggerFeature || ''}
+          onUpgrade={async (_newPlan) => {
             await refreshProfile();
             await refreshUsage();
           }}
