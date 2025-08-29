@@ -289,7 +289,7 @@ export class EnhancedOpenRouterService {
       question: InputSanitizer.sanitizeQuestionText(question.question),
       options: question.options?.map(option => 
         InputSanitizer.sanitizeAnswerText(option)
-      ),
+      ) || [],
       explanation: question.explanation 
         ? InputSanitizer.sanitizeText(question.explanation, { maxLength: 500, allowSpecialChars: true })
         : undefined,
