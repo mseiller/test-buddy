@@ -131,28 +131,35 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Load profile on auth state change
+  // Load profile on auth state change or bypass mode
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading || isBypassMode) {
       loadUserProfile();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, isBypassMode]);
+
+  // Handle bypass mode loading state
+  useEffect(() => {
+    if (isBypassMode && !loading) {
+      setLoading(false);
+    }
+  }, [isBypassMode, loading]);
 
   // Load usage when profile is available
   useEffect(() => {
-    if (userProfile) {
+    if (userProfile || isBypassMode) {
       loadUsage();
     }
-  }, [userProfile]);
+  }, [userProfile, isBypassMode]);
 
   // Calculate derived values
   const canCreateTest = usage ? 
     (planFeatures.maxTestsPerMonth === Infinity || usage.testsGenerated < planFeatures.maxTestsPerMonth) : 
-    false;
+    (isBypassMode ? true : false);
 
   const testsRemaining = usage && planFeatures.maxTestsPerMonth !== Infinity ? 
     Math.max(0, planFeatures.maxTestsPerMonth - usage.testsGenerated) : 
-    Infinity;
+    (isBypassMode ? Infinity : 0);
 
   const refreshProfile = async () => {
     await loadUserProfile();
