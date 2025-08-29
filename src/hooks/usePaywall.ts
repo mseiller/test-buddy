@@ -13,14 +13,14 @@ export function usePaywall() {
   const showPaywall = (triggerFeature?: string) => {
     setPaywallState({
       isOpen: true,
-      triggerFeature,
+      triggerFeature: triggerFeature || '',
     });
   };
 
   const hidePaywall = () => {
     setPaywallState({
       isOpen: false,
-      triggerFeature: undefined,
+      triggerFeature: '',
     });
   };
 

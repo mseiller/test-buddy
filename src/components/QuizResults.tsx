@@ -105,17 +105,17 @@ export default function QuizResults({
         questions={questions}
         answers={answers}
         canUseAiFeedback={canUseAiFeedback}
-        isHistoricalReview={isHistoricalReview}
+        isHistoricalReview={isHistoricalReview || false}
       />
 
       {/* Action Buttons */}
       <ActionButtons
         onRetakeQuiz={onRetakeQuiz}
         onGoHome={onGoHome}
-        onNewQuizFromFile={onNewQuizFromFile}
-        onBackToHistory={onBackToHistory}
+        onNewQuizFromFile={onNewQuizFromFile || (() => {})}
+        onBackToHistory={onBackToHistory || (() => {})}
         onShowReview={() => setShowReview(true)}
-        isHistoricalReview={isHistoricalReview}
+        isHistoricalReview={isHistoricalReview || false}
         canRetake={canRetake}
       />
     </div>

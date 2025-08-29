@@ -9,7 +9,7 @@
 
 // Core Services
 export { OpenRouterService } from './services/openRouter';
-export { default as FirebaseService } from './services/firebaseService';
+export { FirebaseService } from './services/firebaseService';
 export { default as SecurityManager } from './services/security';
 export { default as ErrorManagementService } from './services/errors';
 

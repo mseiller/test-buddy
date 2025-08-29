@@ -50,7 +50,7 @@ export const useKeyboardNavigation = (options: KeyboardNavigationOptions = {}) =
       const el = element as HTMLElement;
       return (
         el.offsetParent !== null && // Element is visible
-        !el.disabled && // Element is not disabled
+        !('disabled' in el && el.disabled) && // Element is not disabled
         el.style.display !== 'none' && // Element is not hidden
         el.style.visibility !== 'hidden' // Element is not invisible
       );
@@ -342,13 +342,15 @@ export const useFocusTrap = (isActive: boolean = true) => {
         )
       ).filter(el => {
         const element = el as HTMLElement;
-        return element.offsetParent !== null && !element.disabled;
+        return element.offsetParent !== null && !('disabled' in element && element.disabled);
       }) as HTMLElement[];
 
       if (focusableElements.length === 0) return;
 
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!firstElement || !lastElement) return;
 
       if (event.shiftKey) {
         // Shift + Tab: move to previous element

@@ -22,9 +22,7 @@ export default function QuizDisplay({
   questions, 
   testName, 
   onQuizComplete, 
-  onGoBack, 
-  onGoToFolders, 
-  isRetake = false 
+  onGoBack 
 }: QuizDisplayProps) {
   // State management
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -52,10 +50,12 @@ export default function QuizDisplay({
 
   // Helper functions
   const getCurrentAnswer = () => {
+    if (!currentQuestion) return undefined;
     return answers.find(a => a.questionId === currentQuestion.id);
   };
 
   const updateAnswer = (answer: string | number | number[] | boolean) => {
+    if (!currentQuestion) return;
     setAnswers(prev => prev.map(a => 
       a.questionId === currentQuestion.id 
         ? { ...a, answer } 
@@ -72,54 +72,15 @@ export default function QuizDisplay({
     }).length;
   };
 
-  const calculateScore = () => {
-    let correct = 0;
-    
-    answers.forEach((userAnswer, index) => {
-      const question = questions[index];
-      let isCorrect = false;
-      
-      switch (question.type) {
-        case 'MCQ':
-          isCorrect = userAnswer.answer === question.correctAnswer;
-          break;
-        case 'MSQ':
-          const userSelections = userAnswer.answer as number[];
-          const correctSelections = question.correctAnswer as number[];
-          isCorrect = Array.isArray(userSelections) && 
-                     Array.isArray(correctSelections) &&
-                     userSelections.length === correctSelections.length &&
-                     userSelections.every(selection => correctSelections.includes(selection));
-          break;
-        case 'True-False':
-          isCorrect = userAnswer.answer === question.correctAnswer;
-          break;
-        case 'Fill-in-the-blank':
-          const userText = (userAnswer.answer as string).toLowerCase().trim();
-          const correctText = (question.correctAnswer as string).toLowerCase().trim();
-          isCorrect = userText === correctText;
-          break;
-        case 'Essay':
-          // Essays are not auto-graded
-          isCorrect = false;
-          break;
-      }
-      
-      if (isCorrect) {
-        correct++;
-      }
-      
-      // Update the answer with correctness
-      userAnswer.isCorrect = isCorrect;
-    });
-    
-    return Math.round((correct / questions.length) * 100);
-  };
+
 
   // Navigation functions
   const goToQuestion = (index: number) => {
     if (isReviewing) {
-      const reviewIndex = reviewQuestions.findIndex(qId => qId === questions[index].id);
+      const question = questions[index];
+      if (!question) return;
+      
+      const reviewIndex = reviewQuestions.findIndex(qId => qId === question.id);
       if (reviewIndex !== -1) {
         const actualQuestionIndex = questions.findIndex(q => q.id === reviewQuestions[reviewIndex]);
         setCurrentQuestionIndex(actualQuestionIndex);
@@ -130,6 +91,8 @@ export default function QuizDisplay({
   };
 
   const goToNext = () => {
+    if (!currentQuestion) return;
+    
     if (isReviewing) {
       const currentReviewIndex = reviewQuestions.indexOf(currentQuestion.id);
       if (currentReviewIndex < reviewQuestions.length - 1) {
@@ -145,6 +108,8 @@ export default function QuizDisplay({
   };
 
   const goToPrevious = () => {
+    if (!currentQuestion) return;
+    
     if (isReviewing) {
       const currentReviewIndex = reviewQuestions.indexOf(currentQuestion.id);
       if (currentReviewIndex > 0) {
@@ -161,6 +126,8 @@ export default function QuizDisplay({
 
   // Review functions
   const toggleMarkForReview = () => {
+    if (!currentQuestion) return;
+    
     const newMarked = new Set(markedForReview);
     if (newMarked.has(currentQuestion.id)) {
       newMarked.delete(currentQuestion.id);
@@ -189,11 +156,12 @@ export default function QuizDisplay({
   // Quiz completion
   const handleFinishQuiz = (isIncomplete = false) => {
     const timeTaken = Date.now() - startTime;
-    const score = calculateScore();
     
     // Update answers with final scores
     const finalAnswers = answers.map((answer, index) => {
       const question = questions[index];
+      if (!question) return answer;
+      
       let isCorrect = false;
       
       switch (question.type) {
@@ -238,7 +206,7 @@ export default function QuizDisplay({
         markedForReview={markedForReview}
         isReviewing={isReviewing}
         reviewQuestionsLength={reviewQuestions.length}
-        currentQuestionId={currentQuestion.id}
+        currentQuestionId={currentQuestion?.id || ''}
         reviewQuestions={reviewQuestions}
         onToggleMarkForReview={toggleMarkForReview}
       />
@@ -261,11 +229,13 @@ export default function QuizDisplay({
         <div className="lg:col-span-3">
           <div className="bg-white rounded-lg shadow-md p-6">
             {/* Question Renderer */}
-            <QuestionRenderer
-              question={currentQuestion}
-              currentAnswer={getCurrentAnswer()}
-              onUpdateAnswer={updateAnswer}
-            />
+            {currentQuestion && getCurrentAnswer() && (
+              <QuestionRenderer
+                question={currentQuestion}
+                currentAnswer={getCurrentAnswer()!}
+                onUpdateAnswer={updateAnswer}
+              />
+            )}
 
             {/* Navigation Controls */}
             <NavigationControls
@@ -273,7 +243,7 @@ export default function QuizDisplay({
               isLastQuestion={isLastQuestion}
               isReviewing={isReviewing}
               reviewQuestions={reviewQuestions}
-              currentQuestionId={currentQuestion.id}
+              currentQuestionId={currentQuestion?.id || ''}
               onGoToPrevious={goToPrevious}
               onGoToNext={goToNext}
               onStartReview={startReview}

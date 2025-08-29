@@ -16,10 +16,6 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadTestHistory();
-  }, [userId, loadTestHistory]);
-
   const loadTestHistory = async () => {
     try {
       setLoading(true);
@@ -31,6 +27,10 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadTestHistory();
+  }, [userId]);
 
   const handleDeleteTest = async (testId: string) => {
     if (!confirm('Are you sure you want to delete this test? This action cannot be undone.')) {

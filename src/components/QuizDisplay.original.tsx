@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Clock, CheckCircle, XCircle, ArrowLeft, ArrowRight, Flag, HelpCircle } from 'lucide-react';
+import { CheckCircle, ArrowLeft, ArrowRight, Flag } from 'lucide-react';
 import { Question, UserAnswer } from '@/types';
 
 interface QuizDisplayProps {
@@ -17,7 +17,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [startTime] = useState(Date.now());
-  const [showResults, setShowResults] = useState(false);
+
   const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set());
   const [isReviewing, setIsReviewing] = useState(false);
   const [reviewQuestions, setReviewQuestions] = useState<string[]>([]);
@@ -38,10 +38,12 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   }, [questions]);
 
   const getCurrentAnswer = () => {
+    if (!currentQuestion) return undefined;
     return answers.find(a => a.questionId === currentQuestion.id);
   };
 
   const updateAnswer = (answer: string | number | number[] | boolean) => {
+    if (!currentQuestion) return;
     setAnswers(prev => prev.map(a => 
       a.questionId === currentQuestion.id 
         ? { ...a, answer } 
@@ -51,6 +53,8 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
 
   // Helper function for MSQ questions to toggle selection
   const toggleMSQOption = (optionIndex: number) => {
+    if (!currentQuestion) return;
+    
     const currentAnswer = getCurrentAnswer();
     const currentSelections = Array.isArray(currentAnswer?.answer) ? currentAnswer.answer : [];
     
@@ -72,6 +76,8 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   };
 
   const toggleMarkForReview = () => {
+    if (!currentQuestion) return;
+    
     const questionId = currentQuestion.id;
     setMarkedForReview(prev => {
       const newSet = new Set(prev);
@@ -106,6 +112,8 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   };
 
   const goToNext = () => {
+    if (!currentQuestion) return;
+    
     if (isReviewing) {
       const currentReviewIndex = reviewQuestions.indexOf(currentQuestion.id);
       const nextReviewIndex = currentReviewIndex + 1;
@@ -122,6 +130,8 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   };
 
   const goToPrevious = () => {
+    if (!currentQuestion) return;
+    
     if (isReviewing) {
       const currentReviewIndex = reviewQuestions.indexOf(currentQuestion.id);
       const prevReviewIndex = currentReviewIndex - 1;
@@ -186,6 +196,8 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
   };
 
   const renderQuestion = () => {
+    if (!currentQuestion) return null;
+    
     const currentAnswer = getCurrentAnswer();
 
     switch (currentQuestion.type) {
@@ -353,16 +365,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
     }).length;
   };
 
-  const isCurrentQuestionAnswered = () => {
-    const current = getCurrentAnswer();
-    if (!current) return false;
-    
-    // Handle different answer types
-    if (typeof current.answer === 'number') {
-      return true; // Numbers (including 0) are valid answers
-    }
-    return current.answer !== '';
-  };
+
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -383,7 +386,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
             <button
               onClick={toggleMarkForReview}
               className={`p-2 rounded-lg transition-colors ${
-                markedForReview.has(currentQuestion.id)
+                currentQuestion && markedForReview.has(currentQuestion.id)
                   ? 'bg-yellow-100 text-yellow-600'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
@@ -396,7 +399,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
                 {markedForReview.size} marked for review
               </div>
             )}
-            {isReviewing && (
+            {isReviewing && currentQuestion && (
               <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
                 Review Mode ({reviewQuestions.indexOf(currentQuestion.id) + 1}/{reviewQuestions.length})
               </div>
@@ -460,10 +463,10 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
             <div className="mb-6">
               <div className="flex items-start justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900 flex-1 pr-4">
-                  {currentQuestion.question}
+                  {currentQuestion?.question}
                 </h2>
                 <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  {currentQuestion.type}
+                  {currentQuestion?.type}
                 </span>
               </div>
             </div>
@@ -477,7 +480,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
             <div className="flex items-center justify-between">
               <button
                 onClick={goToPrevious}
-                disabled={isReviewing ? reviewQuestions.indexOf(currentQuestion.id) === 0 : isFirstQuestion}
+                disabled={isReviewing ? (currentQuestion ? reviewQuestions.indexOf(currentQuestion.id) === 0 : true) : isFirstQuestion}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -493,7 +496,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
                     >
                       Exit Review
                     </button>
-                    {reviewQuestions.indexOf(currentQuestion.id) === reviewQuestions.length - 1 ? (
+                    {currentQuestion && reviewQuestions.indexOf(currentQuestion.id) === reviewQuestions.length - 1 ? (
                       <button
                         onClick={handleFinishQuiz}
                         className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"

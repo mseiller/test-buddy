@@ -147,6 +147,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
 
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
+    return () => {}; // Return empty cleanup function for server-side rendering
   }, []);
 
   const updateSettings = (newSettings: Partial<AccessibilitySettings>) => {

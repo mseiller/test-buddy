@@ -23,7 +23,6 @@ interface QuizResultsProps {
 export default function QuizResults({ 
   questions, 
   answers, 
-  score, 
   timeTaken, 
   testName, 
   onRetakeQuiz, 
@@ -70,13 +69,7 @@ export default function QuizResults({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 91) return 'text-green-600';
-    if (score >= 81) return 'text-blue-600';
-    if (score >= 71) return 'text-yellow-600';
-    if (score >= 61) return 'text-orange-600';
-    return 'text-red-600';
-  };
+
 
   const getScoreIcon = (score: number) => {
     if (score >= 91) return <Trophy className="h-8 w-8 text-yellow-500" />;
