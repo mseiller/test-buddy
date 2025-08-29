@@ -84,7 +84,8 @@ export default function Home() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userDropdownOpen) {
+      const target = event.target as Element;
+      if (userDropdownOpen && !target.closest('.user-dropdown')) {
         setUserDropdownOpen(false);
       }
     };
@@ -559,8 +560,8 @@ export default function Home() {
                 </button>
               )}
               
-              {/* User Dropdown */}
-              <div className="relative">
+                             {/* User Dropdown */}
+               <div className="relative user-dropdown">
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-50"
