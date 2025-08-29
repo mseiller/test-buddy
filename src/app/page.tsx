@@ -117,8 +117,9 @@ export default function Home() {
       setUser(null);
       setAppState('auth');
       resetAppState();
-    } catch (error: any) {
-      setError(error.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     }
   };
 
@@ -259,8 +260,9 @@ export default function Home() {
         questionsGenerated: generatedQuestions.length,
         requestedCount: questionCount
       });
-    } catch (error: any) {
+    } catch (err: unknown) {
       // Handle error with comprehensive error management
+      const error = err instanceof Error ? err : new Error(String(err));
       const errorResult = await errorManager.handleError(error, {
         operation: 'quiz-generation',
         component: 'QuizConfig',
@@ -355,13 +357,14 @@ export default function Home() {
       if (isIncomplete) {
         setError('Progress saved! You can continue this test later from your history.');
       }
-    } catch (error: any) {
-      console.error('Failed to save test history:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to save test history:', message);
       // Show a non-intrusive message to the user
-      const message = isIncomplete 
+      const displayMessage = isIncomplete 
         ? 'Progress saved locally but may not have been saved to the cloud due to a connection issue.'
         : 'Quiz completed successfully! Note: Test history may not have been saved due to a connection issue.';
-      setError(message);
+      setError(displayMessage);
     }
   };
 

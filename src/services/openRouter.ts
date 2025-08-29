@@ -32,6 +32,7 @@ import { Question, QuizType, UserAnswer, FeedbackSummary } from '@/types';
 export class OpenRouterService {
   private static readonly API_URL = 'https://openrouter.ai/api/v1/chat/completions';
   private static readonly API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
+  private static readonly debug = process.env.NODE_ENV !== 'production';
 
   static async generateQuiz(
     text: string,
@@ -68,23 +69,25 @@ export class OpenRouterService {
     let defaultModel = 'qwen/qwen3-235b-a22b:free';
     if (isImageBased) {
       defaultModel = 'mistralai/mistral-small-3.2-24b-instruct:free';
-      console.log('OpenRouter: Using image-optimized model for image-based content');
+      if (this.debug) console.log('OpenRouter: Using image-optimized model for image-based content');
     }
     const model = modelOverride || defaultModel;
     
-    console.log('OpenRouter: Starting API request to:', this.API_URL);
-    console.log('OpenRouter: API Key configured:', !!this.API_KEY);
-    console.log('OpenRouter: Selected model:', model, 'for', adjustedQuestionCount, 'questions', adjustedQuestionCount !== questionCount ? `(reduced from ${questionCount})` : '');
-    console.log('OpenRouter: Max tokens:', maxTokens);
-    console.log('OpenRouter: Request payload size:', JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: '...' },
-        { role: 'user', content: `${prompt.substring(0, 100)  }...` }
-      ],
-      temperature: 0.5,
-      max_tokens: maxTokens,
-    }).length, 'characters');
+    if (this.debug) {
+      console.log('OpenRouter: Starting API request to:', this.API_URL);
+      console.log('OpenRouter: API Key configured:', !!this.API_KEY);
+      console.log('OpenRouter: Selected model:', model, 'for', adjustedQuestionCount, 'questions', adjustedQuestionCount !== questionCount ? `(reduced from ${questionCount})` : '');
+      console.log('OpenRouter: Max tokens:', maxTokens);
+      console.log('OpenRouter: Request payload size:', JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: '...' },
+          { role: 'user', content: `${prompt.substring(0, 100)  }...` }
+        ],
+        temperature: 0.5,
+        max_tokens: maxTokens,
+      }).length, 'characters');
+    }
     
     // Retry logic for network issues
     let lastError: Error | null = null;
@@ -92,7 +95,7 @@ export class OpenRouterService {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`OpenRouter: Attempt ${attempt}/${maxRetries}`);
+        if (this.debug) console.log(`OpenRouter: Attempt ${attempt}/${maxRetries}`);
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout

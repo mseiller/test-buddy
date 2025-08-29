@@ -1,5 +1,4 @@
-import { FirebaseService } from '../firebaseService';
-import { User, Question, UserAnswer, TestHistory } from '@/types';
+// import { User, Question, UserAnswer, TestHistory } from '@/types';
 
 export interface AnalyticsEvent {
   eventType: string;
@@ -484,7 +483,7 @@ export class AdvancedAnalyticsService {
     profile: LearningAnalytics,
     properties: { [key: string]: any }
   ): void {
-    const { score, totalQuestions, timeSpent, topics } = properties;
+    const { score, totalQuestions: _totalQuestions, timeSpent, topics } = properties;
     
     profile.totalTestsTaken++;
     profile.averageScore = (profile.averageScore * (profile.totalTestsTaken - 1) + score) / profile.totalTestsTaken;

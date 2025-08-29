@@ -58,9 +58,10 @@ export default function FolderManager({
       const userFolders = await FirebaseService.getUserFolders(userId);
       console.log('Loaded folders:', userFolders);
       setFolders(userFolders);
-    } catch (error: any) {
-      console.error('Failed to load folders:', error);
-      console.log('Auto-migration failed during folder load:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to load folders:', message);
+      console.error('Auto-migration failed during folder load:', message);
     } finally {
       setLoading(false);
     }
@@ -97,9 +98,10 @@ export default function FolderManager({
         }));
       
       setTests(convertedTests);
-    } catch (error: any) {
-      console.error('Failed to load all tests:', error);
-      console.log('Auto-migration failed during test load:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to load all tests:', message);
+      console.error('Auto-migration failed during test load:', message);
     } finally {
       setLoading(false);
     }
@@ -132,8 +134,9 @@ export default function FolderManager({
         }));
       
       setTests(convertedTests);
-    } catch (error: any) {
-      console.error('Failed to load tests in folder:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to load tests in folder:', message);
     } finally {
       setLoading(false);
     }
@@ -148,9 +151,10 @@ export default function FolderManager({
       
       console.log('Folder created successfully:', newFolder);
       setFolders(prev => [...prev, newFolder]);
-    } catch (error: any) {
-      console.error('Failed to create folder:', error);
-      throw error; // Re-throw to let modal handle error display
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to create folder:', message);
+      throw err; // Re-throw to let modal handle error display
     } finally {
       setLoading(false);
     }
@@ -169,9 +173,10 @@ export default function FolderManager({
           ? { ...folder, name, description, color }
           : folder
       ));
-    } catch (error: any) {
-      console.error('Failed to update folder:', error);
-      throw error; // Re-throw to let modal handle error display
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to update folder:', message);
+      throw err; // Re-throw to let modal handle error display
     } finally {
       setLoading(false);
     }
@@ -191,8 +196,9 @@ export default function FolderManager({
       if (selectedFolder?.id === folderId) {
         onFolderSelect(null);
       }
-    } catch (error: any) {
-      console.error('Failed to delete folder:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to delete folder:', message);
       alert('Failed to delete folder. Please try again.');
     } finally {
       setLoading(false);
@@ -218,8 +224,9 @@ export default function FolderManager({
       } else if (selectedFolder === null) {
         loadAllTests();
       }
-    } catch (error: any) {
-      console.error('Failed to move test:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to move test:', message);
       alert('Failed to move test. Please try again.');
     }
   };

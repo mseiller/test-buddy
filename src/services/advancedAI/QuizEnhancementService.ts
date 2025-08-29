@@ -335,7 +335,8 @@ export class QuizEnhancementService {
     const topicPerformance: { [topic: string]: { correct: number; total: number } } = {};
     
     questions.forEach((question, index) => {
-      const topic = question.topic || 'general';
+      // Note: Question interface doesn't have topic property, using 'general' as default
+      const topic = 'general';
       const isCorrect = answers[index]?.answer === question.correctAnswer;
       
       if (!topicPerformance[topic]) {
@@ -409,7 +410,8 @@ export class QuizEnhancementService {
     const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
     
     for (let i = 0; i < Math.min(count, sentences.length); i++) {
-      const sentence = sentences[i].trim();
+      const sentence = sentences[i]?.trim();
+      if (!sentence) continue;
       const words = sentence.split(' ');
       
       if (words.length > 5) {
@@ -425,8 +427,7 @@ export class QuizEnhancementService {
           ],
           correctAnswer: 'The text discusses important concepts',
           explanation: 'This is a general understanding question about the provided text.',
-          difficulty: 2,
-          topic: 'general'
+          points: 1
         };
         
         questions.push(question);

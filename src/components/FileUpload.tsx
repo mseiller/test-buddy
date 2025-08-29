@@ -132,8 +132,9 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
 
       setUploadedFile(fileUpload);
       onFileProcessed(fileUpload);
-    } catch (error: any) {
-      onError(error.message || 'Failed to process files');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      onError(message || 'Failed to process files');
     } finally {
       setProcessing(false);
     }

@@ -179,7 +179,7 @@ export class CacheManager {
         lastAccessed: Date.now(),
         size,
         compressed,
-        metadata
+        metadata: metadata || {}
       };
 
       // Remove old entry if exists

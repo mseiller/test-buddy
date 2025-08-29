@@ -233,7 +233,7 @@ export class CacheInvalidation {
         entityType,
         entityId,
         timestamp: Date.now(),
-        metadata,
+        metadata: metadata || {},
         triggeredRules
       };
 
@@ -447,7 +447,7 @@ export class CacheInvalidation {
   // ========================================
 
   private findMatchingRules(
-    eventType: InvalidationEventType,
+    _eventType: InvalidationEventType,
     entityType: string,
     entityId: string,
     metadata?: Record<string, any>
@@ -507,7 +507,7 @@ export class CacheInvalidation {
 
   private async processRule(
     rule: InvalidationRule,
-    eventType: InvalidationEventType,
+    _eventType: InvalidationEventType,
     entityType: string,
     entityId: string,
     metadata?: Record<string, any>

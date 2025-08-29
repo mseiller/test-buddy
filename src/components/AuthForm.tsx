@@ -30,8 +30,9 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps) {
         user = await FirebaseService.signIn(email, password);
       }
       onAuthSuccess(user);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -44,8 +45,9 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps) {
     try {
       const user = await FirebaseService.signInWithGoogle();
       onAuthSuccess(user);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     } finally {
       setLoading(false);
     }

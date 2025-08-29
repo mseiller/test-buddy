@@ -21,8 +21,9 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
       setLoading(true);
       const history = await FirebaseService.getUserTestHistory(userId);
       setTests(history);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -40,8 +41,9 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
     try {
       await FirebaseService.deleteTestHistory(testId);
       setTests(prev => prev.filter(test => test.id !== testId));
-    } catch (error: any) {
-      setError(error.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     }
   };
 
