@@ -5,7 +5,8 @@ import {
   testComponentPerformance, 
   expectPerformance, 
   analyzeBundleSize,
-  performanceMonitor 
+  performanceMonitor,
+  PerformanceTester
 } from '../../../utils/performance-test-utils';
 
 describe('Card Component Performance Tests', () => {
@@ -320,7 +321,7 @@ describe('Card Component Performance Tests', () => {
 
   describe('Performance Monitoring', () => {
     it('should provide detailed performance metrics', () => {
-      const tester = new (require('../../../utils/performance-test-utils').PerformanceTester)();
+      const tester = new PerformanceTester();
       
       tester.measureRenderTime('Card-Metrics', <Card>Metrics Card</Card>, 15);
       const stats = tester.getStats('Card-Metrics');
@@ -336,7 +337,7 @@ describe('Card Component Performance Tests', () => {
     });
 
     it('should generate comprehensive performance reports', () => {
-      const tester = new (require('../../../utils/performance-test-utils').PerformanceTester)();
+      const tester = new PerformanceTester();
       
       tester.measureRenderTime('Card-Report', <Card>Report Card</Card>, 10);
       const report = tester.generateReport();

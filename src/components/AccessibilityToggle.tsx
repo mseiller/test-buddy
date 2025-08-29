@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 import { AccessibilityPanel } from './AccessibilityPanel';
-import { Button } from '@/components/ui/Button';
+import Button from '@/components/ui/Button';
 import { Settings, Eye, Type, Zap, Keyboard, Monitor } from 'lucide-react';
 
 export const AccessibilityToggle: React.FC = () => {

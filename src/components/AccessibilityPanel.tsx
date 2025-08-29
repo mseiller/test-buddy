@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 import { Settings, Eye, Type, Zap, Keyboard, Monitor, Palette, BookOpen, RotateCcw } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 interface AccessibilityPanelProps {
   isOpen: boolean;

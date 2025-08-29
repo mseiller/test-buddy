@@ -64,7 +64,7 @@ export interface AnalyticsConfig {
   enableBusinessIntelligence: boolean;
   enableRealTimeAnalytics: boolean;
   enablePredictiveAnalytics: boolean;
-  enableA/BTesting: boolean;
+  enableABTesting: boolean;
   enableHeatmaps: boolean;
   enableSessionRecording: boolean;
   enableConversionTracking: boolean;
@@ -87,7 +87,7 @@ export class AdvancedAnalyticsService {
       enableBusinessIntelligence: true,
       enableRealTimeAnalytics: true,
       enablePredictiveAnalytics: true,
-      enableA/BTesting: true,
+      enableABTesting: true,
       enableHeatmaps: true,
       enableSessionRecording: true,
       enableConversionTracking: true

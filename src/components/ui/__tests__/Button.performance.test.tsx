@@ -5,7 +5,8 @@ import {
   testComponentPerformance, 
   expectPerformance, 
   analyzeBundleSize,
-  performanceMonitor 
+  performanceMonitor,
+  PerformanceTester
 } from '../../../utils/performance-test-utils';
 
 describe('Button Component Performance Tests', () => {
@@ -296,7 +297,7 @@ describe('Button Component Performance Tests', () => {
 
   describe('Performance Monitoring', () => {
     it('should provide detailed performance metrics', () => {
-      const tester = new (require('../../../utils/performance-test-utils').PerformanceTester)();
+      const tester = new PerformanceTester();
       
       tester.measureRenderTime('Button-Metrics', <Button>Metrics Button</Button>, 15);
       const stats = tester.getStats('Button-Metrics');
@@ -310,7 +311,7 @@ describe('Button Component Performance Tests', () => {
     });
 
     it('should generate comprehensive performance reports', () => {
-      const tester = new (require('../../../utils/performance-test-utils').PerformanceTester)();
+      const tester = new PerformanceTester();
       
       tester.measureRenderTime('Button-Report', <Button>Report Button</Button>, 10);
       const report = tester.generateReport();
