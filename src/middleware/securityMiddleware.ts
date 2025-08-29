@@ -63,7 +63,9 @@ export class SecurityMiddleware {
           }
           
           // Add user to request
-          (request as AuthenticatedRequest).user = authResult.user;
+          if (authResult.user) {
+            (request as AuthenticatedRequest).user = authResult.user;
+          }
         }
 
         // 4. Rate limiting
@@ -133,8 +135,7 @@ export class SecurityMiddleware {
         authenticated: true,
         user: {
           uid: 'temp-user-id', // This would be extracted from the verified token
-          email: 'temp@example.com',
-          displayName: undefined
+          email: 'temp@example.com'
         }
       };
     } catch (error) {

@@ -83,9 +83,6 @@ export function middleware(request: NextRequest) {
   }
 
   // Rate limiting headers (basic implementation)
-  const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-  const rateLimitKey = `rate_limit:${clientIp}`;
-  
   // In a real implementation, you would check against a Redis store or similar
   // For now, we'll just add rate limit headers
   response.headers.set('X-RateLimit-Limit', '100');

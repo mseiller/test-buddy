@@ -11,7 +11,7 @@
 export { OpenRouterService } from './services/openRouter';
 export { FirebaseService } from './services/firebaseService';
 export { default as SecurityManager } from './services/security';
-export { default as ErrorManagementService } from './services/errors';
+export { ErrorHandler as ErrorManagementService } from './services/errors';
 
 // Types
 export type {
@@ -22,9 +22,12 @@ export type {
   FeedbackSummary,
   QuizGenerationRequest,
   User,
+} from './types';
+
+export type {
   UserPlan,
   PlanFeatures,
-} from './types';
+} from './config/plans';
 
 // Components (for documentation purposes)
 export { default as AuthForm } from './components/AuthForm';
@@ -87,11 +90,15 @@ export const APP_CONFIG = {
  */
 export async function initializeApp(): Promise<void> {
   try {
+    // Import services dynamically to avoid circular dependencies
+    const { default: SecurityManagerClass } = await import('./services/security');
+    const { ErrorHandler } = await import('./services/errors');
+    
     // Initialize security services
-    await SecurityManager.getInstance().initialize();
+    await SecurityManagerClass.initialize();
     
     // Initialize error management
-    await ErrorManagementService.getInstance().initialize();
+    ErrorHandler.getInstance();
     
     console.log('Test Buddy application initialized successfully');
   } catch (error) {
@@ -116,11 +123,8 @@ export async function initializeApp(): Promise<void> {
  */
 export async function cleanupApp(): Promise<void> {
   try {
-    // Cleanup security services
-    await SecurityManager.getInstance().cleanup();
-    
-    // Cleanup error management
-    await ErrorManagementService.getInstance().cleanup();
+    // Note: Services don't currently implement cleanup methods
+    // This function is provided for future cleanup implementation
     
     console.log('Test Buddy application cleanup completed');
   } catch (error) {
