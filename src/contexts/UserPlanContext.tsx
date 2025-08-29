@@ -34,13 +34,29 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const plan = userProfile?.plan || DEFAULT_PLAN;
+  // Bypass check for testing - give Pro features to bypass user
+  const isBypassUser = user?.uid === 'bypass-user-123';
+  const plan = isBypassUser ? 'pro' : (userProfile?.plan || DEFAULT_PLAN);
   const planFeatures = getPlanFeatures(plan);
 
   // Load user profile
   const loadUserProfile = async () => {
     if (!user) {
       setUserProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    // For bypass user, create mock profile
+    if (user.uid === 'bypass-user-123') {
+      setUserProfile({
+        userId: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || '',
+        plan: 'pro',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
       setLoading(false);
       return;
     }
@@ -66,7 +82,19 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
 
   // Load usage data
   const loadUsage = async () => {
-    if (!user || !userProfile) return;
+    if (!user) return;
+
+    // For bypass user, create mock usage data
+    if (user.uid === 'bypass-user-123') {
+      setUsage({
+        testsGenerated: 5,
+        lastReset: new Date().toISOString(),
+        userId: user.uid
+      });
+      return;
+    }
+
+    if (!userProfile) return;
 
     try {
       const usageCheck = await canGenerateTest(user.uid, userProfile.plan);

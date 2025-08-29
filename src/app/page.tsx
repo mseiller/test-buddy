@@ -66,20 +66,20 @@ export default function Home() {
 
 
 
-  // BYPASS AUTH - GO DIRECTLY TO MAIN APP
+  // BYPASS AUTH - GO DIRECTLY TO MAIN APP WITH PRO FEATURES
   useEffect(() => {
-    // Create a mock user to bypass authentication
+    // Create a mock user to bypass authentication with Pro features
     const mockUser: User = {
       uid: 'bypass-user-123',
       email: 'bypass@test.com',
-      displayName: 'Bypass User'
+      displayName: 'Bypass User (Pro)'
     };
     
     setUser(mockUser);
     setAppState('home');
     setAuthLoading(false);
     
-    console.log('AUTH BYPASS: Going directly to main app');
+    console.log('AUTH BYPASS: Going directly to main app with Pro features');
   }, []);
 
   // Close dropdown when clicking outside
