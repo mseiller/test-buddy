@@ -865,10 +865,26 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-600">
-            © 2024 Test Buddy - AI-Powered Quiz Generator
-          </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <p className="text-gray-600">
+              © 2024 Test Buddy - AI-Powered Quiz Generator
+            </p>
+            <div className="flex items-center space-x-6">
+              <button
+                onClick={() => window.open('/support', '_blank')}
+                className="text-gray-600 hover:text-red-600 transition-colors"
+              >
+                Support
+              </button>
+              <a
+                href="mailto:support@yourbuddyapps.com"
+                className="text-gray-600 hover:text-red-600 transition-colors"
+              >
+                Contact
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, User as UserIcon, History, Folder, BarChart3, LogOut, Crown, Settings } from 'lucide-react';
+import { ChevronDown, User as UserIcon, History, Folder, BarChart3, LogOut, Crown, Settings, HelpCircle } from 'lucide-react';
 import { User as UserType } from '@/types';
 
 interface UserDropdownProps {
@@ -144,6 +144,14 @@ export default function UserDropdown({
             >
               <Settings className="h-4 w-4 text-gray-500" />
               <span>Plan Settings</span>
+            </button>
+
+            <button
+              onClick={() => window.open('/support', '_blank')}
+              className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <HelpCircle className="h-4 w-4 text-gray-500" />
+              <span>Support</span>
             </button>
           </div>
 

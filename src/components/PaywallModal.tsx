@@ -30,16 +30,38 @@ export default function PaywallModal({
     try {
       setUpgrading(targetPlan);
       
-      // For now, just update the plan directly in Firestore
-      // In production, this would integrate with Stripe
-      await updateUserPlan(userId, targetPlan);
+      // Create Stripe checkout session
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan: targetPlan,
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { sessionId } = await response.json();
       
-      onUpgrade?.(targetPlan);
-      onClose();
+      // Redirect to Stripe checkout
+      const stripe = await import('@stripe/stripe-js').then(({ loadStripe }) => 
+        loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+      );
+      
+      if (stripe) {
+        const { error } = await stripe.redirectToCheckout({ sessionId });
+        if (error) {
+          throw new Error(error.message);
+        }
+      }
     } catch (error) {
       console.error('Failed to upgrade plan:', error);
-      alert('Failed to upgrade plan. Please try again.');
-    } finally {
+      alert('Failed to start checkout process. Please try again.');
       setUpgrading(null);
     }
   };
@@ -241,7 +263,7 @@ export default function PaywallModal({
           {/* Note */}
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-500">
-              * This is a demo. In production, this would integrate with Stripe for secure payments.
+              * Secure payments powered by Stripe. Cancel anytime.
             </p>
           </div>
         </div>
