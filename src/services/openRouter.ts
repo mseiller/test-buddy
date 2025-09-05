@@ -1,0 +1,1165 @@
+import { Question, QuizType, UserAnswer, FeedbackSummary } from '@/types';
+
+export class OpenRouterService {
+  private static readonly API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+  private static readonly API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
+
+  static async generateQuiz(
+    text: string,
+    quizType: QuizType,
+    questionCount: number = 5,
+    modelOverride?: string,
+    isImageBased?: boolean
+  ): Promise<Question[]> {
+    if (!this.API_KEY) {
+      throw new Error('OpenRouter API key is not configured');
+    }
+
+    // Adjust token limits with the new high-capacity model
+    let maxTokens = 16000; // Start with 16k as requested
+    let adjustedQuestionCount = questionCount;
+    
+    if (questionCount > 100) {
+      console.warn(`OpenRouter: Requested ${questionCount} questions, but capping at 100 for optimal performance.`);
+      adjustedQuestionCount = 100;
+      maxTokens = 32000; // High limit for 131k context model
+    } else if (questionCount > 75) {
+      maxTokens = 28000;
+    } else if (questionCount > 50) {
+      maxTokens = 24000;
+    } else if (questionCount > 25) {
+      maxTokens = 20000;
+    } else {
+      maxTokens = 16000;
+    }
+
+    const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
+
+    // Use appropriate model based on source type
+    let defaultModel = 'qwen/qwen3-235b-a22b:free';
+    if (isImageBased) {
+      defaultModel = 'mistralai/mistral-small-3.2-24b-instruct:free';
+      console.log('OpenRouter: Using image-optimized model for image-based content');
+    }
+    const model = modelOverride || defaultModel;
+    
+    console.log('OpenRouter: Starting API request to:', this.API_URL);
+    console.log('OpenRouter: API Key configured:', !!this.API_KEY);
+    console.log('OpenRouter: Selected model:', model, 'for', adjustedQuestionCount, 'questions', adjustedQuestionCount !== questionCount ? `(reduced from ${questionCount})` : '');
+    console.log('OpenRouter: Max tokens:', maxTokens);
+    console.log('OpenRouter: Request payload size:', JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: '...' },
+        { role: 'user', content: prompt.substring(0, 100) + '...' }
+      ],
+      temperature: 0.5,
+      max_tokens: maxTokens,
+    }).length, 'characters');
+    
+    // Retry logic for network issues
+    let lastError: Error | null = null;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`OpenRouter: Attempt ${attempt}/${maxRetries}`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+        
+        const response = await fetch(this.API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+            'X-Title': 'Test Buddy Quiz Generator',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: model,
+          messages: [
+            {
+              role: 'system',
+              content: `You are Test Buddy, an AI exam generator. 
+Your job is to create dynamic practice tests from the provided study material. 
+
+Rules:
+1. Mix up question types:
+   - Multiple choice (4–5 options, usually 1 correct answer, but use multiple correct answers when the question naturally requires it).
+   - True/False.
+   - Fill-in-the-blank (with short answers).
+   - Short essay/analysis questions.
+   - Scenario-based questions (give a situation and ask what the learner should do).
+
+2. Always shuffle structure:
+   - Rephrase questions instead of repeating text directly.
+   - Vary difficulty: some questions easy recall, some requiring analysis.
+   - If possible, combine multiple concepts into one question.
+
+3. Provide correct answers and short explanations for each.
+
+4. Keep output JSON structured for easy parsing as an array:
+[
+  {
+    "id": "q1",
+    "type": "MCQ",
+    "question": "What does CIA in cybersecurity stand for?",
+    "options": ["Confidentiality, Integrity, Availability", "Control, Identity, Access", "Confidential, Internal, Audit", "Cybersecurity, Integrity, Authentication"],
+    "correctAnswer": 0,
+    "explanation": "CIA refers to the core triad of information security.",
+    "points": 1
+  },
+  {
+    "id": "q2",
+    "type": "MSQ", 
+    "question": "Which of the following are core principles of information security? (Select 2 answers)",
+    "options": ["Confidentiality", "Complexity", "Integrity", "Availability", "Authentication"],
+    "correctAnswer": [0, 2],
+    "selectCount": 2,
+    "explanation": "Confidentiality and Integrity are two of the three core CIA principles.",
+    "points": 1
+  },
+  {
+    "id": "q3", 
+    "type": "Essay",
+    "question": "A company's database was accidentally exposed. Analyze which principle of CIA is most impacted and propose three remediation steps.",
+    "correctAnswer": "Confidentiality is most impacted. Steps: 1) Immediate containment, 2) Impact assessment, 3) Notification procedures",
+    "explanation": "Unauthorized access affects confidentiality. Quick response minimizes damage.",
+    "points": 1
+  }
+]
+
+IMPORTANT: Use MSQ (multiple select) type ONLY when the question naturally requires multiple correct answers. Most questions should be regular MCQ (single answer). Only use MSQ for questions like:
+- "Select all that apply"
+- "Choose the 2 most important..."
+- "Which of these are valid..." (when multiple are correct)
+- "Identify all correct statements"
+
+5. Be creative but accurate. The goal is to challenge the learner and prevent rote memorization.
+
+CRITICAL OUTPUT FORMAT:
+- Respond with ONLY raw JSON array
+- Start directly with [ and end with ]
+- NO markdown blocks, NO extra text
+- NO excessive whitespace or blank lines
+- Compact JSON formatting
+- If the input contains existing test questions, CREATE NEW questions on the same topics rather than reformatting existing ones`
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.5,
+          max_tokens: maxTokens,
+        }),
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log('OpenRouter: Response status:', response.status, response.statusText);
+        console.log('OpenRouter: Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('OpenRouter: Error response body:', errorText);
+          throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+        }
+
+        let data;
+        try {
+          const responseText = await response.text();
+          console.log('OpenRouter: Raw response text length:', responseText.length);
+          
+          // Check for excessive whitespace that indicates token waste
+          const trimmedText = responseText.trim();
+          const whitespaceRatio = (responseText.length - trimmedText.length) / responseText.length;
+          if (whitespaceRatio > 0.5) {
+            console.warn('OpenRouter: Response contains excessive whitespace (', Math.round(whitespaceRatio * 100), '%) - this wastes tokens');
+          }
+          
+          console.log('OpenRouter: Raw response preview:', responseText.substring(0, 200));
+          
+          if (!responseText || responseText.trim() === '') {
+            throw new Error('Empty response body from OpenRouter API');
+          }
+          
+          data = JSON.parse(responseText);
+          console.log('OpenRouter: Response data structure:', Object.keys(data));
+          console.log('OpenRouter: Full response data:', data);
+        } catch (jsonError) {
+          console.error('OpenRouter: JSON parsing failed:', jsonError);
+          throw new Error(`Invalid JSON response from OpenRouter API: ${jsonError instanceof Error ? jsonError.message : 'Unknown parsing error'}`);
+        }
+        
+        // Check for API errors in response
+        if (data.error) {
+          console.error('OpenRouter: API returned error:', data.error);
+          throw new Error(`OpenRouter API error: ${data.error.message || data.error}`);
+        }
+        
+        const content = data.choices[0]?.message?.content;
+        console.log('OpenRouter: Content from API:', content ? `${content.length} characters` : 'NO CONTENT');
+        
+        if (content) {
+          console.log('OpenRouter: Content preview (first 500 chars):', content.substring(0, 500));
+        }
+
+        if (!content || content.trim() === '') {
+          console.error('OpenRouter: No content in response data:', data);
+          console.error('OpenRouter: Full response structure:', JSON.stringify(data, null, 2));
+          throw new Error('Empty content from OpenRouter API - model may be overloaded or content filtered');
+        }
+
+        console.log('OpenRouter: Content received, length:', content.length);
+        
+        // Check for token efficiency issues
+        if (data.usage) {
+          const tokensPerQuestion = data.usage.completion_tokens / adjustedQuestionCount;
+          console.log('OpenRouter: Token usage - Total:', data.usage.total_tokens, 'Per question:', Math.round(tokensPerQuestion));
+          
+          if (tokensPerQuestion > 200) {
+            console.warn('OpenRouter: High token usage per question (', Math.round(tokensPerQuestion), ') - consider optimizing prompt or switching models');
+          } else if (tokensPerQuestion > 150) {
+            console.log('OpenRouter: Moderate token usage per question (', Math.round(tokensPerQuestion), ') - acceptable but could be optimized');
+          }
+        }
+        
+        return this.parseQuizResponse(content);
+        
+      } catch (error) {
+        lastError = error as Error;
+        
+        const isRetryableError = (
+          (error instanceof TypeError && error.message === 'Failed to fetch') ||
+          (error instanceof Error && (
+            error.message.includes('Invalid JSON response') ||
+            error.message.includes('Empty response body') ||
+            error.message.includes('Unexpected end of JSON input') ||
+            error.message.includes('Empty content from OpenRouter API') ||
+            error.message.includes('No content received from OpenRouter API')
+          ))
+        );
+        
+        if (isRetryableError) {
+          console.error(`OpenRouter: Retryable error on attempt ${attempt}/${maxRetries}:`, error.message);
+          if (attempt < maxRetries) {
+            const delay = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
+            console.log(`OpenRouter: Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+        } else {
+          // For non-retryable errors, don't retry
+          throw error;
+        }
+      }
+    }
+    
+    // If we get here, all retries failed with the primary model
+    if (lastError) {
+      console.error('OpenRouter: All retries failed with primary model. Final error:', lastError);
+      
+      // Try a fallback model if the error seems to be content-related and we're using the free model
+      if (model.includes('free') && lastError.message.includes('Empty content')) {
+        console.log('OpenRouter: Attempting fallback to different model...');
+        try {
+          return await this.generateQuiz(text, quizType, questionCount, 'meta-llama/llama-3.2-3b-instruct:free');
+        } catch (fallbackError) {
+          console.error('OpenRouter: Fallback model also failed:', fallbackError);
+          // Continue to original error handling
+        }
+      }
+      
+      if (lastError instanceof TypeError && lastError.message === 'Failed to fetch') {
+        console.error('OpenRouter: Network error - this usually means:');
+        console.error('1. No internet connection');
+        console.error('2. CORS issue');
+        console.error('3. API endpoint is down');
+        console.error('4. Request timeout');
+      }
+      throw new Error(`Failed to generate quiz questions after ${maxRetries} attempts: ${lastError.message}`);
+    }
+    
+    throw new Error('Failed to generate quiz questions: Unknown error');
+  }
+
+  private static createPrompt(text: string, quizType: QuizType, questionCount: number): string {
+    let typeInstruction = '';
+    
+    switch (quizType) {
+      case 'MCQ':
+        typeInstruction = 'IMPORTANT: Create ONLY multiple choice questions with exactly 4-5 options each. Most questions should have 1 correct answer (type: "MCQ"), but when a question naturally requires multiple correct answers, use type: "MSQ" with correctAnswer as an array and include selectCount. Do NOT create any other question types.';
+        break;
+      case 'Fill-in-the-blank':
+        typeInstruction = 'IMPORTANT: Create ONLY fill-in-the-blank questions with clear, concise answers. Do NOT create any other question types.';
+        break;
+      case 'Essay':
+        typeInstruction = 'IMPORTANT: Create ONLY essay questions that require analysis and critical thinking. Do NOT create any other question types.';
+        break;
+      case 'Mixed':
+        typeInstruction = 'Create a balanced mix of question types: multiple choice (mostly single answer, occasionally multiple select when appropriate), true/false, fill-in-the-blank, and essay questions. Vary the difficulty levels.';
+        break;
+      default:
+        typeInstruction = 'Create a variety of question types appropriate for the content.';
+    }
+
+    // Detect if this looks like existing test questions
+    const hasExistingQuestions = /\b(question|answer|correct|option|choice)\b/gi.test(text.substring(0, 1000));
+    const instructionPrefix = hasExistingQuestions 
+      ? `The provided material contains existing test questions. Use the TOPICS and CONCEPTS from this material to create ${questionCount} COMPLETELY NEW questions. Do NOT reformat or copy existing questions.`
+      : `Generate exactly ${questionCount} dynamic practice questions from this study material.`;
+    
+    return `${instructionPrefix}
+
+${typeInstruction}
+
+Study Material:
+${text.substring(0, 8000)}${text.length > 8000 ? '\n\n[Content truncated for length - focus on key concepts covered above]' : ''}
+
+Requirements:
+- Create ${questionCount} questions that test deep understanding, not just memorization
+- Rephrase concepts rather than copying text directly
+- Include scenario-based questions where appropriate
+- Vary difficulty from basic recall to analysis
+- Combine multiple concepts when possible
+- Provide clear explanations for all answers`;
+  }
+
+  private static parseQuizResponse(content: string): Question[] {
+    try {
+      console.log('OpenRouter: Starting JSON parsing of response...');
+      console.log('OpenRouter: Content length:', content.length);
+      
+      // Clean the content to extract JSON - try multiple approaches
+      let jsonString = '';
+      
+      // First, try to extract JSON from markdown code blocks
+      const markdownMatch = content.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
+      if (markdownMatch) {
+        jsonString = markdownMatch[1];
+        console.log('OpenRouter: Found JSON in markdown code block');
+      } else {
+        // Try to find JSON array in the content
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[0];
+          console.log('OpenRouter: Found JSON array in content');
+        } else {
+          // If no array found, try to find JSON object and wrap it
+          const objectMatch = content.match(/\{[\s\S]*\}/);
+          if (objectMatch) {
+            jsonString = `[${objectMatch[0]}]`;
+            console.log('OpenRouter: Found JSON object, wrapped in array');
+          } else {
+            throw new Error('No valid JSON found in response');
+          }
+        }
+      }
+
+      // Try to fix common JSON issues
+      console.log('OpenRouter: Cleaning JSON string...');
+      jsonString = jsonString
+        .replace(/,\s*}/g, '}') // Remove trailing commas
+        .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
+        .replace(/\\"/g, '"') // Fix escaped quotes
+        .replace(/\\n/g, ' ') // Replace newlines with spaces
+        .replace(/\\t/g, ' ') // Replace tabs with spaces
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .replace(/```json\s*/g, '') // Remove any remaining markdown
+        .replace(/```\s*/g, '') // Remove any remaining markdown
+        .trim();
+
+      // Additional JSON fixes for common AI mistakes
+      jsonString = jsonString
+        .replace(/([^\\])"/g, '$1"') // Fix unescaped quotes (but not escaped ones)
+        .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas before } or ]
+        .replace(/([a-zA-Z0-9])\s*:\s*"/g, '$1": "') // Fix spacing around colons
+        .replace(/"\s*,\s*([a-zA-Z0-9])/g, '", "$1') // Fix spacing around commas
+        .replace(/\n/g, ' ') // Remove all newlines
+        .replace(/\r/g, ' ') // Remove carriage returns
+        .replace(/\t/g, ' ') // Remove tabs
+        .replace(/\s+/g, ' ') // Normalize all whitespace
+        .trim();
+
+      console.log('OpenRouter: Attempting to parse cleaned JSON...');
+      console.log('OpenRouter: JSON preview (first 300 chars):', jsonString.substring(0, 300) + '...');
+      
+      const questions = JSON.parse(jsonString);
+      
+      // Ensure questions is an array
+      if (!Array.isArray(questions)) {
+        throw new Error('Response is not an array of questions');
+      }
+      
+      console.log('OpenRouter: Successfully parsed JSON, found', questions.length, 'questions');
+      
+      // Validate and format questions
+      return questions.map((q: any, index: number) => {
+        if (!q || typeof q !== 'object') {
+          throw new Error(`Invalid question format at index ${index}`);
+        }
+        
+        return {
+          id: q.id || `q${index + 1}`,
+          type: q.type || 'MCQ',
+          question: q.question || `Question ${index + 1}`,
+          options: q.options || undefined,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation || 'No explanation provided',
+          points: q.points || 1,
+        };
+      });
+    } catch (error) {
+      console.error('OpenRouter: Failed to parse quiz response:', error);
+      console.error('OpenRouter: Raw content (first 1000 chars):', content.substring(0, 1000) + '...');
+      
+      // Check for common issues
+      if (error instanceof SyntaxError) {
+        if (error.message.includes('Unexpected end of JSON input')) {
+          console.error('OpenRouter: JSON was truncated - likely due to token limit or timeout');
+        } else if (error.message.includes('Unexpected token')) {
+          console.error('OpenRouter: JSON syntax error - AI may have added extra text');
+        }
+      }
+      
+      // Try to extract partial JSON if possible
+      try {
+        console.log('OpenRouter: Attempting to extract partial JSON...');
+        
+        // Look for complete question objects in the content
+        const questionMatches = content.match(/\{[^}]*"id"[^}]*"type"[^}]*"question"[^}]*\}/g);
+        
+        if (questionMatches && questionMatches.length > 0) {
+          console.log('OpenRouter: Found', questionMatches.length, 'potential question objects');
+          
+          const validQuestions = [];
+          
+          for (let i = 0; i < questionMatches.length; i++) {
+            try {
+              const questionJson = questionMatches[i];
+              console.log('OpenRouter: Attempting to parse question', i + 1, ':', questionJson.substring(0, 100) + '...');
+              
+              // Clean the question JSON
+              let cleanedQuestion = questionJson
+                .replace(/,\s*([}\]])/g, '$1')
+                .replace(/\n/g, ' ')
+                .replace(/\r/g, ' ')
+                .replace(/\t/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+              
+              // Try to complete the JSON if it's cut off
+              if (!cleanedQuestion.endsWith('}')) {
+                // Find the last complete property
+                const lastCompleteMatch = cleanedQuestion.match(/"[^"]*"\s*:\s*"[^"]*"$/);
+                if (lastCompleteMatch) {
+                  cleanedQuestion += '}';
+                }
+              }
+              
+              const question = JSON.parse(cleanedQuestion);
+              
+              // Validate the question has required fields
+              if (question.id && question.type && question.question) {
+                validQuestions.push({
+                  id: question.id,
+                  type: question.type,
+                  question: question.question,
+                  options: question.options || undefined,
+                  correctAnswer: question.correctAnswer,
+                  explanation: question.explanation || 'No explanation provided',
+                  points: question.points || 1,
+                });
+                console.log('OpenRouter: Successfully parsed question', i + 1);
+              }
+            } catch (questionError) {
+              console.error('OpenRouter: Failed to parse question', i + 1, ':', questionError);
+              // Continue with next question
+            }
+          }
+          
+          if (validQuestions.length > 0) {
+            console.log('OpenRouter: Successfully extracted', validQuestions.length, 'valid questions from partial JSON');
+            return validQuestions;
+          }
+        }
+        
+        // Fallback: try to find any JSON array structure
+        const partialMatch = content.match(/\[[\s\S]*?\]/);
+        if (partialMatch) {
+          const partialJson = partialMatch[0];
+          console.log('OpenRouter: Found partial JSON array, attempting to fix...');
+          
+          // Try to fix the partial JSON
+          const fixedJson = partialJson
+            .replace(/,\s*([}\]])/g, '$1')
+            .replace(/\n/g, ' ')
+            .replace(/\r/g, ' ')
+            .replace(/\t/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          const questions = JSON.parse(fixedJson);
+          if (Array.isArray(questions) && questions.length > 0) {
+            console.log('OpenRouter: Successfully parsed partial JSON with', questions.length, 'questions');
+            return questions.map((q: any, index: number) => ({
+              id: q.id || `q${index + 1}`,
+              type: q.type || 'MCQ',
+              question: q.question || `Question ${index + 1}`,
+              options: q.options || undefined,
+              correctAnswer: q.correctAnswer,
+              explanation: q.explanation || 'No explanation provided',
+              points: q.points || 1,
+            }));
+          }
+        }
+      } catch (partialError) {
+        console.error('OpenRouter: Partial JSON parsing also failed:', partialError);
+      }
+      
+      // Return a fallback question if all parsing fails
+      return [{
+        id: 'q1',
+        type: 'MCQ',
+        question: 'There was an issue generating questions. Please try again with a different document or quiz type.',
+        options: ['Try again', 'Use a different document', 'Change quiz type', 'Contact support'],
+        correctAnswer: 0,
+        explanation: 'The AI service encountered an error while generating questions. Please try again.',
+        points: 1,
+      }];
+    }
+  }
+
+  static async validateApiKey(): Promise<boolean> {
+    if (!this.API_KEY) return false;
+
+    try {
+      const response = await fetch(this.API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'qwen/qwen3-235b-a22b:free', // Use new free model for validation
+          messages: [{ role: 'user', content: 'Hello' }],
+          max_tokens: 100,
+        }),
+      });
+
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  static feedbackSystemPrompt(): string {
+    return `You are Test Buddy, an expert AI learning coach. You will receive:
+- the quiz name,
+- overall score,
+- the list of questions with the user's answers, correctness, correct answers, and explanations.
+
+Your job:
+1) Identify ALL significant knowledge gaps (typically 4–8 "Focus Areas") - analyze every incorrect answer and group by topic.
+2) For each Focus Area, provide comprehensive guidance:
+   - WHY this topic is critical (specific to their mistakes, 2-3 sentences)
+   - EXAMPLES of their specific errors from the quiz (be specific)
+   - 4–6 detailed "Study Actions" with concrete, actionable steps
+3) Be thorough and encouraging - learners want comprehensive feedback to improve effectively.
+4) Include multiple focus areas if the learner has diverse knowledge gaps across different topics.
+5) Make study actions specific and practical, not generic advice.
+
+CRITICAL: You must respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use code fences, markdown, or <think> tags. Do not include explanatory text or reasoning.
+
+Your response must start with { and end with }. Nothing else.
+
+Output strictly in this JSON schema:
+
+{
+  "overall_assessment": "2–4 sentence summary highlighting both strengths and areas for improvement.",
+  "strengths": ["specific strength from quiz performance", "another demonstrated strength", "third strength if applicable"],
+  "focus_areas": [
+    {
+      "topic": "Clear, specific topic name",
+      "why": "Why this is critical for their learning based on specific mistakes (2–3 sentences with context)",
+      "examples": ["specific incorrect answer from quiz", "another mistake example", "pattern of errors if applicable"],
+      "study_actions": [
+        "Review [specific concept] fundamentals and core principles",
+        "Practice [specific type] of problems or scenarios", 
+        "Study [particular method/approach] for this topic",
+        "Apply knowledge through [hands-on exercise or project]",
+        "Test understanding with [specific practice method]",
+        "Focus on [particular aspect] that was problematic"
+      ]
+    }
+  ],
+  "suggested_next_quiz": {
+    "difficulty": "easy|mixed|hard",
+    "question_mix": ["multiple_choice","fill_blank","true_false","scenario"],
+    "target_topics": ["topic1","topic2","topic3"]
+  }
+}
+
+Include ALL significant areas where improvement is needed - comprehensive feedback is more valuable than abbreviated summaries.
+If the context is insufficient, say so in "overall_assessment" and leave arrays empty.
+Never invent facts not in the provided context.
+Remember: ONLY return the JSON object, nothing else.`;
+  }
+
+  // Build a compact, token-friendly context
+  private static buildFeedbackContext(
+    testName: string,
+    score: number,
+    questions: Question[],
+    answers: UserAnswer[]
+  ): string {
+    const lines: string[] = [];
+    lines.push(`Test: ${testName}`);
+    lines.push(`Score: ${score}%`);
+    lines.push(`Questions (${questions.length}):`);
+    
+    // Helper to clamp and clean strings
+    const clamp = (s: any, n: number) => (s ?? '').toString().replace(/\s+/g, ' ').slice(0, n);
+    
+    questions.forEach((q, i) => {
+      const ua = answers[i];
+      const correct = ua?.isCorrect ? 'correct' : 'incorrect';
+      
+      // More compact format to reduce truncation risk
+      lines.push(
+        `#${i+1} [${q.type}] ${correct}\n` +
+        `Q: ${clamp(q.question, 180)}\n` +
+        `User: ${clamp(ua?.answer, 120)}\n` +
+        `Correct: ${clamp(q.correctAnswer, 120)}\n` +
+        `Why: ${clamp(q.explanation, 160)}`
+      );
+    });
+    
+    return lines.join('\n');
+  }
+
+  private static stripReasoningAndFences(text: string): string {
+    // Remove <think> blocks
+    text = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    // Remove code fences
+    text = text.replace(/```[\s\S]*?```/g, '');
+    return text.trim();
+  }
+
+  private static extractBalancedJson(text: string): string | null {
+    // Find first '{' then walk to matching '}' with string-awareness
+    const s = text.trim();
+    const start = s.indexOf('{');
+    if (start < 0) return null;
+
+    console.log('OpenRouter: JSON extraction - start index:', start, 'text length:', s.length);
+
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < s.length; i++) {
+      const ch = s[i];
+      if (inStr) {
+        if (esc) { 
+          esc = false; 
+          continue; 
+        }
+        if (ch === '\\') { 
+          esc = true; 
+          continue; 
+        }
+        if (ch === '"') inStr = false;
+      } else {
+        if (ch === '"') {
+          inStr = true;
+        } else if (ch === '{') {
+          depth++;
+        } else if (ch === '}') {
+          depth--;
+          if (depth === 0) {
+            const extracted = s.slice(start, i + 1);
+            console.log('OpenRouter: Successfully extracted JSON, length:', extracted.length);
+            return extracted;
+          }
+        }
+      }
+    }
+    
+    console.log('OpenRouter: JSON extraction failed - final depth:', depth, 'inStr:', inStr);
+    return null; // likely truncated
+  }
+
+  private static tryJsonRepair(text: string): string {
+    // Minimal "repair": remove trailing commas and fix common truncations
+    return text
+      .replace(/,\s*([}\]])/g, '$1')   // trailing commas
+      .replace(/[\u0000-\u001f]/g, ''); // stray control chars
+  }
+
+  private static handleTruncatedJson(truncatedText: string): FeedbackSummary {
+    console.log('OpenRouter: Handling truncated JSON, length:', truncatedText.length);
+    
+    // Try to extract what we can from the truncated response
+    const partialData: Partial<FeedbackSummary> = {};
+    
+    try {
+      // Extract overall_assessment if present
+      const assessmentMatch = truncatedText.match(/"overall_assessment":\s*"([^"]+)"/);
+      if (assessmentMatch) {
+        partialData.overall_assessment = assessmentMatch[1];
+      }
+      
+      // Extract strengths array if present
+      const strengthsMatch = truncatedText.match(/"strengths":\s*\[([\s\S]*?)\]/);
+      if (strengthsMatch) {
+        try {
+          const strengthsStr = '[' + strengthsMatch[1] + ']';
+          partialData.strengths = JSON.parse(strengthsStr);
+        } catch {
+          // Extract individual strength strings
+          const strengthItems = truncatedText.match(/"strengths":\s*\[\s*"([^"]+)"/);
+          if (strengthItems) {
+            partialData.strengths = [strengthItems[1]];
+          }
+        }
+      }
+      
+      // Extract focus areas if present (even partial) - try to get multiple areas
+      const focusAreasMatch = truncatedText.match(/"focus_areas":\s*\[([\s\S]*)/);
+      if (focusAreasMatch) {
+        const focusAreas = [];
+        
+        // Extract all topic/why pairs from the truncated response
+        const topicMatches = truncatedText.match(/"topic":\s*"([^"]+)"/g);
+        const whyMatches = truncatedText.match(/"why":\s*"([^"]+)"/g);
+        
+        if (topicMatches && whyMatches) {
+          const minLength = Math.min(topicMatches.length, whyMatches.length);
+          
+          for (let i = 0; i < minLength; i++) {
+            const topic = topicMatches[i].match(/"topic":\s*"([^"]+)"/)?.[1];
+            const why = whyMatches[i].match(/"why":\s*"([^"]+)"/)?.[1];
+            
+            if (topic && why) {
+              focusAreas.push({
+                topic: topic,
+                why: why,
+                examples: [],
+                study_actions: [
+                  `Review the fundamentals of ${topic}`,
+                  `Practice problems related to ${topic}`,
+                  `Study key concepts and principles in ${topic}`
+                ]
+              });
+            }
+          }
+        }
+        
+        if (focusAreas.length > 0) {
+          partialData.focus_areas = focusAreas;
+        }
+      }
+      
+    } catch (error) {
+      console.log('OpenRouter: Error extracting from truncated JSON:', error);
+    }
+    
+    // Return a complete FeedbackSummary with extracted data + defaults
+    return {
+      overall_assessment: partialData.overall_assessment || 
+        'Response was truncated due to length. You performed well but the detailed analysis was cut off.',
+      strengths: partialData.strengths || [],
+      focus_areas: partialData.focus_areas || [{
+        topic: "Response Truncated",
+        why: "The AI feedback was too long and got cut off. Try regenerating for complete analysis.",
+        examples: [],
+        study_actions: ["Click 'Regenerate' to get the full feedback"]
+      }],
+      suggested_next_quiz: {
+        difficulty: 'mixed',
+        question_mix: ['multiple_choice', 'scenario'],
+        target_topics: []
+      }
+    };
+  }
+
+  private static safeParseFeedbackJSON(text: string): FeedbackSummary {
+    console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
+    
+    // Check for truncation indicators
+    const trimmed = text.trim();
+    const isTruncated = !trimmed.endsWith('}') || trimmed.split('{').length !== trimmed.split('}').length;
+    
+    if (isTruncated) {
+      console.log('OpenRouter: Detected truncated JSON response, attempting recovery...');
+      return this.handleTruncatedJson(trimmed);
+    }
+    
+    // First, try direct parsing if it looks like clean JSON
+    if (trimmed.startsWith('{') && trimmed.includes('"overall_assessment"')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        console.log('OpenRouter: Successfully parsed clean JSON directly');
+        return parsed;
+      } catch (error) {
+        console.log('OpenRouter: Direct parsing failed, trying extraction methods...', error);
+        // If direct parsing fails, it might still be truncated
+        if (error instanceof SyntaxError && error.message.includes('position')) {
+          console.log('OpenRouter: Syntax error suggests truncation, attempting recovery...');
+          return this.handleTruncatedJson(trimmed);
+        }
+      }
+    }
+    
+    let cleaned = this.stripReasoningAndFences(text);
+    console.log('OpenRouter: After cleaning reasoning/fences:', cleaned.substring(0, 200) + '...');
+    
+    // Try direct parsing of cleaned text first
+    if (cleaned.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(cleaned.trim());
+        console.log('OpenRouter: Successfully parsed cleaned JSON directly');
+        return parsed;
+      } catch (error) {
+        console.log('OpenRouter: Cleaned direct parsing failed, trying balanced extraction...', error);
+      }
+    }
+    
+    let jsonString = this.extractBalancedJson(cleaned);
+
+    if (!jsonString) {
+      console.warn('OpenRouter: No balanced JSON found, trying repair...');
+      // try aggressive cleaning
+      cleaned = this.tryJsonRepair(cleaned);
+      jsonString = this.extractBalancedJson(cleaned);
+    }
+    
+    if (!jsonString) {
+      console.warn('OpenRouter: Still no JSON found, using text as fallback');
+      // final fallback: treat whole string as summary to avoid hard failure
+      return {
+        overall_assessment: cleaned.slice(0, 500) || 'Unable to generate detailed feedback at this time.',
+        strengths: [],
+        focus_areas: [],
+        suggested_next_quiz: { 
+          difficulty: 'mixed', 
+          question_mix: ['multiple_choice','scenario'], 
+          target_topics: [] 
+        }
+      };
+    }
+
+    console.log('OpenRouter: Extracted JSON string:', jsonString.substring(0, 200) + '...');
+
+    try {
+      const parsed = JSON.parse(jsonString);
+      console.log('OpenRouter: Successfully parsed extracted JSON');
+      return parsed;
+    } catch (error) {
+      console.warn('OpenRouter: JSON parse failed, trying repair...', error);
+      const repaired = this.tryJsonRepair(jsonString);
+      try {
+        const parsed = JSON.parse(repaired);
+        console.log('OpenRouter: Successfully parsed repaired JSON');
+        return parsed;
+      } catch (repairError) {
+        console.error('OpenRouter: All JSON parsing attempts failed:', repairError);
+        // Return graceful fallback
+        return {
+          overall_assessment: 'Unable to generate detailed feedback due to parsing issues. Please try regenerating.',
+          strengths: [],
+          focus_areas: [],
+          suggested_next_quiz: { 
+            difficulty: 'mixed', 
+            question_mix: ['multiple_choice','scenario'], 
+            target_topics: [] 
+          }
+        };
+      }
+    }
+  }
+
+  static async generateFeedbackSummary(
+    testName: string,
+    score: number,
+    questions: Question[],
+    answers: UserAnswer[]
+  ): Promise<FeedbackSummary> {
+    if (!this.API_KEY) {
+      throw new Error('OpenRouter API key is not configured');
+    }
+
+    const system = this.feedbackSystemPrompt();
+    const user = this.buildFeedbackContext(testName, score, questions, answers);
+
+    console.log('OpenRouter: Generating feedback summary for:', testName);
+    console.log('OpenRouter: Score:', score, '% | Questions:', questions.length);
+
+    try {
+      const response = await fetch(this.API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+          'X-Title': 'Test Buddy'
+        },
+        body: JSON.stringify({
+          model: 'qwen/qwen3-235b-a22b:free',
+          messages: [
+            { 
+              role: 'system', 
+              content: system + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text. Keep responses concise to avoid truncation.' 
+            },
+            { role: 'user', content: user }
+          ],
+          temperature: 0.5,
+          max_tokens: 3000  // Increased for comprehensive feedback with multiple focus areas
+          // Removed response_format as it may not be supported by this model
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('OpenRouter: Primary model failed:', data?.error?.message);
+        throw new Error(data?.error?.message || 'Primary model request failed');
+      }
+
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('AI model returned empty response');
+      }
+
+      console.log('OpenRouter: Full API response structure:', {
+        choices: data?.choices?.length || 0,
+        hasContent: !!content,
+        contentLength: content?.length || 0,
+        usage: data?.usage
+      });
+
+      return this.safeParseFeedbackJSON(content);
+      
+    } catch (error) {
+      console.error('OpenRouter: Primary model error:', error);
+      // Try fallback with backup model
+      return this.tryFallbackGeneration(system, user);
+    }
+  }
+
+  private static async tryFallbackGeneration(systemPrompt: string, userPrompt: string): Promise<FeedbackSummary> {
+    console.log('OpenRouter: Trying fallback model...');
+    
+    try {
+      const response = await fetch(this.API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+          'X-Title': 'Test Buddy'
+        },
+        body: JSON.stringify({
+          model: 'microsoft/phi-3-mini-4k-instruct:free',
+          messages: [
+            { 
+              role: 'system', 
+              content: systemPrompt + '\n\nIMPORTANT: Return ONLY a JSON object. Start with { and end with }. No other text. Keep responses concise.' 
+            },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 2500  // Increased for comprehensive feedback
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('OpenRouter: Fallback model failed:', data?.error?.message);
+        throw new Error(data?.error?.message || 'Fallback model request failed');
+      }
+
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('Fallback model returned empty response');
+      }
+
+      console.log('OpenRouter: Fallback model response received, length:', content.length);
+      return this.safeParseFeedbackJSON(content);
+      
+    } catch (error) {
+      console.error('OpenRouter: All models failed:', error);
+      
+      // Return a meaningful fallback response instead of throwing
+      return {
+        overall_assessment: 'Unable to generate AI feedback at this time. The service may be temporarily unavailable. Your quiz results have been saved successfully.',
+        strengths: [],
+        focus_areas: [],
+        suggested_next_quiz: { 
+          difficulty: 'mixed', 
+          question_mix: ['multiple_choice','scenario'], 
+          target_topics: [] 
+        }
+      };
+    }
+  }
+
+  private static async tryGenerateFeedback(
+    system: string,
+    user: string,
+    modelName: string,
+    temperature: number,
+    maxTokens: number
+  ): Promise<FeedbackSummary> {
+    const response = await fetch(this.API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+        'X-Title': 'Test Buddy',
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user }
+        ],
+        temperature: temperature,
+        max_tokens: maxTokens,
+        top_p: 0.9
+      })
+    });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('OpenRouter feedback error:', data);
+        throw new Error(data?.error?.message || 'OpenRouter feedback request failed');
+      }
+
+      // Check if we have any content at all
+      let text = data?.choices?.[0]?.message?.content ?? '';
+      text = text.trim();
+      
+      console.log('OpenRouter: Full API response structure:', {
+        choices: data?.choices?.length,
+        hasContent: !!text,
+        contentLength: text.length,
+        usage: data?.usage
+      });
+      
+      if (!text || text.length === 0) {
+        console.error('OpenRouter: Received empty content from API');
+        console.error('OpenRouter: Full response data:', JSON.stringify(data, null, 2));
+        throw new Error('AI model returned empty response. This might be due to content filtering or model issues.');
+      }
+      
+      console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
+      
+      // Try multiple strategies to extract JSON
+      let jsonString = text;
+      
+      // Strategy 1: Remove <think> tags if present (common with some models)
+      if (text.includes('<think>')) {
+        // Remove everything from <think> to </think> or end of <think> block
+        jsonString = text.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim();
+        console.log('OpenRouter: Removed <think> tags');
+      }
+      
+      // Strategy 2: Remove code fences if present
+      if (jsonString.includes('```json') || jsonString.includes('```')) {
+        const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+          jsonString = codeBlockMatch[1].trim();
+          console.log('OpenRouter: Extracted JSON from code block');
+        }
+      }
+      
+      // Strategy 3: Find JSON object boundaries
+      if (!jsonString.startsWith('{')) {
+        const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[0];
+          console.log('OpenRouter: Extracted JSON using regex match');
+        }
+      }
+      
+      // Strategy 4: Clean up common formatting issues
+      jsonString = jsonString
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .replace(/^\s*Here's the feedback:\s*/i, '')
+        .replace(/^\s*Response:\s*/i, '')
+        .replace(/<\/?think>/gi, '') // Remove any remaining think tags
+        .trim();
+
+      console.log('OpenRouter: Cleaned JSON string:', jsonString.substring(0, 200) + '...');
+
+      let parsed: FeedbackSummary = {
+        overall_assessment: 'Unable to generate detailed feedback at this time.',
+        strengths: [],
+        focus_areas: [],
+        suggested_next_quiz: { 
+          difficulty: 'mixed', 
+          question_mix: ['multiple_choice', 'scenario'], 
+          target_topics: [] 
+        }
+      };
+      
+      try {
+        parsed = JSON.parse(jsonString);
+        console.log('OpenRouter: Successfully parsed feedback JSON');
+      } catch (parseError) {
+        console.warn('OpenRouter: Failed to parse feedback JSON, trying more aggressive cleaning...');
+        
+        // Try to fix common JSON issues
+        const fixedJson = jsonString
+          .replace(/,\s*}/g, '}')  // Remove trailing commas
+          .replace(/,\s*]/g, ']')  // Remove trailing commas in arrays
+          .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Fix unquoted keys
+          .replace(/:\s*'([^']*)'/g, ': "$1"')  // Fix single quotes
+          .replace(/\n/g, ' ')  // Remove newlines that might break JSON
+          .replace(/\t/g, ' ')  // Remove tabs
+          .replace(/\s+/g, ' '); // Normalize whitespace
+        
+        try {
+          parsed = JSON.parse(fixedJson);
+          console.log('OpenRouter: Successfully parsed feedback JSON after fixing');
+        } catch (secondError) {
+          console.warn('OpenRouter: Fixed JSON also failed, trying to find JSON anywhere in response...');
+          
+          // Last resort: try to find any JSON object in the entire response
+          const allJsonMatches = text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
+          let foundValidJson = false;
+          
+          if (allJsonMatches) {
+            for (const match of allJsonMatches) {
+              try {
+                const testParsed = JSON.parse(match);
+                if (testParsed.overall_assessment || testParsed.focus_areas) {
+                  parsed = testParsed;
+                  foundValidJson = true;
+                  console.log('OpenRouter: Found valid JSON in response!');
+                  break;
+                }
+              } catch {
+                // Continue searching
+              }
+            }
+          }
+          
+          if (!foundValidJson) {
+            console.error('OpenRouter: All JSON parsing attempts failed:', secondError);
+            console.error('OpenRouter: Original text:', text.substring(0, 500));
+            console.error('OpenRouter: Final attempt:', fixedJson.substring(0, 500));
+            // Keep the default fallback value that was already assigned
+          }
+        }
+      }
+      
+      return parsed;
+  }
+} 

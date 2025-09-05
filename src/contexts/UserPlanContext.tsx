@@ -1,0 +1,159 @@
+'use client';
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
+import { UserProfile, ensureUserProfile } from '@/services/userService';
+import { UserPlan, DEFAULT_PLAN, getPlanFeatures } from '@/config/plans';
+import { canGenerateTest, UsageRecord } from '@/services/usageService';
+
+interface UserPlanContextType {
+  // User data
+  userProfile: UserProfile | null;
+  plan: UserPlan;
+  planFeatures: ReturnType<typeof getPlanFeatures>;
+  loading: boolean;
+  error: string | null;
+  
+  // Usage data
+  usage: UsageRecord | null;
+  canCreateTest: boolean;
+  testsRemaining: number;
+  
+  // Actions
+  refreshProfile: () => Promise<void>;
+  refreshUsage: () => Promise<void>;
+}
+
+const UserPlanContext = createContext<UserPlanContextType | undefined>(undefined);
+
+export function UserPlanProvider({ children }: { children: React.ReactNode }) {
+  const [user, authLoading] = useAuthState(auth);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [usage, setUsage] = useState<UsageRecord | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const plan = userProfile?.plan || DEFAULT_PLAN;
+  const planFeatures = getPlanFeatures(plan);
+
+  // Load user profile
+  const loadUserProfile = async () => {
+    if (!user) {
+      setUserProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const profile = await ensureUserProfile(
+        user.uid,
+        user.email || '',
+        user.displayName || undefined
+      );
+      
+      setUserProfile(profile);
+    } catch (err) {
+      console.error('Error loading user profile:', err);
+      setError('Failed to load user profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load usage data
+  const loadUsage = async () => {
+    if (!user || !userProfile) return;
+
+    try {
+      const usageCheck = await canGenerateTest(user.uid, userProfile.plan);
+      setUsage(usageCheck.usage);
+    } catch (err) {
+      console.error('Error loading usage:', err);
+    }
+  };
+
+  // Load profile on auth state change
+  useEffect(() => {
+    if (!authLoading) {
+      loadUserProfile();
+    }
+  }, [user, authLoading]);
+
+  // Load usage when profile is available
+  useEffect(() => {
+    if (userProfile) {
+      loadUsage();
+    }
+  }, [userProfile]);
+
+  // Calculate derived values
+  const canCreateTest = usage ? 
+    (planFeatures.maxTestsPerMonth === Infinity || usage.testsGenerated < planFeatures.maxTestsPerMonth) : 
+    false;
+
+  const testsRemaining = usage && planFeatures.maxTestsPerMonth !== Infinity ? 
+    Math.max(0, planFeatures.maxTestsPerMonth - usage.testsGenerated) : 
+    Infinity;
+
+  const refreshProfile = async () => {
+    await loadUserProfile();
+  };
+
+  const refreshUsage = async () => {
+    await loadUsage();
+  };
+
+  const value: UserPlanContextType = {
+    userProfile,
+    plan,
+    planFeatures,
+    loading: loading || authLoading,
+    error,
+    usage,
+    canCreateTest,
+    testsRemaining: testsRemaining as number,
+    refreshProfile,
+    refreshUsage,
+  };
+
+  return (
+    <UserPlanContext.Provider value={value}>
+      {children}
+    </UserPlanContext.Provider>
+  );
+}
+
+export function useUserPlan(): UserPlanContextType {
+  const context = useContext(UserPlanContext);
+  if (context === undefined) {
+    throw new Error('useUserPlan must be used within a UserPlanProvider');
+  }
+  return context;
+}
+
+// Convenience hooks
+export function usePlanFeatures() {
+  const { planFeatures } = useUserPlan();
+  return planFeatures;
+}
+
+export function useCanAccessFeature(feature: keyof ReturnType<typeof getPlanFeatures>) {
+  const { planFeatures } = useUserPlan();
+  return Boolean(planFeatures[feature]);
+}
+
+export function useUsageStatus() {
+  const { usage, canCreateTest, testsRemaining, plan, planFeatures } = useUserPlan();
+  return {
+    usage,
+    canCreateTest,
+    testsRemaining,
+    limit: planFeatures.maxTestsPerMonth,
+    isUnlimited: planFeatures.maxTestsPerMonth === Infinity,
+    plan,
+  };
+}
