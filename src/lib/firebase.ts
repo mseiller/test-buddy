@@ -12,6 +12,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID || 'demo-app-id'
 };
 
+// Log Firebase configuration status (without sensitive data)
+console.log('Firebase Config Status:', {
+  hasApiKey: !!firebaseConfig.apiKey && firebaseConfig.apiKey !== 'demo-api-key',
+  hasAuthDomain: !!firebaseConfig.authDomain && firebaseConfig.authDomain !== 'demo-project.firebaseapp.com',
+  hasProjectId: !!firebaseConfig.projectId && firebaseConfig.projectId !== 'demo-project',
+  projectId: firebaseConfig.projectId,
+  environment: process.env.NODE_ENV
+});
+
 // Initialize Firebase only if it hasn't been initialized already
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 

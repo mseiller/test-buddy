@@ -34,6 +34,18 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading && !authLoading) {
+        console.warn('UserPlanContext: Loading timeout reached, setting loading to false');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [loading, authLoading]);
+
   const plan = userProfile?.plan || DEFAULT_PLAN;
   const planFeatures = getPlanFeatures(plan);
 
@@ -49,16 +61,26 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
+      console.log('Loading user profile for:', user.uid);
       const profile = await ensureUserProfile(
         user.uid,
         user.email || '',
         user.displayName || undefined
       );
       
+      console.log('User profile loaded:', profile);
       setUserProfile(profile);
     } catch (err) {
       console.error('Error loading user profile:', err);
       setError('Failed to load user profile');
+      // Set a default profile to prevent infinite loading
+      setUserProfile({
+        uid: user.uid,
+        email: user.email || '',
+        plan: 'free',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     } finally {
       setLoading(false);
     }
