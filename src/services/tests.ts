@@ -172,6 +172,9 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
       continue;
     }
     
+    // Use the original createdAt from the document, or current time if not available
+    const createdAt = data.createdAt || new Date();
+    
     // Convert to new format - only include fields that have values
     const testDoc: any = {
       userId: uid,
