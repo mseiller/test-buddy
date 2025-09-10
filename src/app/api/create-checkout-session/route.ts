@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe, PLAN_TO_PRICE_ID, STRIPE_COUPON_IDS, TRIAL_PERIODS } from '@/lib/stripe';
+import { stripe, PLAN_TO_PRICE_ID, TRIAL_PERIODS } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
