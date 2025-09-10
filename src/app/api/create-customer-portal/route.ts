@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       
       // Search through all subscriptions (paginated)
       while (hasMore && !userSubscription) {
-        const subscriptions = await stripe.subscriptions.list({
+        const subscriptions: Stripe.ApiList<Stripe.Subscription> = await stripe.subscriptions.list({
           limit: 100,
           starting_after: startingAfter,
         });
