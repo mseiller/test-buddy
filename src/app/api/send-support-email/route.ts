@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,9 +52,6 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Namecheap email credentials found, sending email...');
 
-    // Send email using Nodemailer with Namecheap SMTP
-    const nodemailer = require('nodemailer');
-    
     // Create transporter using Namecheap SMTP (corrected settings)
     const transporter = nodemailer.createTransport({
       host: 'mail.yourbuddyapps.com', // Your domain's SMTP server
