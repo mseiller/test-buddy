@@ -37,8 +37,8 @@ export default function FolderManager({
   useEffect(() => {
     if (selectedFolder) {
       loadTestsInFolder(selectedFolder.id);
-    } else if (selectedFolder === null && folders.length > 0) {
-      // Only load all tests if "All Tests" was explicitly selected (selectedFolder is null but we have folders)
+    } else if (selectedFolder === null) {
+      // Load all tests when "All Tests" is selected, regardless of folder count
       loadAllTests();
     }
     // If selectedFolder is undefined, don't load any tests (initial state)
@@ -377,7 +377,7 @@ export default function FolderManager({
                     e.stopPropagation();
                     setOpenDropdownId(openDropdownId === `folder-${folder.id}` ? null : `folder-${folder.id}`);
                   }}
-                  className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700"
+                  className="p-1 hover:bg-gray-200 rounded text-gray-700 hover:text-gray-900"
                   data-dropdown-trigger
                 >
                   <MoreHorizontal className="h-3 w-3" />
@@ -438,7 +438,7 @@ export default function FolderManager({
               <h4 className="text-sm font-medium text-gray-900 truncate">
                 {test.testName}
               </h4>
-              <p className="text-xs text-gray-500">
+              <div className="text-xs text-gray-700">
                 {test.fileName} • {test.quizType} • {test.score !== undefined ? `${test.score}%` : 'Not completed'}
                 {!selectedFolder && test.folderId && (
                   <span className="ml-2">
@@ -452,9 +452,9 @@ export default function FolderManager({
                   </span>
                 )}
                 {!selectedFolder && !test.folderId && (
-                  <span className="ml-2 text-gray-400">• Unorganized</span>
+                  <span className="ml-2 text-gray-600">• Unorganized</span>
                 )}
-              </p>
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -475,13 +475,13 @@ export default function FolderManager({
                   }}
                   data-dropdown-trigger
                 >
-                  <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                  <MoreHorizontal className="h-4 w-4 text-gray-700" />
                 </button>
                 
                 {/* Move to folder dropdown */}
                 {openDropdownId === test.id && (
                   <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10" data-dropdown-content>
-                    <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
+                    <div className="px-3 py-2 text-xs font-medium text-gray-700 border-b border-gray-100">
                       Move to folder
                     </div>
                     <button
@@ -521,15 +521,15 @@ export default function FolderManager({
         ))}
         
         {tests.length === 0 && selectedFolder !== undefined && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-700">
             {selectedFolder ? 'No tests in this folder yet.' : 'No tests created yet.'}
           </div>
         )}
         
         {selectedFolder === undefined && (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-700">
             <div className="mb-4">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="mx-auto h-12 w-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
               </svg>
@@ -548,7 +548,7 @@ export default function FolderManager({
               <h3 className="text-lg font-semibold">Create New Folder</h3>
               <button
                 onClick={() => setShowCreateForm(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-600 hover:text-gray-800"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -630,7 +630,7 @@ export default function FolderManager({
               <h3 className="text-lg font-semibold">Edit Folder</h3>
               <button
                 onClick={() => setShowEditForm(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-600 hover:text-gray-800"
               >
                 <X className="h-5 w-5" />
               </button>

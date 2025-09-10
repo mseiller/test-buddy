@@ -9,7 +9,8 @@ export class OpenRouterService {
     quizType: QuizType,
     questionCount: number = 5,
     modelOverride?: string,
-    isImageBased?: boolean
+    isImageBased?: boolean,
+    userPlan?: 'free' | 'student' | 'pro'
   ): Promise<Question[]> {
     if (!this.API_KEY) {
       throw new Error('OpenRouter API key is not configured');
@@ -35,12 +36,23 @@ export class OpenRouterService {
 
     const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
 
-    // Use appropriate model based on source type
-    let defaultModel = 'qwen/qwen3-235b-a22b:free';
+    // Use appropriate model based on source type and user plan
+    let defaultModel: string;
+    
+    if (userPlan === 'pro') {
+      // Pro users: Use GPT-4.1-nano for all content
+      defaultModel = 'openai/gpt-4.1-nano';
+      console.log('OpenRouter: Using Pro model for Pro user');
+    } else {
+      // Free/Student users: Use Qwen for all content
+      defaultModel = 'qwen/qwen3-235b-a22b:free';
+      console.log('OpenRouter: Using Free model for Free/Student user');
+    }
+    
     if (isImageBased) {
-      defaultModel = 'mistralai/mistral-small-3.2-24b-instruct:free';
       console.log('OpenRouter: Using image-optimized model for image-based content');
     }
+    
     const model = modelOverride || defaultModel;
     
     console.log('OpenRouter: Starting API request to:', this.API_URL);
@@ -262,14 +274,40 @@ CRITICAL OUTPUT FORMAT:
     if (lastError) {
       console.error('OpenRouter: All retries failed with primary model. Final error:', lastError);
       
-      // Try a fallback model if the error seems to be content-related and we're using the free model
-      if (model.includes('free') && lastError.message.includes('Empty content')) {
-        console.log('OpenRouter: Attempting fallback to different model...');
+      // Try fallback models based on user plan
+      const fallbackModels = [];
+      
+      if (userPlan === 'pro') {
+        // Pro users: GPT-4.1-nano -> GPT-5-nano
+        if (model.includes('gpt-4.1-nano')) {
+          fallbackModels.push('openai/gpt-5-nano');
+        } else if (model.includes('gpt-5-nano')) {
+          fallbackModels.push('openai/gpt-4.1-nano');
+        } else {
+          // Default pro fallbacks
+          fallbackModels.push('openai/gpt-4.1-nano', 'openai/gpt-5-nano');
+        }
+      } else {
+        // Free/Student users: Qwen -> Mistral -> Llama (NO OpenAI)
+        if (model.includes('qwen')) {
+          fallbackModels.push('mistralai/mistral-small-3.2-24b-instruct:free', 'meta-llama/llama-3.2-3b-instruct:free');
+        } else if (model.includes('mistral')) {
+          fallbackModels.push('meta-llama/llama-3.2-3b-instruct:free', 'qwen/qwen3-235b-a22b:free');
+        } else if (model.includes('llama')) {
+          fallbackModels.push('qwen/qwen3-235b-a22b:free', 'mistralai/mistral-small-3.2-24b-instruct:free');
+        } else {
+          // Default free fallbacks
+          fallbackModels.push('qwen/qwen3-235b-a22b:free', 'mistralai/mistral-small-3.2-24b-instruct:free', 'meta-llama/llama-3.2-3b-instruct:free');
+        }
+      }
+      
+      for (const fallbackModel of fallbackModels) {
+        console.log(`OpenRouter: Attempting fallback to ${fallbackModel}...`);
         try {
-          return await this.generateQuiz(text, quizType, questionCount, 'meta-llama/llama-3.2-3b-instruct:free');
+          return await this.generateQuiz(text, quizType, questionCount, fallbackModel);
         } catch (fallbackError) {
-          console.error('OpenRouter: Fallback model also failed:', fallbackError);
-          // Continue to original error handling
+          console.error(`OpenRouter: Fallback model ${fallbackModel} also failed:`, fallbackError);
+          // Continue to next fallback
         }
       }
       
@@ -884,7 +922,8 @@ Remember: ONLY return the JSON object, nothing else.`;
     testName: string,
     score: number,
     questions: Question[],
-    answers: UserAnswer[]
+    answers: UserAnswer[],
+    userPlan?: 'free' | 'student' | 'pro'
   ): Promise<FeedbackSummary> {
     if (!this.API_KEY) {
       throw new Error('OpenRouter API key is not configured');
@@ -906,7 +945,7 @@ Remember: ONLY return the JSON object, nothing else.`;
           'X-Title': 'Test Buddy'
         },
         body: JSON.stringify({
-          model: 'qwen/qwen3-235b-a22b:free',
+          model: userPlan === 'pro' ? 'openai/gpt-4.1-nano' : 'qwen/qwen3-235b-a22b:free',
           messages: [
             { 
               role: 'system', 
@@ -961,7 +1000,7 @@ Remember: ONLY return the JSON object, nothing else.`;
           'X-Title': 'Test Buddy'
         },
         body: JSON.stringify({
-          model: 'microsoft/phi-3-mini-4k-instruct:free',
+          model: 'qwen/qwen3-235b-a22b:free',
           messages: [
             { 
               role: 'system', 

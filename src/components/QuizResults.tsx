@@ -18,6 +18,8 @@ interface QuizResultsProps {
   onBackToHistory?: () => void;
   canUseAiFeedback?: boolean; // Plan-based AI feedback access
   canRetake?: boolean; // Plan-based retake access
+  userPlan?: 'free' | 'student' | 'pro'; // User plan for model selection
+  onUpgrade?: () => void; // Function to trigger upgrade modal
 }
 
 export default function QuizResults({ 
@@ -32,7 +34,9 @@ export default function QuizResults({
   onBackToHistory,
   isHistoricalReview,
   canUseAiFeedback = true,
-  canRetake = true
+  canRetake = true,
+  userPlan = 'free',
+  onUpgrade
 }: QuizResultsProps) {
   const [showReview, setShowReview] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackSummary | null>(null);
@@ -47,7 +51,7 @@ export default function QuizResults({
     try {
       setFbError(null);
       setFbLoading(true);
-      const data = await OpenRouterService.generateFeedbackSummary(testName, percentage, questions, answers);
+      const data = await OpenRouterService.generateFeedbackSummary(testName, percentage, questions, answers, userPlan);
       setFeedback(data);
     } catch (e: any) {
       setFbError(e?.message ?? 'Failed to load AI feedback');
@@ -107,7 +111,7 @@ export default function QuizResults({
             </span>
             <div>
               <h3 className="text-lg font-medium text-gray-900">{question.question}</h3>
-              <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded mt-1 inline-block">
+              <span className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded mt-1 inline-block">
                 {question.type}
               </span>
             </div>
@@ -433,21 +437,21 @@ export default function QuizResults({
         ) : (
           <div className="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
             <div className="flex items-center space-x-2 mb-4">
-              <Sparkles className="h-5 w-5 text-gray-400" />
-              <h2 className="text-xl font-semibold text-gray-500">AI Study Plan</h2>
+              <Sparkles className="h-5 w-5 text-gray-600" />
+              <h2 className="text-xl font-semibold text-gray-700">AI Study Plan</h2>
             </div>
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
               <div className="text-gray-600 mb-4">
                 Get personalized AI-powered study recommendations based on your quiz performance.
               </div>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-700 mb-4">
                 Upgrade to Pro to unlock AI feedback and study plans.
               </p>
               <button 
-                onClick={() => alert('Upgrade functionality coming soon!')}
+                onClick={() => onUpgrade ? onUpgrade() : alert('Upgrade functionality coming soon!')}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
               >
-                Upgrade to Pro
+                Upgrade
               </button>
             </div>
           </div>
@@ -474,7 +478,7 @@ export default function QuizResults({
           )}
           
           {!canRetake && (
-            <div className="flex items-center justify-center space-x-2 px-6 py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
+            <div className="flex items-center justify-center space-x-2 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg cursor-not-allowed">
               <RotateCcw className="h-4 w-4" />
               <span>Retake (Pro Feature)</span>
             </div>

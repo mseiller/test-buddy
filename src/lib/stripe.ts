@@ -17,8 +17,21 @@ export const STRIPE_PRICE_IDS = {
   pro: process.env.STRIPE_PRO_PRICE_ID!,
 } as const;
 
+// Stripe coupon IDs for promotional offers
+export const STRIPE_COUPON_IDS = {
+  familyLifetimePro: process.env.STRIPE_FAMILY_LIFETIME_COUPON_ID || 'BUDDYFAMILY2025',
+  studentTrial: process.env.STRIPE_STUDENT_TRIAL_COUPON_ID || 'STUDENT_7DAY_TRIAL',
+  proTrial: process.env.STRIPE_PRO_TRIAL_COUPON_ID || 'PRO_7DAY_TRIAL',
+} as const;
+
 // Plan mapping
 export const PLAN_TO_PRICE_ID = {
   student: STRIPE_PRICE_IDS.student,
   pro: STRIPE_PRICE_IDS.pro,
+} as const;
+
+// Trial periods (in days)
+export const TRIAL_PERIODS = {
+  student: 7,
+  pro: 7,
 } as const;

@@ -194,7 +194,7 @@ export default function MetricsDashboard({ userId, plan = 'free' }: MetricsDashb
           <div className="font-medium text-gray-900 mb-4">
             Score Trend ({filters.days ? getTimePeriodLabel(filters.days) : 'Last 10 Quizzes'})
             {filters.folderId && (
-              <span className="text-sm text-gray-500 ml-2">
+              <span className="text-sm text-gray-700 ml-2">
                 • {folders.find(f => f.id === filters.folderId)?.name || 'Selected Folder'}
               </span>
             )}
@@ -255,9 +255,9 @@ interface KpiCardProps {
 function KpiCard({ title, value, subtitle, valueColor = 'text-gray-900' }: KpiCardProps) {
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      <div className="text-sm text-gray-500 mb-1">{title}</div>
+      <div className="text-sm text-gray-700 mb-1">{title}</div>
       <div className={`text-2xl font-semibold ${valueColor}`}>{value}</div>
-      {subtitle && <div className="text-xs text-gray-400 mt-1">{subtitle}</div>}
+      {subtitle && <div className="text-xs text-gray-600 mt-1">{subtitle}</div>}
     </div>
   );
 }

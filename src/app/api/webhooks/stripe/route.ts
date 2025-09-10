@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { updateUserPlan } from '@/services/userService';
 import Stripe from 'stripe';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -26,12 +25,34 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { userId, plan } = session.metadata!;
+        const { userId, plan, isTrial } = session.metadata!;
         
         if (userId && plan) {
           try {
-            await updateUserPlan(userId, plan as 'student' | 'pro');
-            console.log(`User ${userId} upgraded to ${plan} plan`);
+            // Check if this is a trial subscription
+            const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+            const isTrialSubscription = subscription.status === 'trialing';
+            
+            // Call our internal API to update the user plan
+            const updateResponse = await fetch(`${request.nextUrl.origin}/api/update-user-plan`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userId,
+                plan: plan as 'student' | 'pro',
+                isTrial: isTrialSubscription,
+                trialEnd: isTrialSubscription ? subscription.trial_end : null,
+                subscriptionId: subscription.id,
+              }),
+            });
+
+            if (!updateResponse.ok) {
+              throw new Error('Failed to update user plan via API');
+            }
+            
+            console.log(`User ${userId} ${isTrialSubscription ? 'started trial for' : 'upgraded to'} ${plan} plan`);
           } catch (error) {
             console.error('Failed to update user plan:', error);
           }
@@ -52,7 +73,21 @@ export async function POST(request: NextRequest) {
         const userId = subscription.metadata?.userId;
         if (userId) {
           try {
-            await updateUserPlan(userId, 'free');
+            // Call our internal API to update the user plan
+            const updateResponse = await fetch(`${request.nextUrl.origin}/api/update-user-plan`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userId,
+                plan: 'free',
+              }),
+            });
+
+            if (!updateResponse.ok) {
+              throw new Error('Failed to update user plan via API');
+            }
             console.log(`User ${userId} subscription cancelled, downgraded to free`);
           } catch (error) {
             console.error('Failed to downgrade user plan:', error);
@@ -64,7 +99,7 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         // Handle failed payments
-        console.log('Payment failed for subscription:', invoice.subscription);
+        console.log('Payment failed for subscription:', (invoice as any).subscription || 'unknown');
         break;
       }
 

@@ -93,11 +93,11 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
   // Calculate derived values
   const canCreateTest = usage ? 
     (planFeatures.maxTestsPerMonth === Infinity || usage.testsGenerated < planFeatures.maxTestsPerMonth) : 
-    false;
+    (planFeatures.maxTestsPerMonth === Infinity || planFeatures.maxTestsPerMonth > 0); // Allow new users to create tests
 
   const testsRemaining = usage && planFeatures.maxTestsPerMonth !== Infinity ? 
     Math.max(0, planFeatures.maxTestsPerMonth - usage.testsGenerated) : 
-    Infinity;
+    (planFeatures.maxTestsPerMonth === Infinity ? Infinity : planFeatures.maxTestsPerMonth); // Show full limit for new users
 
   const refreshProfile = async () => {
     await loadUserProfile();

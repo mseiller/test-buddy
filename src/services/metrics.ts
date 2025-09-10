@@ -28,12 +28,12 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
     const testHistoryBase = collection(db, 'testHistory');
     const testsBase = collection(db, `users/${uid}/tests`);
 
-    // Get new results data
-    const snapResults = await getDocs(query(resultsBase, orderBy('createdAt', 'desc'), limit(500)));
+    // Get new results data (temporarily remove orderBy to avoid index requirement)
+    const snapResults = await getDocs(query(resultsBase, limit(500)));
     const resultsData = snapResults.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
 
-    // Get current tests data (includes folder information)
-    const snapTests = await getDocs(query(testsBase, orderBy('createdAt', 'desc'), limit(500)));
+    // Get current tests data (includes folder information) - temporarily remove orderBy
+    const snapTests = await getDocs(query(testsBase, limit(500)));
     const testsData = snapTests.docs.map(d => {
       const data = d.data();
       return {
@@ -49,9 +49,9 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
       };
     }) as any[];
 
-    // Get legacy test history data
+    // Get legacy test history data - temporarily remove orderBy
     const snapHistory = await getDocs(
-      query(testHistoryBase, where('userId', '==', uid), orderBy('createdAt', 'desc'), limit(500))
+      query(testHistoryBase, where('userId', '==', uid), limit(500))
     );
     const historyData = snapHistory.docs.map(d => {
       const data = d.data();

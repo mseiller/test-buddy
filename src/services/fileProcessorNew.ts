@@ -22,6 +22,7 @@ export class FileProcessorNew {
       case 'jpg':
       case 'jpeg':
       case 'png':
+      case 'heic':
         return this.extractFromImage(file);
       default:
         throw new Error(`Unsupported file type: ${fileType}`);
@@ -207,10 +208,10 @@ export class FileProcessorNew {
   private static async extractFromImage(file: File): Promise<string> {
     console.log('NEW IMAGE PROCESSOR - Starting image OCR for file:', file.name, 'Size:', file.size);
     
-    // Check file size (max 10MB for images)
-    if (file.size > 10 * 1024 * 1024) {
-      console.log('NEW IMAGE PROCESSOR - File is larger than 10MB, cannot process');
-      throw new Error('Image file is too large (over 10MB). Please compress your image or use a smaller file.');
+    // Check file size (max 25MB for images)
+    if (file.size > 25 * 1024 * 1024) {
+      console.log('NEW IMAGE PROCESSOR - File is larger than 25MB, cannot process');
+      throw new Error('Image file is too large (over 25MB). Please compress your image or use a smaller file.');
     }
     
     try {
@@ -218,8 +219,15 @@ export class FileProcessorNew {
       formData.append('file', file);
       
       console.log('NEW IMAGE PROCESSOR - Sending image to OCR API endpoint...');
+      
+      // Get user plan from context (we'll need to pass this from the component)
+      const userPlan = (window as any).__userPlan || 'free';
+      
       const response = await fetch('/api/extract-image', {
         method: 'POST',
+        headers: {
+          'X-User-Plan': userPlan,
+        },
         body: formData,
       });
       
@@ -228,6 +236,7 @@ export class FileProcessorNew {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('NEW IMAGE PROCESSOR - OCR API error response:', errorData);
+        // Use the improved error message from the API
         throw new Error(errorData.error || 'Failed to extract text from image');
       }
       
@@ -242,6 +251,10 @@ export class FileProcessorNew {
       return result.text;
     } catch (error) {
       console.error('NEW IMAGE PROCESSOR - Image OCR failed:', error);
+      // Preserve the original error message if it's already user-friendly
+      if (error instanceof Error && error.message.includes('OCR service is currently experiencing issues')) {
+        throw error; // Re-throw the original error with the improved message
+      }
       throw new Error(`Image text extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -249,13 +262,13 @@ export class FileProcessorNew {
   static validateFileType(fileName: string, allowImages: boolean = false): boolean {
     let supportedTypes = ['txt', 'pdf', 'doc', 'docx', 'csv', 'xls', 'xlsx'];
     if (allowImages) {
-      supportedTypes = [...supportedTypes, 'jpg', 'jpeg', 'png'];
+      supportedTypes = [...supportedTypes, 'jpg', 'jpeg', 'png', 'heic'];
     }
     const fileType = this.getFileType(fileName);
     return supportedTypes.includes(fileType);
   }
 
   static getMaxFileSize(): number {
-    return 15 * 1024 * 1024; // 15MB
+    return 25 * 1024 * 1024; // 25MB
   }
 }

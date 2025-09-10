@@ -21,6 +21,7 @@ import FolderManager from '@/components/FolderManager';
 import MetricsDashboard from '@/components/MetricsDashboard';
 import { Home as HomeIcon, AlertCircle, BookOpen, History, Folder as FolderIcon } from 'lucide-react';
 import UserDropdown from '@/components/UserDropdown';
+import TestCreationLoader from '@/components/TestCreationLoader';
 
 type AppState = 'auth' | 'home' | 'upload' | 'config' | 'quiz' | 'results' | 'history' | 'folders' | 'metrics';
 
@@ -150,15 +151,15 @@ export default function Home() {
       const isImageBased = uploadedFile.fileType === 'image' || 
                           Boolean(uploadedFile.fileName.toLowerCase().match(/\.(jpg|jpeg|png)$/));
       
-      // Use plan-specific model, or image model if image-based
-      const modelToUse = isImageBased ? planFeatures.imageModel || planFeatures.model : planFeatures.model;
-      
+      // Let OpenRouter service handle model selection based on user plan
+      // Don't override the model - let the service choose the right one
       const generatedQuestions = await OpenRouterService.generateQuiz(
         uploadedFile.extractedText,
         quizType,
         questionCount,
-        modelToUse,
-        isImageBased
+        undefined, // Let service choose model based on user plan
+        isImageBased,
+        plan
       );
       
       // Only increment usage counter AFTER successful generation
@@ -398,6 +399,13 @@ export default function Home() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Test Buddy...</p>
+          <p className="text-sm text-gray-700 mt-2">Checking authentication...</p>
+          <button 
+            onClick={() => setAuthLoading(false)}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Skip Loading (Debug)
+          </button>
         </div>
       </div>
     );
@@ -494,10 +502,10 @@ export default function Home() {
               </p>
               
               {/* Usage Status */}
-              {!planLoading && usage && (
+              {!planLoading && (
                 <div className="max-w-md mx-auto mb-6">
                   <UsageLimit
-                    current={usage.testsGenerated}
+                    current={usage?.testsGenerated || 0}
                     limit={limit}
                     feature="Tests Created This Month"
                     className="text-left"
@@ -584,7 +592,7 @@ export default function Home() {
 
             {/* Quick Stats */}
             <div className="mt-12 text-center">
-              <div className="inline-flex items-center space-x-6 text-sm text-gray-500">
+              <div className="inline-flex items-center space-x-6 text-sm text-gray-700">
                 <span>📚 Multiple file formats supported</span>
                 <span>🤖 AI-powered question generation</span>
                 <span>📊 Detailed performance analytics</span>
@@ -652,6 +660,9 @@ export default function Home() {
           </div>
         )}
 
+        {/* Test Creation Loader */}
+        <TestCreationLoader isVisible={loading} />
+
         {appState === 'quiz' && questions.length > 0 && (
           <QuizDisplay
             questions={questions}
@@ -676,7 +687,9 @@ export default function Home() {
             isHistoricalReview={timeTaken === 0}
             onBackToHistory={() => setAppState('history')}
             canUseAiFeedback={planFeatures.aiFeedback}
+            userPlan={plan}
             canRetake={planFeatures.retakesAllowed}
+            onUpgrade={() => showUpgradePrompt('aiFeedback')}
           />
         )}
 
@@ -804,7 +817,7 @@ export default function Home() {
                   <div className="w-4 h-4 rounded-full bg-gray-400"></div>
                   <div>
                     <div className="font-medium text-gray-900">No Folder</div>
-                    <div className="text-sm text-gray-500">Create test without organizing in a folder</div>
+                    <div className="text-sm text-gray-700">Create test without organizing in a folder</div>
                   </div>
                 </div>
               </button>
@@ -824,7 +837,7 @@ export default function Home() {
                     <div>
                       <div className="font-medium text-gray-900">{folder.name}</div>
                       {folder.description && (
-                        <div className="text-sm text-gray-500">{folder.description}</div>
+                        <div className="text-sm text-gray-700">{folder.description}</div>
                       )}
                     </div>
                   </div>
@@ -845,7 +858,7 @@ export default function Home() {
                   </div>
                   <div>
                     <div className="font-medium text-gray-900">Create New Folder</div>
-                    <div className="text-sm text-gray-500">Organize your tests in a new folder</div>
+                    <div className="text-sm text-gray-700">Organize your tests in a new folder</div>
                   </div>
                 </div>
               </button>

@@ -58,13 +58,28 @@ export async function getTest(uid: string, testId: string): Promise<TestDoc | nu
 // Get all tests for a user
 export async function getAllTests(uid: string): Promise<TestDoc[]> {
   const ref = getTestsCollection(uid);
-  const q = query(ref, orderBy('createdAt', 'desc'), limit(500));
+  
+  // Temporarily remove orderBy to avoid index requirement
+  // TODO: Add back orderBy('createdAt', 'desc') after index is deployed
+  const q = query(ref, limit(500));
   const snapshot = await getDocs(q);
   
-  return snapshot.docs.map(doc => ({
+  console.log(`Found ${snapshot.docs.length} tests for user ${uid}`);
+  
+  // Sort manually for now
+  const tests = snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
   })) as TestDoc[];
+  
+  // Manual sort by createdAt desc
+  tests.sort((a, b) => {
+    const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+    const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+    return bTime - aTime;
+  });
+  
+  return tests;
 }
 
 // Get tests in a specific folder
@@ -102,18 +117,32 @@ export async function getTestsInFolder(uid: string, folderId: string): Promise<T
 // Get unorganized tests (no folder)
 export async function getUnorganizedTests(uid: string): Promise<TestDoc[]> {
   const ref = getTestsCollection(uid);
+  
+  // Temporarily remove orderBy to avoid index requirement
+  // TODO: Add back orderBy('createdAt', 'desc') after index is deployed
   const q = query(
     ref, 
     where('folderId', '==', null), 
-    orderBy('createdAt', 'desc'),
     limit(500)
   );
   const snapshot = await getDocs(q);
   
-  return snapshot.docs.map(doc => ({
+  console.log(`Found ${snapshot.docs.length} unorganized tests for user ${uid}`);
+  
+  // Sort manually for now
+  const tests = snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
   })) as TestDoc[];
+  
+  // Manual sort by createdAt desc
+  tests.sort((a, b) => {
+    const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+    const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+    return bTime - aTime;
+  });
+  
+  return tests;
 }
 
 // Migration function to move data from testHistory to new structure
@@ -128,17 +157,8 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
   // Get existing tests to avoid duplicates
   const existingTests = await getAllTests(uid);
   const existingTestNames = new Set(existingTests.map(t => {
-    // Handle both Date objects and Firestore Timestamps
-    let timestamp: number;
-    if (t.createdAt instanceof Date) {
-      timestamp = t.createdAt.getTime();
-    } else if (t.createdAt && typeof (t.createdAt as any).toDate === 'function') {
-      timestamp = (t.createdAt as any).toDate().getTime();
-    } else {
-      // Fallback to current time if createdAt is invalid
-      timestamp = new Date().getTime();
-    }
-    return t.testName + '_' + timestamp;
+    // Use just the test name for duplicate detection, since timestamps can vary slightly
+    return t.testName;
   }));
   
   let migratedCount = 0;
@@ -146,11 +166,8 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
   for (const doc of historySnapshot.docs) {
     const data = doc.data();
     
-    // Create unique key to avoid duplicates
-    const createdAt = data.createdAt?.toDate() || new Date();
-    const uniqueKey = data.testName + '_' + createdAt.getTime();
-    
-    if (existingTestNames.has(uniqueKey)) {
+    // Check for duplicates by test name only
+    if (existingTestNames.has(data.testName)) {
       console.log(`Skipping duplicate test: ${data.testName}`);
       continue;
     }

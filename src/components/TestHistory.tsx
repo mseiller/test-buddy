@@ -137,7 +137,7 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
 
       {tests.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <FileText className="h-16 w-16 text-gray-500 mx-auto mb-4" />
           <h3 className="text-xl font-medium text-gray-900 mb-2">No Tests Yet</h3>
           <p className="text-gray-600 mb-6">
             Start by uploading a document to create your first quiz and track your progress here.
@@ -197,7 +197,7 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
                     {onRetakeQuiz && test.extractedText && test.extractedText.trim() !== '' && (
                       <button
                         onClick={() => onRetakeQuiz(test)}
-                        className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                        className="p-2 text-gray-600 hover:text-green-600 transition-colors"
                         title="Retake quiz with new questions"
                       >
                         <RotateCcw className="h-4 w-4" />
@@ -207,7 +207,7 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
                     {onViewTest && (
                       <button
                         onClick={() => onViewTest(test)}
-                        className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
+                        className="p-2 text-gray-600 hover:text-indigo-600 transition-colors"
                         title="Review test answers and explanations"
                       >
                         <Eye className="h-4 w-4" />
@@ -216,7 +216,7 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
                     
                     <button
                       onClick={() => handleDeleteTest(test.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      className="p-2 text-gray-600 hover:text-red-600 transition-colors"
                       title="Delete test"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -227,7 +227,7 @@ export default function TestHistory({ userId, onViewTest, onRetakeQuiz }: TestHi
                 {/* Progress bars for different question types */}
                 {test.quizType === 'Mixed' && test.answers && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="text-xs text-gray-500 mb-2">Question Type Breakdown:</div>
+                    <div className="text-xs text-gray-700 mb-2">Question Type Breakdown:</div>
                     <div className="flex space-x-4 text-xs">
                       {['MCQ', 'Fill-in-the-blank', 'Essay'].map(type => {
                         const typeQuestions = test.questions.filter(q => q.type === type);

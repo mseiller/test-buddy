@@ -90,7 +90,7 @@ export default function QuizConfig({ onConfigSubmit, loading = false, isRetake =
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-base text-black"
             autoFocus
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-700 mt-1">
             Leave blank to use default name based on quiz type
           </p>
         </div>
@@ -151,13 +151,13 @@ export default function QuizConfig({ onConfigSubmit, loading = false, isRetake =
               className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
             />
             <div className="flex items-center space-x-2">
-              <BookOpen className="h-4 w-4 text-gray-500" />
+              <BookOpen className="h-4 w-4 text-gray-700" />
               <span className="text-lg font-medium text-gray-900 min-w-[2rem] text-center">
                 {questionCount}
               </span>
             </div>
           </div>
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="flex justify-between text-xs text-gray-700 mt-1">
             <span>5 questions</span>
             <span>100 questions</span>
           </div>

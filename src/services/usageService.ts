@@ -54,16 +54,19 @@ export async function canGenerateTest(uid: string, plan: UserPlan): Promise<{
   const planFeatures = getPlanFeatures(plan);
   const usage = await getUserUsage(uid);
   
+  const limit = planFeatures.maxTestsPerMonth;
+  
   if (!usage) {
+    // New user - allow if they have any tests available
+    const allowed = limit === Infinity || limit > 0;
     return {
-      allowed: false,
+      allowed,
       usage: null,
-      limit: planFeatures.maxTestsPerMonth,
-      remaining: 0,
+      limit,
+      remaining: limit === Infinity ? Infinity : limit,
     };
   }
   
-  const limit = planFeatures.maxTestsPerMonth;
   const remaining = limit === Infinity ? Infinity : Math.max(0, limit - usage.testsGenerated);
   const allowed = limit === Infinity || usage.testsGenerated < limit;
   

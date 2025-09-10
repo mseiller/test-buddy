@@ -24,14 +24,50 @@ export default function PaywallModal({
   onUpgrade 
 }: PaywallModalProps) {
   const [upgrading, setUpgrading] = React.useState<UserPlan | null>(null);
+  const [couponCode, setCouponCode] = React.useState('');
+  const [couponValid, setCouponValid] = React.useState<boolean | null>(null);
+  const [couponDetails, setCouponDetails] = React.useState<any>(null);
+  const [isTrial, setIsTrial] = React.useState(false);
 
   if (!isOpen) return null;
+
+  const validateCoupon = async (code: string) => {
+    if (!code.trim()) {
+      setCouponValid(null);
+      setCouponDetails(null);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/validate-coupon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ couponCode: code }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCouponValid(true);
+        setCouponDetails(data.coupon);
+      } else {
+        setCouponValid(false);
+        setCouponDetails(null);
+      }
+    } catch (error) {
+      console.error('Error validating coupon:', error);
+      setCouponValid(false);
+      setCouponDetails(null);
+    }
+  };
 
   const handleUpgrade = async (targetPlan: UserPlan) => {
     try {
       setUpgrading(targetPlan);
       
       // Check if we're in test mode
+      
       if (isStripeTestMode()) {
         // In test mode, simulate the upgrade
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
@@ -51,6 +87,8 @@ export default function PaywallModal({
         body: JSON.stringify({
           plan: targetPlan,
           userId,
+          couponCode: couponCode.trim() || undefined,
+          isTrial: isTrial,
         }),
       });
 
@@ -151,12 +189,74 @@ export default function PaywallModal({
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-gray-500" />
+            <X className="h-5 w-5 text-gray-700" />
           </button>
         </div>
 
         {/* Plans Grid */}
         <div className="p-6">
+          {/* Coupon and Trial Options */}
+          <div className="mb-8 space-y-4">
+            {/* Coupon Code Input */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">Have a coupon code?</h4>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter coupon code (e.g., FAMILY2024, STUDENT7DAY, PRO7DAY)"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    validateCoupon(e.target.value);
+                  }}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {couponValid === true && (
+                  <div className="flex items-center text-green-600">
+                    <Check className="h-5 w-5 mr-1" />
+                    <span className="text-sm font-medium">Valid!</span>
+                  </div>
+                )}
+                {couponValid === false && (
+                  <div className="flex items-center text-red-600">
+                    <X className="h-5 w-5 mr-1" />
+                    <span className="text-sm font-medium">Invalid</span>
+                  </div>
+                )}
+              </div>
+              {couponDetails && (
+                <div className="mt-2 text-sm text-gray-600">
+                  <p><strong>{couponDetails.name}</strong></p>
+                  {couponDetails.percent_off && (
+                    <p>{couponDetails.percent_off}% off</p>
+                  )}
+                  {couponDetails.metadata?.trial_days && (
+                    <p className="text-blue-600 font-medium">{couponDetails.metadata.trial_days}-day free trial</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Trial Option */}
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="trial-checkbox"
+                  checked={isTrial}
+                  onChange={(e) => setIsTrial(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="trial-checkbox" className="text-sm font-medium text-gray-900">
+                  Start with a 7-day free trial (no payment required)
+                </label>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">
+                You can cancel anytime during the trial period
+              </p>
+            </div>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-6">
             {/* Student Plan */}
             <div className={`relative rounded-xl border-2 p-6 ${
@@ -197,14 +297,15 @@ export default function PaywallModal({
                 disabled={upgrading !== null || currentPlan === 'student'}
                 className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
                   currentPlan === 'student'
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gray-200 text-gray-700 cursor-not-allowed'
                     : upgrading === 'student'
                     ? 'bg-blue-400 text-white cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
                 }`}
               >
                 {upgrading === 'student' ? 'Upgrading...' : 
-                 currentPlan === 'student' ? 'Current Plan' : 'Upgrade to Student'}
+                 currentPlan === 'student' ? 'Current Plan' : 
+                 isTrial ? 'Start 7-Day Free Trial' : 'Upgrade to Student'}
               </button>
             </div>
 
@@ -247,14 +348,15 @@ export default function PaywallModal({
                 disabled={upgrading !== null || currentPlan === 'pro'}
                 className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
                   currentPlan === 'pro'
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gray-200 text-gray-700 cursor-not-allowed'
                     : upgrading === 'pro'
                     ? 'bg-purple-400 text-white cursor-not-allowed'
                     : 'bg-purple-600 text-white hover:bg-purple-700 hover:shadow-lg'
                 }`}
               >
                 {upgrading === 'pro' ? 'Upgrading...' : 
-                 currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
+                 currentPlan === 'pro' ? 'Current Plan' : 
+                 isTrial ? 'Start 7-Day Free Trial' : 'Upgrade to Pro'}
               </button>
             </div>
           </div>
@@ -266,7 +368,7 @@ export default function PaywallModal({
                 <span className="text-sm text-gray-600">Current Plan:</span>
                 <span className="ml-2 font-medium text-gray-900">{PLAN_FEATURES[currentPlan].name}</span>
               </div>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-700">
                 {PLAN_FEATURES[currentPlan].price}
               </span>
             </div>
@@ -284,7 +386,7 @@ export default function PaywallModal({
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-700">
                 * Secure payments powered by Stripe. Cancel anytime.
               </p>
             )}

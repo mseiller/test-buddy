@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, MessageCircle, HelpCircle, ArrowLeft } from 'lucide-react';
+import { Mail, MessageCircle, HelpCircle, ArrowLeft, CreditCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
 
 export default function SupportPage() {
   const router = useRouter();
+  const [user] = useAuthState(auth);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,17 +17,34 @@ export default function SupportPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoadingPortal, setIsLoadingPortal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // For now, we'll just show a success message
-    // In production, you'd send this to your email service
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/send-support-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsSubmitted(true);
+      } else {
+        alert('Failed to send message. Please try again or contact us directly at support@yourbuddyapps.com');
+      }
+    } catch (error) {
+      console.error('Error sending support request:', error);
+      alert('Failed to send message. Please try again or contact us directly at support@yourbuddyapps.com');
+    } finally {
       setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 1000);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -32,6 +52,44 @@ export default function SupportPage() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user) {
+      alert('Please log in to manage your subscription');
+      return;
+    }
+
+    setIsLoadingPortal(true);
+    try {
+      const response = await fetch('/api/create-customer-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.uid,
+          returnUrl: window.location.origin + '/support',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        window.open(data.url, '_blank');
+      } else {
+        if (data.error?.includes('not configured')) {
+          alert('Subscription management is not yet available. Please contact support directly to manage your subscription.');
+        } else {
+          alert(data.error || 'Unable to open subscription management. Please contact support.');
+        }
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      alert('Error opening subscription management. Please try again.');
+    } finally {
+      setIsLoadingPortal(false);
+    }
   };
 
   if (isSubmitted) {
@@ -115,7 +173,7 @@ export default function SupportPage() {
                     required
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 placeholder-gray-500"
                   />
                 </div>
                 
@@ -130,7 +188,7 @@ export default function SupportPage() {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 placeholder-gray-500"
                   />
                 </div>
               </div>
@@ -146,7 +204,7 @@ export default function SupportPage() {
                   required
                   value={formData.subject}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 placeholder-gray-500"
                 />
               </div>
               
@@ -161,7 +219,7 @@ export default function SupportPage() {
                   required
                   value={formData.message}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 placeholder-gray-500"
                   placeholder="Tell us how we can help you..."
                 />
               </div>
@@ -201,6 +259,45 @@ export default function SupportPage() {
               </div>
             </div>
 
+            {/* Subscription Management */}
+            {user && (
+              <div className="bg-white rounded-lg shadow-lg p-8">
+                <div className="flex items-center mb-6">
+                  <CreditCard className="h-6 w-6 text-blue-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-gray-900">Manage Your Subscription</h2>
+                </div>
+                
+                <div className="space-y-4">
+                  <p className="text-gray-600">
+                    Need to update your payment method, change your plan, or cancel your subscription? 
+                    Use our secure subscription management portal.
+                  </p>
+                  
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={isLoadingPortal}
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoadingPortal ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Opening...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Manage Subscription
+                      </>
+                    )}
+                  </button>
+                  
+                  <p className="text-sm text-gray-500">
+                    This will open a secure Stripe portal where you can manage all aspects of your subscription.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* FAQ */}
             <div className="bg-white rounded-lg shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
@@ -223,7 +320,8 @@ export default function SupportPage() {
                 <div>
                   <h3 className="font-medium text-gray-900 mb-2">Can I cancel my subscription?</h3>
                   <p className="text-gray-600 text-sm">
-                    Yes, you can cancel your subscription anytime from your account settings. You'll continue to have access until the end of your billing period.
+                    Yes, you can cancel your subscription anytime using the "Manage Subscription" button above. 
+                    You'll continue to have access until the end of your billing period.
                   </p>
                 </div>
                 

@@ -16,6 +16,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Test Buddy - AI-Powered Quiz Generator",
   description: "AI-Powered Quiz Generation from Your Documents",
+  icons: {
+    icon: [
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '16x16 32x32', type: 'image/x-icon' }
+    ],
+    shortcut: '/favicon.png',
+    apple: '/cartoon-avatar.png',
+  },
 };
 
 export default function RootLayout({
@@ -27,6 +36,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
       >
         <Providers>
           {children}

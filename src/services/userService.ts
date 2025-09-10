@@ -7,6 +7,9 @@ export interface UserProfile extends User {
   plan: UserPlan;
   createdAt: Date;
   updatedAt: Date;
+  isTrial?: boolean;
+  trialEnd?: number | null;
+  subscriptionId?: string;
 }
 
 // Get user profile from Firestore
@@ -26,6 +29,9 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
       plan: data.plan || DEFAULT_PLAN,
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate() || new Date(),
+      isTrial: data.isTrial || false,
+      trialEnd: data.trialEnd || null,
+      subscriptionId: data.subscriptionId || null,
     } as UserProfile;
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -65,12 +71,34 @@ export async function createUserProfile(
 }
 
 // Update user plan
-export async function updateUserPlan(uid: string, plan: UserPlan): Promise<void> {
+export async function updateUserPlan(
+  uid: string, 
+  plan: UserPlan, 
+  options?: {
+    isTrial?: boolean;
+    trialEnd?: number | null;
+    subscriptionId?: string;
+  }
+): Promise<void> {
   try {
-    await updateDoc(doc(db, 'users', uid), {
+    const updateData: any = {
       plan,
       updatedAt: serverTimestamp(),
-    });
+    };
+
+    if (options) {
+      if (options.isTrial !== undefined) {
+        updateData.isTrial = options.isTrial;
+      }
+      if (options.trialEnd !== undefined) {
+        updateData.trialEnd = options.trialEnd;
+      }
+      if (options.subscriptionId) {
+        updateData.subscriptionId = options.subscriptionId;
+      }
+    }
+
+    await updateDoc(doc(db, 'users', uid), updateData);
   } catch (error) {
     console.error('Error updating user plan:', error);
     throw error;

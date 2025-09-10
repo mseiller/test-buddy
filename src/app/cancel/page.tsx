@@ -31,7 +31,7 @@ export default function CancelPage() {
               <span>Return to Test Buddy</span>
             </button>
             
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-700">
               Need help? Contact us at support@yourbuddyapps.com
             </p>
           </div>

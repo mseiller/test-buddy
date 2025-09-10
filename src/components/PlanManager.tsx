@@ -86,7 +86,7 @@ export default function PlanManager({ userId, onClose }: PlanManagerProps) {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Plan Management</h2>
-              <p className="text-gray-600">Switch between plans for testing</p>
+              <p className="text-gray-700">Switch between plans for testing</p>
             </div>
           </div>
           <button
@@ -131,43 +131,43 @@ export default function PlanManager({ userId, onClose }: PlanManagerProps) {
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex items-center space-x-2">
                 <Check className="h-4 w-4 text-green-500" />
-                <span>{planFeatures.maxTestsPerMonth === Infinity ? 'Unlimited' : planFeatures.maxTestsPerMonth} tests/month</span>
+                <span className="text-gray-700">{planFeatures.maxTestsPerMonth === Infinity ? 'Unlimited' : planFeatures.maxTestsPerMonth} tests/month</span>
               </div>
               <div className="flex items-center space-x-2">
                 {planFeatures.retakesAllowed ? (
                   <Check className="h-4 w-4 text-green-500" />
                 ) : (
-                  <span className="h-4 w-4 text-gray-400">×</span>
+                  <span className="h-4 w-4 text-gray-600">×</span>
                 )}
-                <span>Quiz retakes</span>
+                <span className="text-gray-700">Quiz retakes</span>
               </div>
               <div className="flex items-center space-x-2">
                 {planFeatures.folders ? (
                   <Check className="h-4 w-4 text-green-500" />
                 ) : (
-                  <span className="h-4 w-4 text-gray-400">×</span>
+                  <span className="h-4 w-4 text-gray-600">×</span>
                 )}
-                <span>Folder organization</span>
+                <span className="text-gray-700">Folder organization</span>
               </div>
               <div className="flex items-center space-x-2">
                 {planFeatures.aiFeedback ? (
                   <Check className="h-4 w-4 text-green-500" />
                 ) : (
-                  <span className="h-4 w-4 text-gray-400">×</span>
+                  <span className="h-4 w-4 text-gray-600">×</span>
                 )}
-                <span>AI feedback</span>
+                <span className="text-gray-700">AI feedback</span>
               </div>
               <div className="flex items-center space-x-2">
                 {planFeatures.metrics ? (
                   <Check className="h-4 w-4 text-green-500" />
                 ) : (
-                  <span className="h-4 w-4 text-gray-400">×</span>
+                  <span className="h-4 w-4 text-gray-600">×</span>
                 )}
-                <span>{planFeatures.metrics || 'No'} analytics</span>
+                <span className="text-gray-700">{planFeatures.metrics || 'No'} analytics</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Check className="h-4 w-4 text-green-500" />
-                <span>{planFeatures.model.includes('gpt-4') ? 'GPT-4' : 'Free'} model</span>
+                <span className="text-gray-700">{planFeatures.model.includes('gpt-4') ? 'GPT-4' : 'Free'} model</span>
               </div>
             </div>
           </div>
@@ -202,9 +202,9 @@ export default function PlanManager({ userId, onClose }: PlanManagerProps) {
                       isActive
                         ? 'bg-green-100 text-green-700 cursor-not-allowed'
                         : isLoading
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        ? 'bg-gray-200 text-gray-700 cursor-not-allowed'
                         : switching !== null
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        ? 'bg-gray-200 text-gray-700 cursor-not-allowed'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >

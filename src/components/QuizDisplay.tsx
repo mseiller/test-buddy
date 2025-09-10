@@ -462,7 +462,7 @@ export default function QuizDisplay({ questions, testName, onQuizComplete, onGoB
                 <h2 className="text-xl font-semibold text-gray-900 flex-1 pr-4">
                   {currentQuestion.question}
                 </h2>
-                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                <span className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">
                   {currentQuestion.type}
                 </span>
               </div>

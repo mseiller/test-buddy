@@ -41,7 +41,19 @@ export class FirebaseService {
         displayName: displayName || user.displayName || undefined,
       };
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to create account');
+      // Provide user-friendly error messages
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        case 'auth/invalid-email':
+          throw new Error('Please enter a valid email address.');
+        case 'auth/weak-password':
+          throw new Error('Password should be at least 6 characters long.');
+        case 'auth/operation-not-allowed':
+          throw new Error('Account creation is currently disabled. Please contact support.');
+        default:
+          throw new Error(error.message || 'Failed to create account. Please try again.');
+      }
     }
   }
 
@@ -56,7 +68,21 @@ export class FirebaseService {
         displayName: user.displayName || undefined,
       };
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to sign in');
+      // Provide user-friendly error messages
+      switch (error.code) {
+        case 'auth/invalid-credential':
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+          throw new Error('User not found. Please check your email and password, or sign up for a new account.');
+        case 'auth/invalid-email':
+          throw new Error('Please enter a valid email address.');
+        case 'auth/user-disabled':
+          throw new Error('This account has been disabled. Please contact support.');
+        case 'auth/too-many-requests':
+          throw new Error('Too many failed attempts. Please try again later.');
+        default:
+          throw new Error(error.message || 'Failed to sign in. Please try again.');
+      }
     }
   }
 
@@ -153,10 +179,10 @@ export class FirebaseService {
 
   static async getUserTestHistory(userId: string): Promise<TestHistory[]> {
     try {
+      // Temporarily remove orderBy to avoid index requirement
       const q = query(
         collection(db, 'testHistory'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', userId)
       );
 
       const querySnapshot = await getDocs(q);
@@ -179,6 +205,9 @@ export class FirebaseService {
           completedAt: data.completedAt ? data.completedAt.toDate() : undefined,
         });
       });
+
+      // Sort by createdAt descending (client-side sorting while index builds)
+      testHistory.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       return testHistory;
     } catch (error: any) {
@@ -264,11 +293,25 @@ export class FirebaseService {
   // Test Firestore connectivity
   static async testFirestoreConnection(): Promise<boolean> {
     try {
-      const testDoc = await addDoc(collection(db, 'test'), {
+      const currentUser = this.getCurrentUser();
+      if (!currentUser) {
+        console.log('No authenticated user for Firestore connection test');
+        return false;
+      }
+      
+      // Test with a path that's allowed by security rules
+      const testDoc = await addDoc(collection(db, `users/${currentUser.uid}/tests`), {
         test: true,
         timestamp: Timestamp.now(),
+        userId: currentUser.uid,
+        testName: 'Connection Test',
+        fileName: 'test.txt',
+        quizType: 'MCQ',
+        questions: [],
+        answers: [],
+        createdAt: Timestamp.now(),
       });
-      await deleteDoc(doc(db, 'test', testDoc.id));
+      await deleteDoc(doc(db, `users/${currentUser.uid}/tests`, testDoc.id));
       return true;
     } catch (error) {
       console.error('Firestore connection test failed:', error);
@@ -332,10 +375,11 @@ export class FirebaseService {
 
   static async getUserFolders(userId: string): Promise<Folder[]> {
     try {
+      // Temporarily remove orderBy while index is building
       const foldersQuery = query(
         collection(db, 'folders'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', userId)
+        // orderBy('createdAt', 'desc') // Temporarily disabled while index builds
       );
       
       const querySnapshot = await getDocs(foldersQuery);
@@ -353,6 +397,9 @@ export class FirebaseService {
           updatedAt: data.updatedAt.toDate(),
         });
       });
+
+      // Sort by createdAt descending (client-side sorting while index builds)
+      folders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       return folders;
     } catch (error: any) {
@@ -420,11 +467,11 @@ export class FirebaseService {
 
   static async getTestsInFolder(userId: string, folderId: string): Promise<TestHistory[]> {
     try {
+      // Temporarily remove orderBy to avoid index requirement
       const testsQuery = query(
         collection(db, 'testHistory'),
         where('userId', '==', userId),
-        where('folderId', '==', folderId),
-        orderBy('createdAt', 'desc')
+        where('folderId', '==', folderId)
       );
       
       const querySnapshot = await getDocs(testsQuery);
@@ -448,6 +495,9 @@ export class FirebaseService {
           folderId: data.folderId,
         });
       });
+
+      // Sort by createdAt descending (client-side sorting while index builds)
+      tests.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       return tests;
     } catch (error: any) {

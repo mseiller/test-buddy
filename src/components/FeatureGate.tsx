@@ -58,7 +58,7 @@ export function LockedFeature({
   
   if (compact) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center gap-2 text-sm text-gray-700">
         <Lock className="h-4 w-4" />
         <span>Pro Feature</span>
       </div>
@@ -86,14 +86,14 @@ export function LockedFeature({
                 }}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
               >
-                Upgrade Now
+                Upgrade
               </button>
     </div>
   );
 }
 
 function getFeatureIcon(feature: string) {
-  const iconClass = "h-8 w-8 text-gray-400";
+  const iconClass = "h-8 w-8 text-gray-600";
   
   switch (feature) {
     case 'folders':
@@ -149,7 +149,7 @@ export function UsageLimit({ current, limit, feature, className = "" }: UsageLim
         <span className={isAtLimit ? 'text-red-600' : 'text-gray-600'}>
           {feature}: {current} / {limit}
         </span>
-        <span className={`text-xs ${isNearLimit ? 'text-orange-500' : 'text-gray-500'}`}>
+        <span className={`text-xs ${isNearLimit ? 'text-orange-500' : 'text-gray-700'}`}>
           {limit - current} remaining
         </span>
       </div>

@@ -81,9 +81,9 @@ export default function UserDropdown({
           <div className="text-sm font-medium text-gray-900">
             {user.displayName || user.email?.split('@')[0] || 'User'}
           </div>
-          <div className="text-xs text-gray-500">{planName}</div>
+          <div className="text-xs text-gray-700">{planName}</div>
         </div>
-        <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 text-gray-700 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
@@ -98,9 +98,9 @@ export default function UserDropdown({
                 <div className="text-sm font-medium text-gray-900 truncate">
                   {user.displayName || user.email}
                 </div>
-                <div className="text-xs text-gray-500">{planName}</div>
+                <div className="text-xs text-gray-700">{planName}</div>
                 {limit !== Infinity && (
-                  <div className="text-xs text-gray-400 mt-1">
+                  <div className="text-xs text-gray-600 mt-1">
                     {testsRemaining} tests remaining this month
                   </div>
                 )}
@@ -114,7 +114,7 @@ export default function UserDropdown({
               onClick={() => handleNavigate('history')}
               className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <History className="h-4 w-4 text-gray-500" />
+              <History className="h-4 w-4 text-gray-700" />
               <span>History</span>
             </button>
 
@@ -123,7 +123,7 @@ export default function UserDropdown({
                 onClick={() => handleNavigate('folders')}
                 className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <Folder className="h-4 w-4 text-gray-500" />
+                <Folder className="h-4 w-4 text-gray-700" />
                 <span>Folders</span>
               </button>
             )}
@@ -133,7 +133,7 @@ export default function UserDropdown({
                 onClick={() => handleNavigate('metrics')}
                 className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <BarChart3 className="h-4 w-4 text-gray-500" />
+                <BarChart3 className="h-4 w-4 text-gray-700" />
                 <span>Analytics</span>
               </button>
             )}
@@ -142,7 +142,7 @@ export default function UserDropdown({
               onClick={handlePlanManager}
               className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <Settings className="h-4 w-4 text-gray-500" />
+              <Settings className="h-4 w-4 text-gray-700" />
               <span>Plan Settings</span>
             </button>
 
@@ -150,7 +150,7 @@ export default function UserDropdown({
               onClick={() => window.open('/support', '_blank')}
               className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <HelpCircle className="h-4 w-4 text-gray-500" />
+              <HelpCircle className="h-4 w-4 text-gray-700" />
               <span>Support</span>
             </button>
           </div>
@@ -176,7 +176,7 @@ export default function UserDropdown({
               onClick={handleSignOut}
               className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <LogOut className="h-4 w-4 text-gray-500" />
+              <LogOut className="h-4 w-4 text-gray-700" />
               <span>Sign Out</span>
             </button>
           </div>
