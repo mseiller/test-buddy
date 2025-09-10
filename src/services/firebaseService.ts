@@ -23,6 +23,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { TestHistory, User, Folder } from '@/types';
+import { logger } from './logger';
 
 export class FirebaseService {
   // Authentication methods
@@ -156,9 +157,9 @@ export class FirebaseService {
         testHistoryData.folderId = testHistory.folderId;
       }
 
-      console.log('Attempting to save test history for user:', testHistory.userId);
+      await logger.info('Attempting to save test history', 'firebase', { userId: testHistory.userId });
       const docRef = await addDoc(collection(db, 'testHistory'), testHistoryData);
-      console.log('Test history saved successfully with ID:', docRef.id);
+      await logger.info('Test history saved successfully', 'firebase', { docId: docRef.id, userId: testHistory.userId });
       return docRef.id;
     } catch (error: any) {
       console.error('Firestore save error:', error);

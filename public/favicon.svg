@@ -1,11 +1,6 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle -->
-  <circle cx="16" cy="16" r="15" fill="#3B82F6" stroke="#1E40AF" stroke-width="2"/>
-  
-  <!-- Test Buddy "TB" text -->
-  <text x="16" y="22" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">TB</text>
-  
-  <!-- Small test/quiz icon -->
-  <circle cx="8" cy="8" r="3" fill="white" opacity="0.8"/>
-  <text x="8" y="10" font-family="Arial, sans-serif" font-size="6" font-weight="bold" text-anchor="middle" fill="#3B82F6">?</text>
+  <rect width="32" height="32" rx="6" fill="#3B82F6"/>
+  <path d="M8 12h16v2H8v-2zm0 4h16v2H8v-2zm0 4h12v2H8v-2z" fill="white"/>
+  <circle cx="22" cy="10" r="3" fill="#10B981"/>
+  <text x="22" y="13" text-anchor="middle" fill="white" font-size="6" font-weight="bold">T</text>
 </svg>

@@ -1,4 +1,5 @@
 import { Question, QuizType, UserAnswer, FeedbackSummary } from '@/types';
+import { logger } from './logger';
 
 export class OpenRouterService {
   private static readonly API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -42,11 +43,11 @@ export class OpenRouterService {
     if (userPlan === 'pro') {
       // Pro users: Use GPT-4.1-nano for all content
       defaultModel = 'openai/gpt-4.1-nano';
-      console.log('OpenRouter: Using Pro model for Pro user');
+      await logger.info('Using Pro model for Pro user', 'openrouter', { userPlan });
     } else {
       // Free/Student users: Use Qwen for all content
       defaultModel = 'qwen/qwen3-235b-a22b:free';
-      console.log('OpenRouter: Using Free model for Free/Student user');
+      await logger.info('Using Free model for Free/Student user', 'openrouter', { userPlan });
     }
     
     if (isImageBased) {
