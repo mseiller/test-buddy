@@ -1,5 +1,6 @@
 import { Question, QuizType, UserAnswer, FeedbackSummary } from '@/types';
 import { logger } from './logger';
+import { safeConsole } from '@/utils/console';
 
 export class OpenRouterService {
   private static readonly API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -22,7 +23,7 @@ export class OpenRouterService {
     let adjustedQuestionCount = questionCount;
     
     if (questionCount > 100) {
-      console.warn(`OpenRouter: Requested ${questionCount} questions, but capping at 100 for optimal performance.`);
+      safeConsole.warn(`OpenRouter: Requested ${questionCount} questions, but capping at 100 for optimal performance.`);
       adjustedQuestionCount = 100;
       maxTokens = 32000; // High limit for 131k context model
     } else if (questionCount > 75) {
@@ -51,16 +52,18 @@ export class OpenRouterService {
     }
     
     if (isImageBased) {
-      console.log('OpenRouter: Using image-optimized model for image-based content');
+      safeConsole.log('OpenRouter: Using image-optimized model for image-based content');
     }
     
     const model = modelOverride || defaultModel;
     
-    console.log('OpenRouter: Starting API request to:', this.API_URL);
-    console.log('OpenRouter: API Key configured:', !!this.API_KEY);
-    console.log('OpenRouter: Selected model:', model, 'for', adjustedQuestionCount, 'questions', adjustedQuestionCount !== questionCount ? `(reduced from ${questionCount})` : '');
-    console.log('OpenRouter: Max tokens:', maxTokens);
-    console.log('OpenRouter: Request payload size:', JSON.stringify({
+    await logger.info('Starting API request', 'openrouter', { 
+      model, 
+      questionCount: adjustedQuestionCount, 
+      originalQuestionCount: questionCount,
+      maxTokens 
+    });
+    safeConsole.log('OpenRouter: Request payload size:', JSON.stringify({
       model: model,
       messages: [
         { role: 'system', content: '...' },
@@ -76,7 +79,7 @@ export class OpenRouterService {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`OpenRouter: Attempt ${attempt}/${maxRetries}`);
+        safeConsole.log(`OpenRouter: Attempt ${attempt}/${maxRetries}`);
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
@@ -172,71 +175,71 @@ CRITICAL OUTPUT FORMAT:
 
         clearTimeout(timeoutId);
 
-        console.log('OpenRouter: Response status:', response.status, response.statusText);
-        console.log('OpenRouter: Response headers:', Object.fromEntries(response.headers.entries()));
+        safeConsole.log('OpenRouter: Response status:', response.status, response.statusText);
+        safeConsole.log('OpenRouter: Response headers:', Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('OpenRouter: Error response body:', errorText);
+          safeConsole.error('OpenRouter: Error response body:', errorText);
           throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
         }
 
         let data;
         try {
           const responseText = await response.text();
-          console.log('OpenRouter: Raw response text length:', responseText.length);
+          safeConsole.log('OpenRouter: Raw response text length:', responseText.length);
           
           // Check for excessive whitespace that indicates token waste
           const trimmedText = responseText.trim();
           const whitespaceRatio = (responseText.length - trimmedText.length) / responseText.length;
           if (whitespaceRatio > 0.5) {
-            console.warn('OpenRouter: Response contains excessive whitespace (', Math.round(whitespaceRatio * 100), '%) - this wastes tokens');
+            safeConsole.warn('OpenRouter: Response contains excessive whitespace (', Math.round(whitespaceRatio * 100), '%) - this wastes tokens');
           }
           
-          console.log('OpenRouter: Raw response preview:', responseText.substring(0, 200));
+          safeConsole.log('OpenRouter: Raw response preview:', responseText.substring(0, 200));
           
           if (!responseText || responseText.trim() === '') {
             throw new Error('Empty response body from OpenRouter API');
           }
           
           data = JSON.parse(responseText);
-          console.log('OpenRouter: Response data structure:', Object.keys(data));
-          console.log('OpenRouter: Full response data:', data);
+          safeConsole.log('OpenRouter: Response data structure:', Object.keys(data));
+          safeConsole.log('OpenRouter: Full response data:', data);
         } catch (jsonError) {
-          console.error('OpenRouter: JSON parsing failed:', jsonError);
+          safeConsole.error('OpenRouter: JSON parsing failed:', jsonError);
           throw new Error(`Invalid JSON response from OpenRouter API: ${jsonError instanceof Error ? jsonError.message : 'Unknown parsing error'}`);
         }
         
         // Check for API errors in response
         if (data.error) {
-          console.error('OpenRouter: API returned error:', data.error);
+          safeConsole.error('OpenRouter: API returned error:', data.error);
           throw new Error(`OpenRouter API error: ${data.error.message || data.error}`);
         }
         
         const content = data.choices[0]?.message?.content;
-        console.log('OpenRouter: Content from API:', content ? `${content.length} characters` : 'NO CONTENT');
+        safeConsole.log('OpenRouter: Content from API:', content ? `${content.length} characters` : 'NO CONTENT');
         
         if (content) {
-          console.log('OpenRouter: Content preview (first 500 chars):', content.substring(0, 500));
+          safeConsole.log('OpenRouter: Content preview (first 500 chars):', content.substring(0, 500));
         }
 
         if (!content || content.trim() === '') {
-          console.error('OpenRouter: No content in response data:', data);
-          console.error('OpenRouter: Full response structure:', JSON.stringify(data, null, 2));
+          safeConsole.error('OpenRouter: No content in response data:', data);
+          safeConsole.error('OpenRouter: Full response structure:', JSON.stringify(data, null, 2));
           throw new Error('Empty content from OpenRouter API - model may be overloaded or content filtered');
         }
 
-        console.log('OpenRouter: Content received, length:', content.length);
+        safeConsole.log('OpenRouter: Content received, length:', content.length);
         
         // Check for token efficiency issues
         if (data.usage) {
           const tokensPerQuestion = data.usage.completion_tokens / adjustedQuestionCount;
-          console.log('OpenRouter: Token usage - Total:', data.usage.total_tokens, 'Per question:', Math.round(tokensPerQuestion));
+          safeConsole.log('OpenRouter: Token usage - Total:', data.usage.total_tokens, 'Per question:', Math.round(tokensPerQuestion));
           
           if (tokensPerQuestion > 200) {
-            console.warn('OpenRouter: High token usage per question (', Math.round(tokensPerQuestion), ') - consider optimizing prompt or switching models');
+            safeConsole.warn('OpenRouter: High token usage per question (', Math.round(tokensPerQuestion), ') - consider optimizing prompt or switching models');
           } else if (tokensPerQuestion > 150) {
-            console.log('OpenRouter: Moderate token usage per question (', Math.round(tokensPerQuestion), ') - acceptable but could be optimized');
+            safeConsole.log('OpenRouter: Moderate token usage per question (', Math.round(tokensPerQuestion), ') - acceptable but could be optimized');
           }
         }
         
@@ -257,10 +260,10 @@ CRITICAL OUTPUT FORMAT:
         );
         
         if (isRetryableError) {
-          console.error(`OpenRouter: Retryable error on attempt ${attempt}/${maxRetries}:`, error.message);
+          safeConsole.error(`OpenRouter: Retryable error on attempt ${attempt}/${maxRetries}:`, error.message);
           if (attempt < maxRetries) {
             const delay = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
-            console.log(`OpenRouter: Retrying in ${delay}ms...`);
+            safeConsole.log(`OpenRouter: Retrying in ${delay}ms...`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
@@ -273,7 +276,7 @@ CRITICAL OUTPUT FORMAT:
     
     // If we get here, all retries failed with the primary model
     if (lastError) {
-      console.error('OpenRouter: All retries failed with primary model. Final error:', lastError);
+      safeConsole.error('OpenRouter: All retries failed with primary model. Final error:', lastError);
       
       // Try fallback models based on user plan
       const fallbackModels = [];
@@ -303,21 +306,21 @@ CRITICAL OUTPUT FORMAT:
       }
       
       for (const fallbackModel of fallbackModels) {
-        console.log(`OpenRouter: Attempting fallback to ${fallbackModel}...`);
+        safeConsole.log(`OpenRouter: Attempting fallback to ${fallbackModel}...`);
         try {
           return await this.generateQuiz(text, quizType, questionCount, fallbackModel);
         } catch (fallbackError) {
-          console.error(`OpenRouter: Fallback model ${fallbackModel} also failed:`, fallbackError);
+          safeConsole.error(`OpenRouter: Fallback model ${fallbackModel} also failed:`, fallbackError);
           // Continue to next fallback
         }
       }
       
       if (lastError instanceof TypeError && lastError.message === 'Failed to fetch') {
-        console.error('OpenRouter: Network error - this usually means:');
-        console.error('1. No internet connection');
-        console.error('2. CORS issue');
-        console.error('3. API endpoint is down');
-        console.error('4. Request timeout');
+        safeConsole.error('OpenRouter: Network error - this usually means:');
+        safeConsole.error('1. No internet connection');
+        safeConsole.error('2. CORS issue');
+        safeConsole.error('3. API endpoint is down');
+        safeConsole.error('4. Request timeout');
       }
       throw new Error(`Failed to generate quiz questions after ${maxRetries} attempts: ${lastError.message}`);
     }
@@ -369,8 +372,8 @@ Requirements:
 
   private static parseQuizResponse(content: string): Question[] {
     try {
-      console.log('OpenRouter: Starting JSON parsing of response...');
-      console.log('OpenRouter: Content length:', content.length);
+      safeConsole.log('OpenRouter: Starting JSON parsing of response...');
+      safeConsole.log('OpenRouter: Content length:', content.length);
       
       // Clean the content to extract JSON - try multiple approaches
       let jsonString = '';
@@ -379,19 +382,19 @@ Requirements:
       const markdownMatch = content.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
       if (markdownMatch) {
         jsonString = markdownMatch[1];
-        console.log('OpenRouter: Found JSON in markdown code block');
+        safeConsole.log('OpenRouter: Found JSON in markdown code block');
       } else {
         // Try to find JSON array in the content
         const jsonMatch = content.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           jsonString = jsonMatch[0];
-          console.log('OpenRouter: Found JSON array in content');
+          safeConsole.log('OpenRouter: Found JSON array in content');
         } else {
           // If no array found, try to find JSON object and wrap it
           const objectMatch = content.match(/\{[\s\S]*\}/);
           if (objectMatch) {
             jsonString = `[${objectMatch[0]}]`;
-            console.log('OpenRouter: Found JSON object, wrapped in array');
+            safeConsole.log('OpenRouter: Found JSON object, wrapped in array');
           } else {
             throw new Error('No valid JSON found in response');
           }
@@ -399,7 +402,7 @@ Requirements:
       }
 
       // Try to fix common JSON issues
-      console.log('OpenRouter: Cleaning JSON string...');
+      safeConsole.log('OpenRouter: Cleaning JSON string...');
       jsonString = jsonString
         .replace(/,\s*}/g, '}') // Remove trailing commas
         .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
@@ -423,8 +426,8 @@ Requirements:
         .replace(/\s+/g, ' ') // Normalize all whitespace
         .trim();
 
-      console.log('OpenRouter: Attempting to parse cleaned JSON...');
-      console.log('OpenRouter: JSON preview (first 300 chars):', jsonString.substring(0, 300) + '...');
+      safeConsole.log('OpenRouter: Attempting to parse cleaned JSON...');
+      safeConsole.log('OpenRouter: JSON preview (first 300 chars):', jsonString.substring(0, 300) + '...');
       
       const questions = JSON.parse(jsonString);
       
@@ -433,7 +436,7 @@ Requirements:
         throw new Error('Response is not an array of questions');
       }
       
-      console.log('OpenRouter: Successfully parsed JSON, found', questions.length, 'questions');
+      safeConsole.log('OpenRouter: Successfully parsed JSON, found', questions.length, 'questions');
       
       // Validate and format questions
       return questions.map((q: any, index: number) => {
@@ -452,34 +455,34 @@ Requirements:
         };
       });
     } catch (error) {
-      console.error('OpenRouter: Failed to parse quiz response:', error);
-      console.error('OpenRouter: Raw content (first 1000 chars):', content.substring(0, 1000) + '...');
+      safeConsole.error('OpenRouter: Failed to parse quiz response:', error);
+      safeConsole.error('OpenRouter: Raw content (first 1000 chars):', content.substring(0, 1000) + '...');
       
       // Check for common issues
       if (error instanceof SyntaxError) {
         if (error.message.includes('Unexpected end of JSON input')) {
-          console.error('OpenRouter: JSON was truncated - likely due to token limit or timeout');
+          safeConsole.error('OpenRouter: JSON was truncated - likely due to token limit or timeout');
         } else if (error.message.includes('Unexpected token')) {
-          console.error('OpenRouter: JSON syntax error - AI may have added extra text');
+          safeConsole.error('OpenRouter: JSON syntax error - AI may have added extra text');
         }
       }
       
       // Try to extract partial JSON if possible
       try {
-        console.log('OpenRouter: Attempting to extract partial JSON...');
+        safeConsole.log('OpenRouter: Attempting to extract partial JSON...');
         
         // Look for complete question objects in the content
         const questionMatches = content.match(/\{[^}]*"id"[^}]*"type"[^}]*"question"[^}]*\}/g);
         
         if (questionMatches && questionMatches.length > 0) {
-          console.log('OpenRouter: Found', questionMatches.length, 'potential question objects');
+          safeConsole.log('OpenRouter: Found', questionMatches.length, 'potential question objects');
           
           const validQuestions = [];
           
           for (let i = 0; i < questionMatches.length; i++) {
             try {
               const questionJson = questionMatches[i];
-              console.log('OpenRouter: Attempting to parse question', i + 1, ':', questionJson.substring(0, 100) + '...');
+              safeConsole.log('OpenRouter: Attempting to parse question', i + 1, ':', questionJson.substring(0, 100) + '...');
               
               // Clean the question JSON
               let cleanedQuestion = questionJson
@@ -512,16 +515,16 @@ Requirements:
                   explanation: question.explanation || 'No explanation provided',
                   points: question.points || 1,
                 });
-                console.log('OpenRouter: Successfully parsed question', i + 1);
+                safeConsole.log('OpenRouter: Successfully parsed question', i + 1);
               }
             } catch (questionError) {
-              console.error('OpenRouter: Failed to parse question', i + 1, ':', questionError);
+              safeConsole.error('OpenRouter: Failed to parse question', i + 1, ':', questionError);
               // Continue with next question
             }
           }
           
           if (validQuestions.length > 0) {
-            console.log('OpenRouter: Successfully extracted', validQuestions.length, 'valid questions from partial JSON');
+            safeConsole.log('OpenRouter: Successfully extracted', validQuestions.length, 'valid questions from partial JSON');
             return validQuestions;
           }
         }
@@ -530,7 +533,7 @@ Requirements:
         const partialMatch = content.match(/\[[\s\S]*?\]/);
         if (partialMatch) {
           const partialJson = partialMatch[0];
-          console.log('OpenRouter: Found partial JSON array, attempting to fix...');
+          safeConsole.log('OpenRouter: Found partial JSON array, attempting to fix...');
           
           // Try to fix the partial JSON
           const fixedJson = partialJson
@@ -543,7 +546,7 @@ Requirements:
           
           const questions = JSON.parse(fixedJson);
           if (Array.isArray(questions) && questions.length > 0) {
-            console.log('OpenRouter: Successfully parsed partial JSON with', questions.length, 'questions');
+            safeConsole.log('OpenRouter: Successfully parsed partial JSON with', questions.length, 'questions');
             return questions.map((q: any, index: number) => ({
               id: q.id || `q${index + 1}`,
               type: q.type || 'MCQ',
@@ -556,7 +559,7 @@ Requirements:
           }
         }
       } catch (partialError) {
-        console.error('OpenRouter: Partial JSON parsing also failed:', partialError);
+        safeConsole.error('OpenRouter: Partial JSON parsing also failed:', partialError);
       }
       
       // Return a fallback question if all parsing fails
@@ -694,7 +697,7 @@ Remember: ONLY return the JSON object, nothing else.`;
     const start = s.indexOf('{');
     if (start < 0) return null;
 
-    console.log('OpenRouter: JSON extraction - start index:', start, 'text length:', s.length);
+    safeConsole.log('OpenRouter: JSON extraction - start index:', start, 'text length:', s.length);
 
     let depth = 0, inStr = false, esc = false;
     for (let i = start; i < s.length; i++) {
@@ -718,14 +721,14 @@ Remember: ONLY return the JSON object, nothing else.`;
           depth--;
           if (depth === 0) {
             const extracted = s.slice(start, i + 1);
-            console.log('OpenRouter: Successfully extracted JSON, length:', extracted.length);
+            safeConsole.log('OpenRouter: Successfully extracted JSON, length:', extracted.length);
             return extracted;
           }
         }
       }
     }
     
-    console.log('OpenRouter: JSON extraction failed - final depth:', depth, 'inStr:', inStr);
+    safeConsole.log('OpenRouter: JSON extraction failed - final depth:', depth, 'inStr:', inStr);
     return null; // likely truncated
   }
 
@@ -737,7 +740,7 @@ Remember: ONLY return the JSON object, nothing else.`;
   }
 
   private static handleTruncatedJson(truncatedText: string): FeedbackSummary {
-    console.log('OpenRouter: Handling truncated JSON, length:', truncatedText.length);
+    safeConsole.log('OpenRouter: Handling truncated JSON, length:', truncatedText.length);
     
     // Try to extract what we can from the truncated response
     const partialData: Partial<FeedbackSummary> = {};
@@ -801,7 +804,7 @@ Remember: ONLY return the JSON object, nothing else.`;
       }
       
     } catch (error) {
-      console.log('OpenRouter: Error extracting from truncated JSON:', error);
+      safeConsole.log('OpenRouter: Error extracting from truncated JSON:', error);
     }
     
     // Return a complete FeedbackSummary with extracted data + defaults
@@ -824,14 +827,14 @@ Remember: ONLY return the JSON object, nothing else.`;
   }
 
   private static safeParseFeedbackJSON(text: string): FeedbackSummary {
-    console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
+    safeConsole.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
     
     // Check for truncation indicators
     const trimmed = text.trim();
     const isTruncated = !trimmed.endsWith('}') || trimmed.split('{').length !== trimmed.split('}').length;
     
     if (isTruncated) {
-      console.log('OpenRouter: Detected truncated JSON response, attempting recovery...');
+      safeConsole.log('OpenRouter: Detected truncated JSON response, attempting recovery...');
       return this.handleTruncatedJson(trimmed);
     }
     
@@ -839,43 +842,43 @@ Remember: ONLY return the JSON object, nothing else.`;
     if (trimmed.startsWith('{') && trimmed.includes('"overall_assessment"')) {
       try {
         const parsed = JSON.parse(trimmed);
-        console.log('OpenRouter: Successfully parsed clean JSON directly');
+        safeConsole.log('OpenRouter: Successfully parsed clean JSON directly');
         return parsed;
       } catch (error) {
-        console.log('OpenRouter: Direct parsing failed, trying extraction methods...', error);
+        safeConsole.log('OpenRouter: Direct parsing failed, trying extraction methods...', error);
         // If direct parsing fails, it might still be truncated
         if (error instanceof SyntaxError && error.message.includes('position')) {
-          console.log('OpenRouter: Syntax error suggests truncation, attempting recovery...');
+          safeConsole.log('OpenRouter: Syntax error suggests truncation, attempting recovery...');
           return this.handleTruncatedJson(trimmed);
         }
       }
     }
     
     let cleaned = this.stripReasoningAndFences(text);
-    console.log('OpenRouter: After cleaning reasoning/fences:', cleaned.substring(0, 200) + '...');
+    safeConsole.log('OpenRouter: After cleaning reasoning/fences:', cleaned.substring(0, 200) + '...');
     
     // Try direct parsing of cleaned text first
     if (cleaned.trim().startsWith('{')) {
       try {
         const parsed = JSON.parse(cleaned.trim());
-        console.log('OpenRouter: Successfully parsed cleaned JSON directly');
+        safeConsole.log('OpenRouter: Successfully parsed cleaned JSON directly');
         return parsed;
       } catch (error) {
-        console.log('OpenRouter: Cleaned direct parsing failed, trying balanced extraction...', error);
+        safeConsole.log('OpenRouter: Cleaned direct parsing failed, trying balanced extraction...', error);
       }
     }
     
     let jsonString = this.extractBalancedJson(cleaned);
 
     if (!jsonString) {
-      console.warn('OpenRouter: No balanced JSON found, trying repair...');
+      safeConsole.warn('OpenRouter: No balanced JSON found, trying repair...');
       // try aggressive cleaning
       cleaned = this.tryJsonRepair(cleaned);
       jsonString = this.extractBalancedJson(cleaned);
     }
     
     if (!jsonString) {
-      console.warn('OpenRouter: Still no JSON found, using text as fallback');
+      safeConsole.warn('OpenRouter: Still no JSON found, using text as fallback');
       // final fallback: treat whole string as summary to avoid hard failure
       return {
         overall_assessment: cleaned.slice(0, 500) || 'Unable to generate detailed feedback at this time.',
@@ -889,21 +892,21 @@ Remember: ONLY return the JSON object, nothing else.`;
       };
     }
 
-    console.log('OpenRouter: Extracted JSON string:', jsonString.substring(0, 200) + '...');
+    safeConsole.log('OpenRouter: Extracted JSON string:', jsonString.substring(0, 200) + '...');
 
     try {
       const parsed = JSON.parse(jsonString);
-      console.log('OpenRouter: Successfully parsed extracted JSON');
+      safeConsole.log('OpenRouter: Successfully parsed extracted JSON');
       return parsed;
     } catch (error) {
-      console.warn('OpenRouter: JSON parse failed, trying repair...', error);
+      safeConsole.warn('OpenRouter: JSON parse failed, trying repair...', error);
       const repaired = this.tryJsonRepair(jsonString);
       try {
         const parsed = JSON.parse(repaired);
-        console.log('OpenRouter: Successfully parsed repaired JSON');
+        safeConsole.log('OpenRouter: Successfully parsed repaired JSON');
         return parsed;
       } catch (repairError) {
-        console.error('OpenRouter: All JSON parsing attempts failed:', repairError);
+        safeConsole.error('OpenRouter: All JSON parsing attempts failed:', repairError);
         // Return graceful fallback
         return {
           overall_assessment: 'Unable to generate detailed feedback due to parsing issues. Please try regenerating.',
@@ -933,8 +936,8 @@ Remember: ONLY return the JSON object, nothing else.`;
     const system = this.feedbackSystemPrompt();
     const user = this.buildFeedbackContext(testName, score, questions, answers);
 
-    console.log('OpenRouter: Generating feedback summary for:', testName);
-    console.log('OpenRouter: Score:', score, '% | Questions:', questions.length);
+    safeConsole.log('OpenRouter: Generating feedback summary for:', testName);
+    safeConsole.log('OpenRouter: Score:', score, '% | Questions:', questions.length);
 
     try {
       const response = await fetch(this.API_URL, {
@@ -963,7 +966,7 @@ Remember: ONLY return the JSON object, nothing else.`;
       const data = await response.json();
       
       if (!response.ok) {
-        console.error('OpenRouter: Primary model failed:', data?.error?.message);
+        safeConsole.error('OpenRouter: Primary model failed:', data?.error?.message);
         throw new Error(data?.error?.message || 'Primary model request failed');
       }
 
@@ -972,7 +975,7 @@ Remember: ONLY return the JSON object, nothing else.`;
         throw new Error('AI model returned empty response');
       }
 
-      console.log('OpenRouter: Full API response structure:', {
+      safeConsole.log('OpenRouter: Full API response structure:', {
         choices: data?.choices?.length || 0,
         hasContent: !!content,
         contentLength: content?.length || 0,
@@ -982,14 +985,14 @@ Remember: ONLY return the JSON object, nothing else.`;
       return this.safeParseFeedbackJSON(content);
       
     } catch (error) {
-      console.error('OpenRouter: Primary model error:', error);
+      safeConsole.error('OpenRouter: Primary model error:', error);
       // Try fallback with backup model
       return this.tryFallbackGeneration(system, user);
     }
   }
 
   private static async tryFallbackGeneration(systemPrompt: string, userPrompt: string): Promise<FeedbackSummary> {
-    console.log('OpenRouter: Trying fallback model...');
+    safeConsole.log('OpenRouter: Trying fallback model...');
     
     try {
       const response = await fetch(this.API_URL, {
@@ -1017,7 +1020,7 @@ Remember: ONLY return the JSON object, nothing else.`;
       const data = await response.json();
       
       if (!response.ok) {
-        console.error('OpenRouter: Fallback model failed:', data?.error?.message);
+        safeConsole.error('OpenRouter: Fallback model failed:', data?.error?.message);
         throw new Error(data?.error?.message || 'Fallback model request failed');
       }
 
@@ -1026,11 +1029,11 @@ Remember: ONLY return the JSON object, nothing else.`;
         throw new Error('Fallback model returned empty response');
       }
 
-      console.log('OpenRouter: Fallback model response received, length:', content.length);
+      safeConsole.log('OpenRouter: Fallback model response received, length:', content.length);
       return this.safeParseFeedbackJSON(content);
       
     } catch (error) {
-      console.error('OpenRouter: All models failed:', error);
+      safeConsole.error('OpenRouter: All models failed:', error);
       
       // Return a meaningful fallback response instead of throwing
       return {
@@ -1076,7 +1079,7 @@ Remember: ONLY return the JSON object, nothing else.`;
       const data = await response.json();
       
       if (!response.ok) {
-        console.error('OpenRouter feedback error:', data);
+        safeConsole.error('OpenRouter feedback error:', data);
         throw new Error(data?.error?.message || 'OpenRouter feedback request failed');
       }
 
@@ -1084,7 +1087,7 @@ Remember: ONLY return the JSON object, nothing else.`;
       let text = data?.choices?.[0]?.message?.content ?? '';
       text = text.trim();
       
-      console.log('OpenRouter: Full API response structure:', {
+      safeConsole.log('OpenRouter: Full API response structure:', {
         choices: data?.choices?.length,
         hasContent: !!text,
         contentLength: text.length,
@@ -1092,12 +1095,12 @@ Remember: ONLY return the JSON object, nothing else.`;
       });
       
       if (!text || text.length === 0) {
-        console.error('OpenRouter: Received empty content from API');
-        console.error('OpenRouter: Full response data:', JSON.stringify(data, null, 2));
+        safeConsole.error('OpenRouter: Received empty content from API');
+        safeConsole.error('OpenRouter: Full response data:', JSON.stringify(data, null, 2));
         throw new Error('AI model returned empty response. This might be due to content filtering or model issues.');
       }
       
-      console.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
+      safeConsole.log('OpenRouter: Raw feedback response:', text.substring(0, 300) + '...');
       
       // Try multiple strategies to extract JSON
       let jsonString = text;
@@ -1106,7 +1109,7 @@ Remember: ONLY return the JSON object, nothing else.`;
       if (text.includes('<think>')) {
         // Remove everything from <think> to </think> or end of <think> block
         jsonString = text.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim();
-        console.log('OpenRouter: Removed <think> tags');
+        safeConsole.log('OpenRouter: Removed <think> tags');
       }
       
       // Strategy 2: Remove code fences if present
@@ -1114,7 +1117,7 @@ Remember: ONLY return the JSON object, nothing else.`;
         const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         if (codeBlockMatch) {
           jsonString = codeBlockMatch[1].trim();
-          console.log('OpenRouter: Extracted JSON from code block');
+          safeConsole.log('OpenRouter: Extracted JSON from code block');
         }
       }
       
@@ -1123,7 +1126,7 @@ Remember: ONLY return the JSON object, nothing else.`;
         const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           jsonString = jsonMatch[0];
-          console.log('OpenRouter: Extracted JSON using regex match');
+          safeConsole.log('OpenRouter: Extracted JSON using regex match');
         }
       }
       
@@ -1136,7 +1139,7 @@ Remember: ONLY return the JSON object, nothing else.`;
         .replace(/<\/?think>/gi, '') // Remove any remaining think tags
         .trim();
 
-      console.log('OpenRouter: Cleaned JSON string:', jsonString.substring(0, 200) + '...');
+      safeConsole.log('OpenRouter: Cleaned JSON string:', jsonString.substring(0, 200) + '...');
 
       let parsed: FeedbackSummary = {
         overall_assessment: 'Unable to generate detailed feedback at this time.',
@@ -1151,9 +1154,9 @@ Remember: ONLY return the JSON object, nothing else.`;
       
       try {
         parsed = JSON.parse(jsonString);
-        console.log('OpenRouter: Successfully parsed feedback JSON');
+        safeConsole.log('OpenRouter: Successfully parsed feedback JSON');
       } catch (parseError) {
-        console.warn('OpenRouter: Failed to parse feedback JSON, trying more aggressive cleaning...');
+        safeConsole.warn('OpenRouter: Failed to parse feedback JSON, trying more aggressive cleaning...');
         
         // Try to fix common JSON issues
         const fixedJson = jsonString
@@ -1167,9 +1170,9 @@ Remember: ONLY return the JSON object, nothing else.`;
         
         try {
           parsed = JSON.parse(fixedJson);
-          console.log('OpenRouter: Successfully parsed feedback JSON after fixing');
+          safeConsole.log('OpenRouter: Successfully parsed feedback JSON after fixing');
         } catch (secondError) {
-          console.warn('OpenRouter: Fixed JSON also failed, trying to find JSON anywhere in response...');
+          safeConsole.warn('OpenRouter: Fixed JSON also failed, trying to find JSON anywhere in response...');
           
           // Last resort: try to find any JSON object in the entire response
           const allJsonMatches = text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
@@ -1182,7 +1185,7 @@ Remember: ONLY return the JSON object, nothing else.`;
                 if (testParsed.overall_assessment || testParsed.focus_areas) {
                   parsed = testParsed;
                   foundValidJson = true;
-                  console.log('OpenRouter: Found valid JSON in response!');
+                  safeConsole.log('OpenRouter: Found valid JSON in response!');
                   break;
                 }
               } catch {
@@ -1192,9 +1195,9 @@ Remember: ONLY return the JSON object, nothing else.`;
           }
           
           if (!foundValidJson) {
-            console.error('OpenRouter: All JSON parsing attempts failed:', secondError);
-            console.error('OpenRouter: Original text:', text.substring(0, 500));
-            console.error('OpenRouter: Final attempt:', fixedJson.substring(0, 500));
+            safeConsole.error('OpenRouter: All JSON parsing attempts failed:', secondError);
+            safeConsole.error('OpenRouter: Original text:', text.substring(0, 500));
+            safeConsole.error('OpenRouter: Final attempt:', fixedJson.substring(0, 500));
             // Keep the default fallback value that was already assigned
           }
         }

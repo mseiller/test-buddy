@@ -1,5 +1,6 @@
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { safeConsole } from '@/utils/console';
 
 export interface ResultData {
   testName: string;
@@ -32,10 +33,10 @@ export async function logResult(uid: string, data: ResultData) {
     
     const docRef = await addDoc(ref, cleanData);
     
-    console.log('Result logged successfully:', docRef.id);
+    safeConsole.log('Result logged successfully:', docRef.id);
     return docRef.id;
   } catch (error) {
-    console.error('Error logging result:', error);
+    safeConsole.error('Error logging result:', error);
     throw error;
   }
 }

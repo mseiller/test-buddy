@@ -1,5 +1,6 @@
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { safeConsole } from '@/utils/console';
 
 export interface LogEntry {
   level: 'info' | 'warn' | 'error' | 'debug';
@@ -19,26 +20,26 @@ class Logger {
 
   async log(entry: LogEntry): Promise<void> {
     try {
-      // Always log to console in development
-      if (!this.isProduction) {
-        console.log(`[${entry.level.toUpperCase()}] ${entry.service}: ${entry.message}`, entry.metadata);
-      }
+      // Only log to console in development
+      safeConsole.log(`[${entry.level.toUpperCase()}] ${entry.service}: ${entry.message}`, entry.metadata);
 
-      // In production, send to Firebase
-      if (this.isProduction && typeof window !== 'undefined') {
+      // Always send to Firebase (both dev and prod)
+      if (typeof window !== 'undefined') {
         const logData = {
           ...entry,
           timestamp: serverTimestamp(),
           userAgent: navigator.userAgent,
           url: window.location.href,
+          environment: this.isProduction ? 'production' : 'development',
         };
 
         await addDoc(collection(db, 'logs'), logData);
       }
     } catch (error) {
-      // Fallback to console if Firebase fails
-      console.error('Failed to log to Firebase:', error);
-      console.log(`[${entry.level.toUpperCase()}] ${entry.service}: ${entry.message}`, entry.metadata);
+      // Only show Firebase errors in development
+      safeConsole.error('Failed to log to Firebase:', error);
+      safeConsole.log(`[${entry.level.toUpperCase()}] ${entry.service}: ${entry.message}`, entry.metadata);
+      // In production, silently fail - don't expose any errors to users
     }
   }
 

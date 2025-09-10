@@ -1,6 +1,7 @@
 import { collection, getDocs, query, orderBy, limit, where, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { logResult } from './results';
+import { safeConsole } from '@/utils/console';
 
 const now = () => new Date();
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
@@ -100,7 +101,7 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
     }
 
     // Debug logging
-    console.log('Metrics Debug:', {
+    safeConsole.log('Metrics Debug:', {
       totalItems: all.length,
       filters,
       sampleFolderIds: all.slice(0, 8).map(item => ({ testName: item.testName, folderId: item.folderId })),
@@ -185,7 +186,7 @@ export async function getUserMetrics(uid: string, filters: MetricsFilters = {}):
       totalRetakes,
     };
   } catch (error) {
-    console.error('Error fetching user metrics:', error);
+    safeConsole.error('Error fetching user metrics:', error);
     throw error;
   }
 }
@@ -233,10 +234,10 @@ export async function migrateTestHistoryToResults(uid: string): Promise<number> 
       migratedCount++;
     }
     
-    console.log(`Migrated ${migratedCount} test history records to results collection`);
+    safeConsole.log(`Migrated ${migratedCount} test history records to results collection`);
     return migratedCount;
   } catch (error) {
-    console.error('Error migrating test history:', error);
+    safeConsole.error('Error migrating test history:', error);
     throw error;
   }
 }
@@ -272,7 +273,7 @@ export async function getUserFolders(uid: string): Promise<Array<{id: string, na
     
     return folders.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
-    console.error('Error fetching user folders:', error);
+    safeConsole.error('Error fetching user folders:', error);
     return [];
   }
 }
@@ -280,7 +281,7 @@ export async function getUserFolders(uid: string): Promise<Array<{id: string, na
 // Function to fix tests that should be in folders but show as unorganized
 export async function fixUnorganizedTests(uid: string, targetFolderId: string): Promise<number> {
   try {
-    console.log('Starting fix for unorganized tests, target folder:', targetFolderId);
+    safeConsole.log('Starting fix for unorganized tests, target folder:', targetFolderId);
     
     // Get all test history
     const testHistoryBase = collection(db, 'testHistory');
@@ -298,7 +299,7 @@ export async function fixUnorganizedTests(uid: string, targetFolderId: string): 
       !test.folderId || test.folderId === '' || test.folderId === null || test.folderId === undefined
     );
     
-    console.log(`Found ${unorganizedTests.length} unorganized tests:`, unorganizedTests.map(t => t.testName));
+    safeConsole.log(`Found ${unorganizedTests.length} unorganized tests:`, unorganizedTests.map(t => t.testName));
     
     // Update all unorganized tests to be in the target folder
     let fixedCount = 0;
@@ -306,17 +307,17 @@ export async function fixUnorganizedTests(uid: string, targetFolderId: string): 
       try {
         const testRef = doc(db, 'testHistory', test.id);
         await updateDoc(testRef, { folderId: targetFolderId });
-        console.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
+        safeConsole.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
         fixedCount++;
       } catch (error) {
-        console.error(`Failed to fix test ${test.testName}:`, error);
+        safeConsole.error(`Failed to fix test ${test.testName}:`, error);
       }
     }
     
-    console.log(`Successfully fixed ${fixedCount} tests`);
+    safeConsole.log(`Successfully fixed ${fixedCount} tests`);
     return fixedCount;
   } catch (error) {
-    console.error('Error fixing unorganized tests:', error);
+    safeConsole.error('Error fixing unorganized tests:', error);
     throw error;
   }
 }
@@ -324,7 +325,7 @@ export async function fixUnorganizedTests(uid: string, targetFolderId: string): 
 // Function to fix folder ID mismatches - update all tests to use current folder ID
 export async function fixFolderIdMismatch(uid: string, targetFolderId: string): Promise<number> {
   try {
-    console.log('Starting fix for folder ID mismatch, target folder:', targetFolderId);
+    safeConsole.log('Starting fix for folder ID mismatch, target folder:', targetFolderId);
     
     // Get all test history
     const testHistoryBase = collection(db, 'testHistory');
@@ -342,9 +343,9 @@ export async function fixFolderIdMismatch(uid: string, targetFolderId: string): 
       test.folderId && test.folderId !== '' && test.folderId !== targetFolderId
     );
     
-    console.log(`Found ${mismatchedTests.length} tests with mismatched folder IDs:`);
+    safeConsole.log(`Found ${mismatchedTests.length} tests with mismatched folder IDs:`);
     mismatchedTests.forEach(test => {
-      console.log(`- ${test.testName}: current=${test.folderId}, target=${targetFolderId}`);
+      safeConsole.log(`- ${test.testName}: current=${test.folderId}, target=${targetFolderId}`);
     });
     
     // Update all mismatched tests to use the target folder ID
@@ -353,23 +354,23 @@ export async function fixFolderIdMismatch(uid: string, targetFolderId: string): 
       try {
         const testRef = doc(db, 'testHistory', test.id);
         await updateDoc(testRef, { folderId: targetFolderId });
-        console.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
+        safeConsole.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
         fixedCount++;
       } catch (error) {
-        console.error(`Failed to fix test ${test.testName}:`, error);
+        safeConsole.error(`Failed to fix test ${test.testName}:`, error);
       }
     }
     
-    console.log(`Successfully fixed ${fixedCount} folder ID mismatches`);
+    safeConsole.log(`Successfully fixed ${fixedCount} folder ID mismatches`);
     
     // Trigger a page refresh to update the folder manager UI
     if (fixedCount > 0) {
-      console.log('Folder ID fix complete. The folder manager UI will need to refresh to show the updated organization.');
+      safeConsole.log('Folder ID fix complete. The folder manager UI will need to refresh to show the updated organization.');
     }
     
     return fixedCount;
   } catch (error) {
-    console.error('Error fixing folder ID mismatches:', error);
+    safeConsole.error('Error fixing folder ID mismatches:', error);
     throw error;
   }
 }
@@ -377,7 +378,7 @@ export async function fixFolderIdMismatch(uid: string, targetFolderId: string): 
 // Migrate to single source of truth: /users/{uid}/tests
 export async function migrateToSingleSourceOfTruth(uid: string): Promise<number> {
   try {
-    console.log('Starting migration to single source of truth');
+    safeConsole.log('Starting migration to single source of truth');
     
     // Get all tests from testHistory
     const testHistoryBase = collection(db, 'testHistory');
@@ -396,7 +397,7 @@ export async function migrateToSingleSourceOfTruth(uid: string): Promise<number>
       
       // Skip if already exists in new collection
       if (existingTestIds.has(docSnapshot.id)) {
-        console.log(`Test ${docSnapshot.id} already exists in new collection`);
+        safeConsole.log(`Test ${docSnapshot.id} already exists in new collection`);
         continue;
       }
       
@@ -419,14 +420,14 @@ export async function migrateToSingleSourceOfTruth(uid: string): Promise<number>
       };
       
       await setDoc(newTestRef, testDoc);
-      console.log(`Migrated test: ${data.testName} (${docSnapshot.id})`);
+      safeConsole.log(`Migrated test: ${data.testName} (${docSnapshot.id})`);
       migratedCount++;
     }
     
-    console.log(`Migration complete: ${migratedCount} tests migrated to single source of truth`);
+    safeConsole.log(`Migration complete: ${migratedCount} tests migrated to single source of truth`);
     return migratedCount;
   } catch (error) {
-    console.error('Error migrating to single source of truth:', error);
+    safeConsole.error('Error migrating to single source of truth:', error);
     throw error;
   }
 }
@@ -459,7 +460,7 @@ export async function diagnoseAndFixFolderData(uid: string): Promise<{
     const testsWithoutFolders = allTests.filter(test => !test.folderId || test.folderId === '').length;
     const uniqueFolderIds = [...new Set(allTests.map(test => test.folderId).filter(Boolean))];
     
-    console.log('Folder Data Diagnosis:', {
+    safeConsole.log('Folder Data Diagnosis:', {
       totalTests: allTests.length,
       testsWithFolders,
       testsWithoutFolders,
@@ -480,7 +481,7 @@ export async function diagnoseAndFixFolderData(uid: string): Promise<{
       availableFolders: folders
     };
   } catch (error) {
-    console.error('Error diagnosing folder data:', error);
+    safeConsole.error('Error diagnosing folder data:', error);
     throw error;
   }
 }

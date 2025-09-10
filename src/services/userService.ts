@@ -2,6 +2,7 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { db } from '@/lib/firebase';
 import { User } from '@/types';
 import { UserPlan, DEFAULT_PLAN } from '@/config/plans';
+import { safeConsole } from '@/utils/console';
 
 export interface UserProfile extends User {
   plan: UserPlan;
@@ -34,7 +35,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
       subscriptionId: data.subscriptionId || null,
     } as UserProfile;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    safeConsole.error('Error fetching user profile:', error);
     return null;
   }
 }
@@ -65,7 +66,7 @@ export async function createUserProfile(
       updatedAt: new Date(),
     } as UserProfile;
   } catch (error) {
-    console.error('Error creating user profile:', error);
+    safeConsole.error('Error creating user profile:', error);
     throw error;
   }
 }
@@ -100,7 +101,7 @@ export async function updateUserPlan(
 
     await updateDoc(doc(db, 'users', uid), updateData);
   } catch (error) {
-    console.error('Error updating user plan:', error);
+    safeConsole.error('Error updating user plan:', error);
     throw error;
   }
 }

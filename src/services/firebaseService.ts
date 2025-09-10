@@ -24,6 +24,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { TestHistory, User, Folder } from '@/types';
 import { logger } from './logger';
+import { safeConsole } from '@/utils/console';
 
 export class FirebaseService {
   // Authentication methods
@@ -162,17 +163,17 @@ export class FirebaseService {
       await logger.info('Test history saved successfully', 'firebase', { docId: docRef.id, userId: testHistory.userId });
       return docRef.id;
     } catch (error: any) {
-      console.error('Firestore save error:', error);
+      safeConsole.error('Firestore save error:', error);
       
       // Try to provide more specific error information
       if (error.code === 'permission-denied') {
-        console.error('Permission denied - check Firestore rules');
+        safeConsole.error('Permission denied - check Firestore rules');
         throw new Error('Permission denied - unable to save test history');
       } else if (error.code === 'unavailable') {
-        console.error('Firestore unavailable - network issue');
+        safeConsole.error('Firestore unavailable - network issue');
         throw new Error('Network error - unable to save test history');
       } else {
-        console.error('Unknown Firestore error:', error.code, error.message);
+        safeConsole.error('Unknown Firestore error:', error.code, error.message);
         throw new Error('Failed to save test history: ' + error.message);
       }
     }
@@ -212,7 +213,7 @@ export class FirebaseService {
 
       return testHistory;
     } catch (error: any) {
-      console.error('Firestore fetch error:', error);
+      safeConsole.error('Firestore fetch error:', error);
       // Return empty array if Firestore is unavailable
       return [];
     }
@@ -296,7 +297,7 @@ export class FirebaseService {
     try {
       const currentUser = this.getCurrentUser();
       if (!currentUser) {
-        console.log('No authenticated user for Firestore connection test');
+        safeConsole.log('No authenticated user for Firestore connection test');
         return false;
       }
       
@@ -315,7 +316,7 @@ export class FirebaseService {
       await deleteDoc(doc(db, `users/${currentUser.uid}/tests`, testDoc.id));
       return true;
     } catch (error) {
-      console.error('Firestore connection test failed:', error);
+      safeConsole.error('Firestore connection test failed:', error);
       return false;
     }
   }
@@ -338,14 +339,14 @@ export class FirebaseService {
       }
       return null;
     } catch (error: any) {
-      console.error('Error getting folder by ID:', error);
+      safeConsole.error('Error getting folder by ID:', error);
       return null;
     }
   }
 
   static async createFolder(userId: string, name: string, description?: string, color?: string): Promise<Folder> {
     try {
-      console.log('Creating folder in Firestore:', { userId, name, description, color });
+      safeConsole.log('Creating folder in Firestore:', { userId, name, description, color });
       const folderData = {
         userId,
         name,
@@ -355,9 +356,9 @@ export class FirebaseService {
         updatedAt: Timestamp.now(),
       };
 
-      console.log('Folder data to save:', folderData);
+      safeConsole.log('Folder data to save:', folderData);
       const docRef = await addDoc(collection(db, 'folders'), folderData);
-      console.log('Folder created with ID:', docRef.id);
+      safeConsole.log('Folder created with ID:', docRef.id);
       
       const result = {
         id: docRef.id,
@@ -366,10 +367,10 @@ export class FirebaseService {
         updatedAt: folderData.updatedAt.toDate(),
       };
       
-      console.log('Returning folder result:', result);
+      safeConsole.log('Returning folder result:', result);
       return result;
     } catch (error: any) {
-      console.error('Error creating folder:', error);
+      safeConsole.error('Error creating folder:', error);
       throw new Error(error.message || 'Failed to create folder');
     }
   }
@@ -404,7 +405,7 @@ export class FirebaseService {
 
       return folders;
     } catch (error: any) {
-      console.error('Firestore fetch error:', error);
+      safeConsole.error('Firestore fetch error:', error);
       return [];
     }
   }
@@ -454,10 +455,10 @@ export class FirebaseService {
             const newTestDoc = await getDoc(newTestRef);
             if (newTestDoc.exists()) {
               await updateDoc(newTestRef, { folderId, updatedAt: new Date() });
-              console.log(`Updated test in new collection: ${testId} -> folder ${folderId}`);
+              safeConsole.log(`Updated test in new collection: ${testId} -> folder ${folderId}`);
             }
           } catch (newCollectionError) {
-            console.log('Test not found in new collection, only updated legacy collection');
+            safeConsole.log('Test not found in new collection, only updated legacy collection');
           }
         }
       }
@@ -502,7 +503,7 @@ export class FirebaseService {
 
       return tests;
     } catch (error: any) {
-      console.error('Firestore fetch error:', error);
+      safeConsole.error('Firestore fetch error:', error);
       return [];
     }
   }

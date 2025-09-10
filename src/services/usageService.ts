@@ -1,6 +1,7 @@
 import { doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { UserPlan, getPlanFeatures } from '@/config/plans';
+import { safeConsole } from '@/utils/console';
 
 export interface UsageRecord {
   monthId: string; // Format: "2024-01"
@@ -39,7 +40,7 @@ export async function getUserUsage(uid: string, monthId?: string): Promise<Usage
       updatedAt: data.updatedAt?.toDate() || new Date(),
     };
   } catch (error) {
-    console.error('Error fetching usage:', error);
+    safeConsole.error('Error fetching usage:', error);
     return null;
   }
 }
@@ -105,7 +106,7 @@ export async function incrementTestUsage(uid: string): Promise<UsageRecord> {
     const updatedUsage = await getUserUsage(uid, monthId);
     return updatedUsage!;
   } catch (error) {
-    console.error('Error incrementing test usage:', error);
+    safeConsole.error('Error incrementing test usage:', error);
     throw error;
   }
 }

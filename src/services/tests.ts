@@ -1,5 +1,6 @@
 import { db } from '@/lib/firebase';
 import { doc, setDoc, updateDoc, getDoc, collection, addDoc, deleteDoc, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { safeConsole } from '@/utils/console';
 
 export type TestDoc = {
   id?: string;
@@ -41,10 +42,10 @@ export async function updateTest(uid: string, testId: string, patch: Partial<Tes
 }
 
 export async function moveTest(uid: string, testId: string, toFolderId: string | null): Promise<void> {
-  console.log(`Moving test ${testId} to folder ${toFolderId}`);
+  safeConsole.log(`Moving test ${testId} to folder ${toFolderId}`);
   const ref = doc(db, `users/${uid}/tests/${testId}`);
   await updateDoc(ref, { folderId: toFolderId, updatedAt: new Date() });
-  console.log(`Successfully moved test ${testId} to folder ${toFolderId}`);
+  safeConsole.log(`Successfully moved test ${testId} to folder ${toFolderId}`);
 }
 
 export async function getTest(uid: string, testId: string): Promise<TestDoc | null> {
@@ -64,7 +65,7 @@ export async function getAllTests(uid: string): Promise<TestDoc[]> {
   const q = query(ref, limit(500));
   const snapshot = await getDocs(q);
   
-  console.log(`Found ${snapshot.docs.length} tests for user ${uid}`);
+  safeConsole.log(`Found ${snapshot.docs.length} tests for user ${uid}`);
   
   // Sort manually for now
   const tests = snapshot.docs.map(doc => ({
@@ -84,7 +85,7 @@ export async function getAllTests(uid: string): Promise<TestDoc[]> {
 
 // Get tests in a specific folder
 export async function getTestsInFolder(uid: string, folderId: string): Promise<TestDoc[]> {
-  console.log(`Querying tests collection for folderId: ${folderId}`);
+  safeConsole.log(`Querying tests collection for folderId: ${folderId}`);
   const ref = getTestsCollection(uid);
   
   // Temporarily remove orderBy to avoid index requirement
@@ -96,7 +97,7 @@ export async function getTestsInFolder(uid: string, folderId: string): Promise<T
   );
   const snapshot = await getDocs(q);
   
-  console.log(`Found ${snapshot.docs.length} tests with folderId ${folderId}`);
+  safeConsole.log(`Found ${snapshot.docs.length} tests with folderId ${folderId}`);
   
   // Sort manually for now
   const tests = snapshot.docs.map(doc => ({
@@ -127,7 +128,7 @@ export async function getUnorganizedTests(uid: string): Promise<TestDoc[]> {
   );
   const snapshot = await getDocs(q);
   
-  console.log(`Found ${snapshot.docs.length} unorganized tests for user ${uid}`);
+  safeConsole.log(`Found ${snapshot.docs.length} unorganized tests for user ${uid}`);
   
   // Sort manually for now
   const tests = snapshot.docs.map(doc => ({
@@ -147,7 +148,7 @@ export async function getUnorganizedTests(uid: string): Promise<TestDoc[]> {
 
 // Migration function to move data from testHistory to new structure
 export async function migrateFromTestHistory(uid: string): Promise<number> {
-  console.log('Starting migration from testHistory to new tests collection');
+  safeConsole.log('Starting migration from testHistory to new tests collection');
   
   // Get all tests from testHistory
   const testHistoryRef = collection(db, 'testHistory');
@@ -168,7 +169,7 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
     
     // Check for duplicates by test name only
     if (existingTestNames.has(data.testName)) {
-      console.log(`Skipping duplicate test: ${data.testName}`);
+      safeConsole.log(`Skipping duplicate test: ${data.testName}`);
       continue;
     }
     
@@ -204,17 +205,17 @@ export async function migrateFromTestHistory(uid: string): Promise<number> {
     const newRef = getTestsCollection(uid);
     await addDoc(newRef, testDoc);
     
-    console.log(`Migrated test: ${data.testName}`);
+    safeConsole.log(`Migrated test: ${data.testName}`);
     migratedCount++;
   }
   
-  console.log(`Migration complete: ${migratedCount} tests migrated`);
+  safeConsole.log(`Migration complete: ${migratedCount} tests migrated`);
   return migratedCount;
 }
 
 // Fix any tests that have incorrect folderId
 export async function fixFolderMismatches(uid: string, targetFolderId: string): Promise<number> {
-  console.log('Fixing folder mismatches in new tests collection');
+  safeConsole.log('Fixing folder mismatches in new tests collection');
   
   const allTests = await getAllTests(uid);
   let fixedCount = 0;
@@ -223,11 +224,11 @@ export async function fixFolderMismatches(uid: string, targetFolderId: string): 
     // If test has no folderId or wrong folderId, fix it
     if (!test.folderId || test.folderId !== targetFolderId) {
       await moveTest(uid, test.id!, targetFolderId);
-      console.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
+      safeConsole.log(`Fixed test: ${test.testName} -> folder ${targetFolderId}`);
       fixedCount++;
     }
   }
   
-  console.log(`Fixed ${fixedCount} folder mismatches`);
+  safeConsole.log(`Fixed ${fixedCount} folder mismatches`);
   return fixedCount;
 }
