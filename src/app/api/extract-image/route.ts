@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/services/logger';
 
 export async function POST(request: NextRequest) {
+  console.log('🔍 OCR API called');
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    console.log('📁 File received:', file?.name, file?.type, file?.size);
     
     // Get user plan from header
     const userPlan = request.headers.get('X-User-Plan') as 'free' | 'student' | 'pro' || 'free';
+    console.log('👤 User plan:', userPlan);
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -46,7 +49,9 @@ export async function POST(request: NextRequest) {
 
     // Use OpenRouter's vision model to extract text
     const openRouterApiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
+    console.log('🔑 OpenRouter API key present:', !!openRouterApiKey);
     if (!openRouterApiKey) {
+      console.log('❌ No OpenRouter API key found');
       await logger.error('OpenRouter API key not configured', 'general', { fileName: file.name });
       return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
     }
@@ -201,6 +206,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
+    console.log('💥 OCR API Error:', error);
+    console.log('💥 Error message:', error instanceof Error ? error.message : String(error));
+    console.log('💥 Error stack:', error instanceof Error ? error.stack : 'No stack');
     await logger.error('Image processing error', 'general', { 
       error: error instanceof Error ? error.message : String(error)
     });
