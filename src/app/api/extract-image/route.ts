@@ -145,13 +145,14 @@ export async function POST(request: NextRequest) {
           
           // Check if model explicitly found no text
           if (extractedText && extractedText.trim().toUpperCase().includes('NO_TEXT_FOUND')) {
-            await logger.warn('Model found no text in image', 'openrouter', { 
+            await logger.info('Model found no text in image', 'openrouter', { 
               model, 
               attempt: i + 1,
               fileName: file.name 
             });
-            lastError = { error: 'No text found in image' };
-            continue; // Try next model
+            // Treat NO_TEXT_FOUND as successful - the image was processed but contains no text
+            extractedText = 'NO_TEXT_FOUND';
+            break; // Stop trying other models
           }
           
           if (extractedText && extractedText.trim().length > 0) {
@@ -202,6 +203,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         error: 'Failed to extract text from image. Try uploading a PDF or text file instead, or ensure the image contains clear, readable text.' 
       }, { status: 503 });
+    }
+
+    // Handle NO_TEXT_FOUND case
+    if (extractedText === 'NO_TEXT_FOUND') {
+      return NextResponse.json({ 
+        error: 'No readable text found in the image. Please ensure the image contains clear, readable text.' 
+      }, { status: 400 });
     }
 
     return NextResponse.json({
