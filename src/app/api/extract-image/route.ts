@@ -146,8 +146,11 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
+    // Log the actual error for debugging
+    console.error('OCR API Error:', error.message || error);
     return NextResponse.json({ 
-      error: 'Failed to process image. Please try again.' 
+      error: 'Failed to process image. Please try again.',
+      details: error.message || 'Unknown error'
     }, { status: 500 });
   }
 }
