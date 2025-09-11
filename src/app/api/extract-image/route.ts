@@ -207,11 +207,15 @@ export async function POST(request: NextRequest) {
       }, { status: 503 });
     }
 
-    // Handle NO_TEXT_FOUND case
+    // Handle NO_TEXT_FOUND case - return success with special flag
     if (extractedText === 'NO_TEXT_FOUND') {
       return NextResponse.json({ 
-        error: 'No readable text found in the image. Please ensure the image contains clear, readable text.' 
-      }, { status: 400 });
+        text: '',
+        fileName: file.name,
+        fileSize: file.size,
+        success: true,
+        noTextFound: true
+      }, { status: 200 });
     }
 
     return NextResponse.json({

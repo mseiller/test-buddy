@@ -244,6 +244,12 @@ export class FileProcessorNew {
       const result = await response.json();
       safeConsole.log('NEW IMAGE PROCESSOR - OCR extraction successful. Text length:', result.text?.length || 0);
       
+      // Check if the API explicitly found no text
+      if (result.noTextFound) {
+        safeConsole.warn('NEW IMAGE PROCESSOR - Image processed but contains no readable text');
+        throw new Error('No readable text found in the image. Please ensure the image contains clear, readable text.');
+      }
+      
       if (!result.text || result.text.trim().length === 0) {
         safeConsole.warn('NEW IMAGE PROCESSOR - Image processed but contains no text content');
         throw new Error('No text content found in the image. Please ensure the image contains readable text.');
