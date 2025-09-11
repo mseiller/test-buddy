@@ -50,11 +50,13 @@ export async function POST(request: NextRequest) {
     // Use OpenRouter's vision model to extract text
     const openRouterApiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
     console.log('🔑 OpenRouter API key present:', !!openRouterApiKey);
+    console.log('🔑 OpenRouter API key length:', openRouterApiKey?.length || 0);
     if (!openRouterApiKey) {
       console.log('❌ No OpenRouter API key found');
       await logger.error('OpenRouter API key not configured', 'general', { fileName: file.name });
       return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
     }
+    console.log('✅ OpenRouter API key found, proceeding with OCR...');
 
     await logger.info('Starting image text extraction', 'openrouter', { 
       fileName: file.name, 
