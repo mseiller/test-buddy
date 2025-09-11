@@ -75,7 +75,6 @@ export async function POST(request: NextRequest) {
       models = [
         'openai/gpt-4o-mini',  // Best for OCR, fast and accurate
         'openai/gpt-4o',       // Most accurate but slower
-        'openai/gpt-4-vision-preview',  // Specialized vision model
         'openai/gpt-4o-mini'   // Fallback
       ];
     } else {
