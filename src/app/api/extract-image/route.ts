@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/services/logger';
-import { safeConsole } from '@/utils/console';
 
 export async function POST(request: NextRequest) {
   try {
@@ -204,8 +203,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     await logger.error('Image processing error', 'general', { 
-      error: error instanceof Error ? error.message : String(error),
-      fileName: file?.name || 'unknown'
+      error: error instanceof Error ? error.message : String(error)
     });
     return NextResponse.json({ 
       error: 'Failed to process image. Please try again.' 
