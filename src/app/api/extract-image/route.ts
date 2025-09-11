@@ -8,6 +8,13 @@ export async function POST(request: NextRequest) {
     
     // Get user plan from header
     const userPlan = request.headers.get('X-User-Plan') as 'free' | 'student' | 'pro' || 'free';
+    
+    // Debug log for user plan
+    await logger.info('OCR request received', 'general', { 
+      userPlan,
+      headerValue: request.headers.get('X-User-Plan'),
+      fileName: file?.name || 'unknown'
+    });
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -55,7 +62,8 @@ export async function POST(request: NextRequest) {
       fileName: file.name, 
       fileSize: file.size, 
       fileType,
-      userPlan 
+      userPlan,
+      base64Length: base64Image.length 
     });
 
     // Try models with retry pattern based on user plan
@@ -71,12 +79,15 @@ export async function POST(request: NextRequest) {
         'openai/gpt-4o-mini'   // Fallback
       ];
     } else {
-      // Free/Student users: Vision-capable free models
+      // Free/Student users: Vision-capable free models with better fallbacks
       models = [
         'qwen/qwen-vl-plus',           // Qwen vision model
         'qwen/qwen-vl-max',            // Better Qwen vision
-        'qwen/qwen3-235b-a22b:free',   // Fallback to text-only
-        'mistralai/mistral-large-2407:free'  // Alternative
+        'qwen/qwen-vl-7b',             // Smaller Qwen vision model
+        'qwen/qwen-vl-2',              // Alternative Qwen vision
+        'llava-v1.6-mistral-7b',       // LLaVA vision model
+        'llava-v1.6-vicuna-7b',        // Another LLaVA model
+        'qwen/qwen3-235b-a22b:free'    // Last resort text-only
       ];
     }
 
