@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { logger } from '@/services/logger';
+import { logger } from '@/services/logger';
+import { safeConsole } from '@/utils/console';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('OCR API called');
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    console.log('File received:', file?.name, file?.size);
     
     // Get user plan from header
     const userPlan = request.headers.get('X-User-Plan') as 'free' | 'student' | 'pro' || 'free';
-    
-    // Debug log for user plan
-    console.log('OCR request received:', { 
-      userPlan,
-      headerValue: request.headers.get('X-User-Plan'),
-      fileName: file?.name || 'unknown'
-    });
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -33,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!supportedFormats.includes(fileType)) {
       // For HEIC files, we'll try to process them but warn the user
       if (fileType === 'image/heic') {
-        console.log('HEIC format detected, attempting to process', { fileName: file.name, fileType });
+        await logger.warn('HEIC format detected, attempting to process', 'general', { fileName: file.name, fileType });
       } else {
         return NextResponse.json({ 
           error: 'Unsupported image format. Please use JPG or PNG files. HEIC files may not work reliably.' 
@@ -56,20 +48,16 @@ export async function POST(request: NextRequest) {
     // Use OpenRouter's vision model to extract text
     const openRouterApiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
     if (!openRouterApiKey) {
-      console.error('OpenRouter API key not configured', { fileName: file.name });
+      await logger.error('OpenRouter API key not configured', 'general', { fileName: file.name });
       return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
     }
 
-    console.log('Starting image text extraction', { 
+    await logger.info('Starting image text extraction', 'openrouter', { 
       fileName: file.name, 
       fileSize: file.size, 
       fileType,
-      userPlan,
-      base64Length: base64Image.length 
+      userPlan 
     });
-    
-    // Debug: Log the first part of the base64 to see if it's valid
-    console.log('Base64 starts with:', base64Image.substring(0, 50));
 
     // Try models with retry pattern based on user plan
     // Using vision-capable models that are better for OCR
@@ -83,15 +71,12 @@ export async function POST(request: NextRequest) {
         'openai/gpt-4o-mini'   // Fallback
       ];
     } else {
-      // Free/Student users: Vision-capable free models with better fallbacks
+      // Free/Student users: Vision-capable free models
       models = [
         'qwen/qwen-vl-plus',           // Qwen vision model
         'qwen/qwen-vl-max',            // Better Qwen vision
-        'qwen/qwen-vl-7b',             // Smaller Qwen vision model
-        'qwen/qwen-vl-2',              // Alternative Qwen vision
-        'llava-v1.6-mistral-7b',       // LLaVA vision model
-        'llava-v1.6-vicuna-7b',        // Another LLaVA model
-        'qwen/qwen3-235b-a22b:free'    // Last resort text-only
+        'qwen/qwen3-235b-a22b:free',   // Fallback to text-only
+        'mistralai/mistral-large-2407:free'  // Alternative
       ];
     }
 
@@ -101,7 +86,7 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < models.length; i++) {
       const model = models[i];
       try {
-        console.log(`OCR attempt ${i + 1}/${models.length}`, { 
+        await logger.info(`OCR attempt ${i + 1}/${models.length}`, 'openrouter', { 
           model, 
           fileName: file.name,
           userPlan 
@@ -148,25 +133,19 @@ export async function POST(request: NextRequest) {
           const data = await response.json();
           extractedText = data.choices?.[0]?.message?.content;
           
-          console.log(`Model ${model} response:`, {
-            extractedText: extractedText?.substring(0, 200) + (extractedText?.length > 200 ? '...' : ''),
-            fullLength: extractedText?.length || 0
-          });
-          
           // Check if model explicitly found no text
           if (extractedText && extractedText.trim().toUpperCase().includes('NO_TEXT_FOUND')) {
-            console.log('Model found no text in image', { 
+            await logger.warn('Model found no text in image', 'openrouter', { 
               model, 
               attempt: i + 1,
               fileName: file.name 
             });
-            // This means OCR failed - continue to next model
-            lastError = { error: 'Model reported no text found' };
-            continue;
+            lastError = { error: 'No text found in image' };
+            continue; // Try next model
           }
           
           if (extractedText && extractedText.trim().length > 0) {
-            console.log('OCR extraction successful', { 
+            await logger.info('OCR extraction successful', 'openrouter', { 
               model, 
               attempt: i + 1, 
               textLength: extractedText.length,
@@ -174,7 +153,7 @@ export async function POST(request: NextRequest) {
             });
             break;
           } else {
-            console.log('Model returned empty text', { 
+            await logger.warn('Model returned empty text', 'openrouter', { 
               model, 
               attempt: i + 1,
               fileName: file.name 
@@ -183,7 +162,7 @@ export async function POST(request: NextRequest) {
           }
         } else {
           const errorData = await response.json().catch(() => ({}));
-          console.log('OCR model failed', { 
+          await logger.warn('OCR model failed', 'openrouter', { 
             model, 
             attempt: i + 1, 
             status: response.status,
@@ -193,7 +172,7 @@ export async function POST(request: NextRequest) {
           lastError = errorData;
         }
       } catch (error) {
-        console.error('OCR model error', { 
+        await logger.error('OCR model error', 'openrouter', { 
           model, 
           attempt: i + 1, 
           error: error instanceof Error ? error.message : String(error),
@@ -204,7 +183,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
-      console.error('All OCR models failed', { 
+      await logger.error('All OCR models failed', 'openrouter', { 
         fileName: file.name, 
         userPlan,
         lastError: lastError instanceof Error ? lastError.message : lastError,
@@ -212,13 +191,6 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({ 
         error: 'Failed to extract text from image. Try uploading a PDF or text file instead, or ensure the image contains clear, readable text.' 
-      }, { status: 503 });
-    }
-
-    // Handle NO_TEXT_FOUND case - this means OCR failed to extract text that should be there
-    if (extractedText === 'NO_TEXT_FOUND') {
-      return NextResponse.json({ 
-        error: 'OCR failed to extract text from image. The image may contain text that is not clearly readable to the AI models.' 
       }, { status: 503 });
     }
 
@@ -230,10 +202,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('OCR API error:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Image processing error', { 
-      error: error instanceof Error ? error.message : String(error)
+    await logger.error('Image processing error', 'general', { 
+      error: error instanceof Error ? error.message : String(error),
+      fileName: file?.name || 'unknown'
     });
     return NextResponse.json({ 
       error: 'Failed to process image. Please try again.' 
