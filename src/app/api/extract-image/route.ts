@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
       userPlan,
       base64Length: base64Image.length 
     });
+    
+    // Debug: Log the first part of the base64 to see if it's valid
+    console.log('Base64 starts with:', base64Image.substring(0, 50));
 
     // Try models with retry pattern based on user plan
     // Using vision-capable models that are better for OCR
@@ -145,6 +148,11 @@ export async function POST(request: NextRequest) {
           const data = await response.json();
           extractedText = data.choices?.[0]?.message?.content;
           
+          console.log(`Model ${model} response:`, {
+            extractedText: extractedText?.substring(0, 200) + (extractedText?.length > 200 ? '...' : ''),
+            fullLength: extractedText?.length || 0
+          });
+          
           // Check if model explicitly found no text
           if (extractedText && extractedText.trim().toUpperCase().includes('NO_TEXT_FOUND')) {
             console.log('Model found no text in image', { 
@@ -152,9 +160,9 @@ export async function POST(request: NextRequest) {
               attempt: i + 1,
               fileName: file.name 
             });
-            // Treat NO_TEXT_FOUND as successful - the image was processed but contains no text
-            extractedText = 'NO_TEXT_FOUND';
-            break; // Stop trying other models
+            // This means OCR failed - continue to next model
+            lastError = { error: 'Model reported no text found' };
+            continue;
           }
           
           if (extractedText && extractedText.trim().length > 0) {
@@ -207,15 +215,11 @@ export async function POST(request: NextRequest) {
       }, { status: 503 });
     }
 
-    // Handle NO_TEXT_FOUND case - return success with special flag
+    // Handle NO_TEXT_FOUND case - this means OCR failed to extract text that should be there
     if (extractedText === 'NO_TEXT_FOUND') {
       return NextResponse.json({ 
-        text: '',
-        fileName: file.name,
-        fileSize: file.size,
-        success: true,
-        noTextFound: true
-      }, { status: 200 });
+        error: 'OCR failed to extract text from image. The image may contain text that is not clearly readable to the AI models.' 
+      }, { status: 503 });
     }
 
     return NextResponse.json({
