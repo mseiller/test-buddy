@@ -21,6 +21,9 @@ export async function GET() {
         user: !!process.env.NAMECHEAP_EMAIL_USER,
         password: !!process.env.NAMECHEAP_EMAIL_PASSWORD,
         supportEmail: !!process.env.NAMECHEAP_SUPPORT_EMAIL,
+      },
+      openrouter: {
+        apiKey: !!process.env.NEXT_PUBLIC_OPENROUTER_API_KEY,
       }
     };
 
