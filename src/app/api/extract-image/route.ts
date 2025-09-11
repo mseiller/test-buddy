@@ -3,8 +3,10 @@ import { logger } from '@/services/logger';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('OCR API called');
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    console.log('File received:', file?.name, file?.size);
     
     // Get user plan from header
     const userPlan = request.headers.get('X-User-Plan') as 'free' | 'student' | 'pro' || 'free';
@@ -220,6 +222,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
+    console.error('OCR API error:', error);
+    console.error('Error stack:', error.stack);
     await logger.error('Image processing error', 'general', { 
       error: error instanceof Error ? error.message : String(error)
     });

@@ -1,0 +1,5 @@
+TEST IMAGE FOR OCR
+This is a test image containing readable text.
+The OCR should be able to extract this text successfully.
+Page 107 - THE GREAT MUSICIAN
+Sample text for testing purposes.
