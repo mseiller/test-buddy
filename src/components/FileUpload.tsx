@@ -255,6 +255,7 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
                 <li>Files are processed immediately and not stored</li>
                 <li>To create multiple quizzes from the same document, upload it again</li>
                 <li>Supported formats: PDF, JPEG, PNG, GIF, WebP, DOC, DOCX, TXT, CSV, XLS, XLSX</li>
+                <li>PDFs: Text-based PDFs work best. For scanned/image PDFs, convert pages to JPEG/PNG first</li>
                 <li>Maximum file size: 25MB</li>
               </ul>
             </div>

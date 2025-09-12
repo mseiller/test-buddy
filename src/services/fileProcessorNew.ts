@@ -168,9 +168,31 @@ export class FileProcessorNew {
         const errorText = await response.text();
         safeConsole.error('NEW PDF PROCESSOR - PDF API error response:', errorText);
         
-        // If server fails, provide helpful error message
-        console.error('NEW PDF PROCESSOR - Server failed with status:', response.status);
-        throw new Error(`PDF processing failed (Server error ${response.status}). Please try a smaller PDF or contact support if the issue persists.`);
+        // Try to parse the error response for better user guidance
+        let errorMessage = `PDF processing failed (Server error ${response.status}).`;
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+          if (errorData.suggestion) {
+            errorMessage += ` ${errorData.suggestion}`;
+          }
+        } catch (e) {
+          // If we can't parse the error, use the raw text
+          if (errorText && errorText.length < 200) {
+            errorMessage = errorText;
+          }
+        }
+        
+        console.error('NEW PDF PROCESSOR - Server failed with status:', response.status, 'Error:', errorMessage);
+        
+        // If it's a 422 error, it's likely an image-based PDF
+        if (response.status === 422) {
+          throw new Error('This PDF appears to be image-based or scanned. Please convert the PDF pages to images (JPEG/PNG) and use the image OCR feature instead. Most PDFs with photos or scanned documents need to be processed as images.');
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const result = await response.json();
