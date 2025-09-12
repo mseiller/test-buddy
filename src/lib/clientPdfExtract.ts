@@ -1,7 +1,7 @@
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 
 // Use version-specific worker to avoid version mismatch
-GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${require('pdfjs-dist/package.json').version}/build/pdf.worker.min.js`;
+GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.js';
 
 export interface ClientPdfResult {
   text: string;
