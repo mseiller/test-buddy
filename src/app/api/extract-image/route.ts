@@ -28,7 +28,15 @@ export async function POST(request: Request) {
 
     // Use OpenRouter's vision model to extract text
     const openRouterApiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
+    console.log('OCR API - Environment check:', {
+      hasApiKey: !!openRouterApiKey,
+      keyLength: openRouterApiKey?.length || 0,
+      appUrl: process.env.NEXT_PUBLIC_APP_URL,
+      nodeEnv: process.env.NODE_ENV
+    });
+    
     if (!openRouterApiKey) {
+      console.error('OCR API - Missing OpenRouter API key');
       return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
     }
 
@@ -70,10 +78,15 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('OpenRouter API error:', errorData);
+      console.error('OCR API - OpenRouter API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        headers: Object.fromEntries(response.headers.entries())
+      });
       return NextResponse.json({ 
         error: 'OCR service failed',
-        details: errorData.error?.message || 'Unknown error'
+        details: errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`
       }, { status: 500 });
     }
 
