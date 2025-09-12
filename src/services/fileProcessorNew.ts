@@ -95,7 +95,7 @@ export class FileProcessorNew {
         copiedPages.forEach((page) => chunkDoc.addPage(page));
         
         const chunkBytes = await chunkDoc.save();
-        const chunkFile = new File([chunkBytes], `${file.name.replace('.pdf', '')}_part${Math.floor(startPage / pagesPerChunk) + 1}.pdf`, { type: 'application/pdf' });
+        const chunkFile = new File([new Uint8Array(chunkBytes)], `${file.name.replace('.pdf', '')}_part${Math.floor(startPage / pagesPerChunk) + 1}.pdf`, { type: 'application/pdf' });
         
         chunks.push(chunkFile);
         console.log(`PDF CHUNKING - Created chunk ${Math.floor(startPage / pagesPerChunk) + 1}: pages ${startPage + 1}-${endPage + 1}, size: ${chunkFile.size} bytes`);
