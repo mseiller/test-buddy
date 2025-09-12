@@ -1,7 +1,7 @@
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 
-// Bundle the worker locally instead of using CDN
-GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// Use version-specific worker to avoid version mismatch
+GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${require('pdfjs-dist/package.json').version}/build/pdf.worker.min.js`;
 
 export interface ClientPdfResult {
   text: string;

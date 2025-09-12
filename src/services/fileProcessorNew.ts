@@ -2,7 +2,6 @@ import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import { safeConsole } from '@/utils/console';
 import imageCompression from 'browser-image-compression';
-import heic2any from 'heic2any';
 import { PDFDocument } from 'pdf-lib';
 
 export class FileProcessorNew {
@@ -38,26 +37,27 @@ export class FileProcessorNew {
     return extension || '';
   }
 
-  private static async convertHeicToJpeg(file: File): Promise<File> {
-    console.log('HEIC CONVERSION - Converting HEIC file:', file.name, 'Size:', file.size);
+  private static async handleHeicFile(file: File): Promise<never> {
+    console.log('HEIC HANDLING - HEIC file detected:', file.name, 'Size:', file.size);
     
-    try {
-      const convertedBlob = await heic2any({
-        blob: file,
-        toType: 'image/jpeg',
-        quality: 0.8
-      });
-      
-      // heic2any returns an array, get the first item
-      const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-      const convertedFile = new File([blob], file.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
-      
-      console.log('HEIC CONVERSION - Converted file size:', convertedFile.size, 'bytes');
-      return convertedFile;
-    } catch (error) {
-      console.error('HEIC CONVERSION - Failed to convert HEIC file:', error);
-      throw new Error('Failed to convert HEIC image. Please try converting it to JPEG manually.');
-    }
+    // Provide helpful instructions for HEIC files
+    const instructions = `
+HEIC files are not supported for direct processing. Here are your options:
+
+1. **Convert on iPhone/iPad**: 
+   - Go to Settings > Camera > Formats
+   - Select "Most Compatible" instead of "High Efficiency"
+   - Take new photos (they'll be JPEG)
+
+2. **Convert existing HEIC files**:
+   - Use online converters like convertio.co or cloudconvert.com
+   - Use macOS Preview: Open HEIC file > File > Export > Format: JPEG
+
+3. **Alternative**: Use regular JPEG/PNG images instead
+
+Please convert your HEIC files to JPEG and try again.`;
+    
+    throw new Error(instructions);
   }
 
   private static async chunkPdf(file: File): Promise<File[]> {
@@ -184,18 +184,9 @@ export class FileProcessorNew {
         const errorText = await response.text();
         safeConsole.error('NEW PDF PROCESSOR - PDF API error response:', errorText);
         
-        // If server fails, try client-side fallback
-        safeConsole.log('NEW PDF PROCESSOR - Server failed, trying client-side fallback...');
-        try {
-          const { extractPdfText } = await import('@/lib/clientPdfExtract');
-          safeConsole.log('NEW PDF PROCESSOR - Client-side fallback starting...');
-          const clientResult = await extractPdfText(file);
-          safeConsole.log('NEW PDF PROCESSOR - Client-side fallback successful. Text length:', clientResult.text.length);
-          return clientResult.text;
-        } catch (clientError) {
-          safeConsole.error('NEW PDF PROCESSOR - Client-side fallback also failed:', clientError);
-          throw new Error(`PDF extraction failed on both server and client: ${clientError instanceof Error ? clientError.message : 'Unknown error'}`);
-        }
+        // If server fails, provide helpful error message
+        console.error('NEW PDF PROCESSOR - Server failed with status:', response.status);
+        throw new Error(`PDF processing failed (Server error ${response.status}). Please try a smaller PDF or contact support if the issue persists.`);
       }
       
       const result = await response.json();
@@ -322,12 +313,13 @@ export class FileProcessorNew {
   private static async extractFromImage(file: File): Promise<string> {
     console.log('NEW IMAGE PROCESSOR - Starting image OCR for file:', file.name, 'Size:', file.size);
     
-    // Convert HEIC to JPEG first
-    let processedFile = file;
+    // Handle HEIC files
     if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
-      console.log('NEW IMAGE PROCESSOR - Converting HEIC to JPEG...');
-      processedFile = await this.convertHeicToJpeg(file);
+      console.log('NEW IMAGE PROCESSOR - HEIC file detected, providing conversion instructions...');
+      await this.handleHeicFile(file);
     }
+    
+    let processedFile = file;
     
     // Compress image if it's larger than 3MB to ensure it stays under 4MB limit
     if (processedFile.size > 3 * 1024 * 1024) {
