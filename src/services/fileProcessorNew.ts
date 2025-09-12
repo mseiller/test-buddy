@@ -219,16 +219,17 @@ export class FileProcessorNew {
       const formData = new FormData();
       formData.append('file', file);
       
-      safeConsole.log('NEW IMAGE PROCESSOR - Sending image to OCR API endpoint...');
-      safeConsole.log('NEW IMAGE PROCESSOR - Current URL:', window.location.href);
-      safeConsole.log('NEW IMAGE PROCESSOR - API URL:', '/api/extract-image');
+      console.log('NEW IMAGE PROCESSOR - Sending image to OCR API endpoint...');
+      console.log('NEW IMAGE PROCESSOR - Current URL:', window.location.href);
+      console.log('NEW IMAGE PROCESSOR - API URL:', '/api/extract-image');
       
       const response = await fetch('/api/extract-image', {
         method: 'POST',
         body: formData,
       });
       
-      safeConsole.log('NEW IMAGE PROCESSOR - OCR API response status:', response.status);
+      console.log('NEW IMAGE PROCESSOR - OCR API response status:', response.status);
+      console.log('NEW IMAGE PROCESSOR - Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -237,12 +238,13 @@ export class FileProcessorNew {
       }
       
       const result = await response.json();
-      safeConsole.log('NEW IMAGE PROCESSOR - Full API response:', result);
-      safeConsole.log('NEW IMAGE PROCESSOR - OCR extraction successful. Text length:', result.text?.length || 0);
+      console.log('NEW IMAGE PROCESSOR - Full API response:', result);
+      console.log('NEW IMAGE PROCESSOR - OCR extraction successful. Text length:', result.text?.length || 0);
       
       if (!result.text || result.text.trim().length === 0) {
-        safeConsole.warn('NEW IMAGE PROCESSOR - Image processed but contains no text content');
-        safeConsole.warn('NEW IMAGE PROCESSOR - Response structure:', Object.keys(result));
+        console.warn('NEW IMAGE PROCESSOR - Image processed but contains no text content');
+        console.warn('NEW IMAGE PROCESSOR - Response structure:', Object.keys(result));
+        console.warn('NEW IMAGE PROCESSOR - Full result object:', JSON.stringify(result, null, 2));
         throw new Error('No text content found in the image. Please ensure the image contains readable text.');
       }
       
