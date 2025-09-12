@@ -40,24 +40,8 @@ export class FileProcessorNew {
   private static async handleHeicFile(file: File): Promise<never> {
     console.log('HEIC HANDLING - HEIC file detected:', file.name, 'Size:', file.size);
     
-    // Provide helpful instructions for HEIC files
-    const instructions = `
-HEIC files are not supported for direct processing. Here are your options:
-
-1. **Convert on iPhone/iPad**: 
-   - Go to Settings > Camera > Formats
-   - Select "Most Compatible" instead of "High Efficiency"
-   - Take new photos (they'll be JPEG)
-
-2. **Convert existing HEIC files**:
-   - Use online converters like convertio.co or cloudconvert.com
-   - Use macOS Preview: Open HEIC file > File > Export > Format: JPEG
-
-3. **Alternative**: Use regular JPEG/PNG images instead
-
-Please convert your HEIC files to JPEG and try again.`;
-    
-    throw new Error(instructions);
+    // Provide a concise error message that will display nicely in the UI
+    throw new Error('HEIC files are not supported. Please convert to JPEG using your phone settings (Camera > Formats > Most Compatible) or an online converter, then try again.');
   }
 
   private static async chunkPdf(file: File): Promise<File[]> {
@@ -71,13 +55,13 @@ Please convert your HEIC files to JPEG and try again.`;
       console.log('PDF CHUNKING - PDF has', pageCount, 'pages');
       
       // If PDF is small enough, return as single file
-      if (file.size <= 3.5 * 1024 * 1024) {
+      if (file.size <= 2.5 * 1024 * 1024) {
         console.log('PDF CHUNKING - PDF is small enough, no chunking needed');
         return [file];
       }
       
-      // Calculate pages per chunk (aim for ~3MB chunks)
-      const targetChunkSize = 3.5 * 1024 * 1024;
+      // Calculate pages per chunk (aim for ~1.8MB chunks to be safer)
+      const targetChunkSize = 1.8 * 1024 * 1024;
       const estimatedPageSize = file.size / pageCount;
       const pagesPerChunk = Math.max(1, Math.floor(targetChunkSize / estimatedPageSize));
       
@@ -147,7 +131,7 @@ Please convert your HEIC files to JPEG and try again.`;
     console.log('NEW PDF PROCESSOR - Starting PDF extraction for file:', file.name, 'Size:', file.size);
     
     // Check if PDF needs chunking
-    if (file.size > 3.5 * 1024 * 1024) {
+    if (file.size > 2.5 * 1024 * 1024) {
       console.log('NEW PDF PROCESSOR - PDF is large, chunking into smaller parts...');
       const chunks = await this.chunkPdf(file);
       

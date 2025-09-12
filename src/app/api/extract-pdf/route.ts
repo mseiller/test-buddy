@@ -65,11 +65,12 @@ export async function POST(request: NextRequest) {
       console.log('PDF extraction completed. Pages:', pdfData.numpages, 'Text length:', pdfData.text?.length || 0);
       
       if (!pdfData.text || pdfData.text.trim().length === 0) {
-        console.warn('PDF contains no text content');
+        console.warn('PDF contains no text content - likely image-based or scanned');
         return NextResponse.json({ 
-          error: 'No text content found in PDF. The file might be image-based or contain only scanned pages.',
+          error: 'This PDF appears to be image-based or scanned. Please use OCR on the images instead, or try a text-based PDF.',
           pages: pdfData.numpages,
-          info: pdfData.info 
+          info: pdfData.info,
+          suggestion: 'For image-based PDFs, try converting the pages to images and use the image OCR feature instead.'
         }, { status: 422 });
       }
       
