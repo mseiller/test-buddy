@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// Use the same pattern as the working OpenRouter service
+const API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
 export async function POST(request: Request) {
   try {
     console.log('OCR API called');
@@ -27,15 +31,14 @@ export async function POST(request: Request) {
     const base64Image = buffer.toString('base64');
 
     // Use OpenRouter's vision model to extract text
-    const openRouterApiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
     console.log('OCR API - Environment check:', {
-      hasApiKey: !!openRouterApiKey,
-      keyLength: openRouterApiKey?.length || 0,
+      hasApiKey: !!API_KEY,
+      keyLength: API_KEY?.length || 0,
       appUrl: process.env.NEXT_PUBLIC_APP_URL,
       nodeEnv: process.env.NODE_ENV
     });
     
-    if (!openRouterApiKey) {
+    if (!API_KEY) {
       console.error('OCR API - Missing OpenRouter API key');
       return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
     }
@@ -43,10 +46,10 @@ export async function POST(request: Request) {
     console.log('Starting OCR for file:', file.name, 'Size:', file.size);
 
     // Use GPT-4 Vision for OCR
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openRouterApiKey}`,
+        'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
         'X-Title': 'Test Buddy - Image OCR'
