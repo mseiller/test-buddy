@@ -20,9 +20,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
     }
 
-    // Check file size (max 10MB for images)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Image file too large. Please use images smaller than 10MB.' }, { status: 400 });
+    // Check file size (max 4MB for Vercel compatibility)
+    if (file.size > 4 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Image file too large. Please use images smaller than 4MB.' }, { status: 413 });
     }
 
     // Convert file to base64

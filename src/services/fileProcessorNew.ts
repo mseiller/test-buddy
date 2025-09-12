@@ -209,10 +209,10 @@ export class FileProcessorNew {
   private static async extractFromImage(file: File): Promise<string> {
     safeConsole.log('NEW IMAGE PROCESSOR - Starting image OCR for file:', file.name, 'Size:', file.size);
     
-    // Check file size (max 10MB for images)
-    if (file.size > 10 * 1024 * 1024) {
-      safeConsole.log('NEW IMAGE PROCESSOR - File is larger than 10MB, cannot process');
-      throw new Error('Image file is too large (over 10MB). Please compress your image or use a smaller file.');
+    // Check file size (max 4MB for Vercel compatibility)
+    if (file.size > 4 * 1024 * 1024) {
+      console.log('NEW IMAGE PROCESSOR - File is larger than 4MB, cannot process');
+      throw new Error('Image file is too large (over 4MB). Please compress your image or use a smaller file.');
     }
     
     try {
@@ -232,8 +232,11 @@ export class FileProcessorNew {
       console.log('NEW IMAGE PROCESSOR - Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
+        if (response.status === 413) {
+          throw new Error('Image file is too large for processing. Please compress your image to under 4MB or use a smaller file.');
+        }
         const errorData = await response.json().catch(() => ({}));
-        safeConsole.error('NEW IMAGE PROCESSOR - OCR API error response:', errorData);
+        console.error('NEW IMAGE PROCESSOR - OCR API error response:', errorData);
         throw new Error(errorData.error || 'Failed to extract text from image');
       }
       
