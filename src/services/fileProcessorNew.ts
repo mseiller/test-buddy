@@ -189,7 +189,15 @@ export class FileProcessorNew {
         
         // If it's a 422 error, it's likely an image-based PDF
         if (response.status === 422) {
-          throw new Error('This PDF appears to be image-based or scanned. Please convert the PDF pages to images (JPEG/PNG) and use the image OCR feature instead. Most PDFs with photos or scanned documents need to be processed as images.');
+          // Create a special error that includes helpful conversion links
+          const error = new Error('This PDF appears to be image-based or scanned. Please convert the PDF pages to images (JPEG/PNG) and use the image OCR feature instead.');
+          (error as any).isImageBasedPdf = true;
+          (error as any).conversionLinks = [
+            { name: 'PDF24 Converter', url: 'https://tools.pdf24.org/en/pdf-to-jpg' },
+            { name: 'SmallPDF Converter', url: 'https://smallpdf.com/pdf-to-jpg' },
+            { name: 'ILovePDF Converter', url: 'https://www.ilovepdf.com/pdf_to_jpg' }
+          ];
+          throw error;
         }
         
         throw new Error(errorMessage);

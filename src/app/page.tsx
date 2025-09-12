@@ -125,8 +125,15 @@ export default function Home() {
     setAppState('config');
   };
 
-  const handleFileError = (error: string) => {
-    setError(error);
+  const handleFileError = (error: string | any) => {
+    // Check if this is an image-based PDF error with conversion links
+    if (typeof error === 'object' && error?.isImageBasedPdf && error?.conversionLinks) {
+      setError(`PDF Conversion Required: ${error.message}`);
+      // Store conversion links for display
+      (window as any).pdfConversionLinks = error.conversionLinks;
+    } else {
+      setError(typeof error === 'string' ? error : error?.message || 'An error occurred');
+    }
   };
 
   const handleConfigSubmit = async (quizType: QuizType, questionCount: number, name: string, allowMultipleAnswers: boolean = false) => {
@@ -478,9 +485,39 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-6 mb-6">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
               <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="text-red-800 font-medium">Error</h3>
-                <p className="text-red-700 mt-1">{error}</p>
+              <div className="flex-1">
+                <h3 className="text-red-800 font-medium">
+                  {error.startsWith('PDF Conversion Required:') ? 'PDF Conversion Needed' : 'Error'}
+                </h3>
+                <p className="text-red-700 mt-1">
+                  {error.startsWith('PDF Conversion Required:') 
+                    ? error.replace('PDF Conversion Required: ', '')
+                    : error
+                  }
+                </p>
+                
+                {/* Show conversion links for PDF errors */}
+                {error.startsWith('PDF Conversion Required:') && (window as any).pdfConversionLinks && (
+                  <div className="mt-3">
+                    <p className="text-red-700 text-sm font-medium mb-2">Quick conversion tools:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(window as any).pdfConversionLinks.map((link: any, index: number) => (
+                        <a
+                          key={index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-800 text-sm font-medium rounded-md hover:bg-blue-200 transition-colors"
+                        >
+                          {link.name}
+                        </a>
+                      ))}
+                    </div>
+                    <p className="text-red-600 text-xs mt-2">
+                      After converting, upload the images (JPEG/PNG) and use the image OCR feature.
+                    </p>
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => setError('')}
