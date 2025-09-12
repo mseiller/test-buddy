@@ -2,6 +2,8 @@ import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import { safeConsole } from '@/utils/console';
 import imageCompression from 'browser-image-compression';
+import heic2any from 'heic2any';
+import { PDFDocument } from 'pdf-lib';
 
 export class FileProcessorNew {
   static async extractTextFromFile(file: File): Promise<string> {
@@ -34,6 +36,77 @@ export class FileProcessorNew {
   private static getFileType(fileName: string): string {
     const extension = fileName.split('.').pop()?.toLowerCase();
     return extension || '';
+  }
+
+  private static async convertHeicToJpeg(file: File): Promise<File> {
+    console.log('HEIC CONVERSION - Converting HEIC file:', file.name, 'Size:', file.size);
+    
+    try {
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.8
+      });
+      
+      // heic2any returns an array, get the first item
+      const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+      const convertedFile = new File([blob], file.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
+      
+      console.log('HEIC CONVERSION - Converted file size:', convertedFile.size, 'bytes');
+      return convertedFile;
+    } catch (error) {
+      console.error('HEIC CONVERSION - Failed to convert HEIC file:', error);
+      throw new Error('Failed to convert HEIC image. Please try converting it to JPEG manually.');
+    }
+  }
+
+  private static async chunkPdf(file: File): Promise<File[]> {
+    console.log('PDF CHUNKING - Starting PDF chunking for file:', file.name, 'Size:', file.size);
+    
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const pageCount = pdfDoc.getPageCount();
+      
+      console.log('PDF CHUNKING - PDF has', pageCount, 'pages');
+      
+      // If PDF is small enough, return as single file
+      if (file.size <= 3.5 * 1024 * 1024) {
+        console.log('PDF CHUNKING - PDF is small enough, no chunking needed');
+        return [file];
+      }
+      
+      // Calculate pages per chunk (aim for ~3MB chunks)
+      const targetChunkSize = 3.5 * 1024 * 1024;
+      const estimatedPageSize = file.size / pageCount;
+      const pagesPerChunk = Math.max(1, Math.floor(targetChunkSize / estimatedPageSize));
+      
+      console.log('PDF CHUNKING - Estimated pages per chunk:', pagesPerChunk);
+      
+      const chunks: File[] = [];
+      
+      for (let startPage = 0; startPage < pageCount; startPage += pagesPerChunk) {
+        const endPage = Math.min(startPage + pagesPerChunk - 1, pageCount - 1);
+        
+        // Create new PDF with selected pages
+        const chunkDoc = await PDFDocument.create();
+        const copiedPages = await chunkDoc.copyPages(pdfDoc, Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i));
+        
+        copiedPages.forEach((page) => chunkDoc.addPage(page));
+        
+        const chunkBytes = await chunkDoc.save();
+        const chunkFile = new File([chunkBytes], `${file.name.replace('.pdf', '')}_part${Math.floor(startPage / pagesPerChunk) + 1}.pdf`, { type: 'application/pdf' });
+        
+        chunks.push(chunkFile);
+        console.log(`PDF CHUNKING - Created chunk ${Math.floor(startPage / pagesPerChunk) + 1}: pages ${startPage + 1}-${endPage + 1}, size: ${chunkFile.size} bytes`);
+      }
+      
+      console.log('PDF CHUNKING - Created', chunks.length, 'chunks');
+      return chunks;
+    } catch (error) {
+      console.error('PDF CHUNKING - Failed to chunk PDF:', error);
+      throw new Error('Failed to process large PDF. Please try splitting it manually or use a smaller PDF.');
+    }
   }
 
   private static async compressImage(file: File): Promise<File> {
@@ -71,25 +144,41 @@ export class FileProcessorNew {
   }
 
   private static async extractFromPdf(file: File): Promise<string> {
-    safeConsole.log('NEW PDF PROCESSOR - Starting PDF extraction for file:', file.name, 'Size:', file.size);
+    console.log('NEW PDF PROCESSOR - Starting PDF extraction for file:', file.name, 'Size:', file.size);
     
-    // For files larger than 4MB, show a helpful error message
-    if (file.size > 4 * 1024 * 1024) {
-      safeConsole.log('NEW PDF PROCESSOR - File is larger than 4MB, cannot process due to Vercel limits');
-      throw new Error('PDF file is too large (over 4MB). Due to platform limitations, we can only process PDFs up to 4MB. Please try compressing your PDF or splitting it into smaller files.');
+    // Check if PDF needs chunking
+    if (file.size > 3.5 * 1024 * 1024) {
+      console.log('NEW PDF PROCESSOR - PDF is large, chunking into smaller parts...');
+      const chunks = await this.chunkPdf(file);
+      
+      let combinedText = '';
+      for (let i = 0; i < chunks.length; i++) {
+        console.log(`NEW PDF PROCESSOR - Processing chunk ${i + 1}/${chunks.length}`);
+        const chunkText = await this.extractFromPdfChunk(chunks[i]);
+        combinedText += `\n\n--- Part ${i + 1} ---\n\n${chunkText}`;
+      }
+      
+      console.log('NEW PDF PROCESSOR - All chunks processed. Total text length:', combinedText.length);
+      return combinedText;
     }
+    
+    return this.extractFromPdfChunk(file);
+  }
+
+  private static async extractFromPdfChunk(file: File): Promise<string> {
+    console.log('NEW PDF PROCESSOR - Processing PDF chunk:', file.name, 'Size:', file.size);
     
     try {
       const formData = new FormData();
       formData.append('file', file);
       
-      safeConsole.log('NEW PDF PROCESSOR - Sending PDF to API endpoint...');
+      console.log('NEW PDF PROCESSOR - Sending PDF chunk to API endpoint...');
       const response = await fetch('/api/extract-pdf', {
         method: 'POST',
         body: formData,
       });
       
-      safeConsole.log('NEW PDF PROCESSOR - PDF API response status:', response.status);
+      console.log('NEW PDF PROCESSOR - PDF API response status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -233,11 +322,17 @@ export class FileProcessorNew {
   private static async extractFromImage(file: File): Promise<string> {
     console.log('NEW IMAGE PROCESSOR - Starting image OCR for file:', file.name, 'Size:', file.size);
     
-    // Compress image if it's larger than 3MB to ensure it stays under 4MB limit
+    // Convert HEIC to JPEG first
     let processedFile = file;
-    if (file.size > 3 * 1024 * 1024) {
+    if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
+      console.log('NEW IMAGE PROCESSOR - Converting HEIC to JPEG...');
+      processedFile = await this.convertHeicToJpeg(file);
+    }
+    
+    // Compress image if it's larger than 3MB to ensure it stays under 4MB limit
+    if (processedFile.size > 3 * 1024 * 1024) {
       console.log('NEW IMAGE PROCESSOR - Compressing large image...');
-      processedFile = await this.compressImage(file);
+      processedFile = await this.compressImage(processedFile);
     }
     
     // Final size check after compression
