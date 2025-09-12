@@ -1,6 +1,7 @@
 import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import { safeConsole } from '@/utils/console';
+import imageCompression from 'browser-image-compression';
 
 export class FileProcessorNew {
   static async extractTextFromFile(file: File): Promise<string> {
@@ -33,6 +34,29 @@ export class FileProcessorNew {
   private static getFileType(fileName: string): string {
     const extension = fileName.split('.').pop()?.toLowerCase();
     return extension || '';
+  }
+
+  private static async compressImage(file: File): Promise<File> {
+    console.log('COMPRESSION - Original file size:', file.size, 'bytes');
+    
+    const options = {
+      maxSizeMB: 3.5, // Target 3.5MB to stay well under 4MB Vercel limit
+      maxWidthOrHeight: 1920, // Maintain good quality
+      useWebWorker: true,
+      fileType: file.type,
+      initialQuality: 0.8,
+    };
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      console.log('COMPRESSION - Compressed file size:', compressedFile.size, 'bytes');
+      console.log('COMPRESSION - Size reduction:', Math.round((1 - compressedFile.size / file.size) * 100) + '%');
+      
+      return compressedFile;
+    } catch (error) {
+      console.warn('COMPRESSION - Failed to compress image, using original:', error);
+      return file;
+    }
   }
 
   private static async extractFromTxt(file: File): Promise<string> {
@@ -207,19 +231,28 @@ export class FileProcessorNew {
   }
 
   private static async extractFromImage(file: File): Promise<string> {
-    safeConsole.log('NEW IMAGE PROCESSOR - Starting image OCR for file:', file.name, 'Size:', file.size);
+    console.log('NEW IMAGE PROCESSOR - Starting image OCR for file:', file.name, 'Size:', file.size);
     
-    // Check file size (max 4MB for Vercel compatibility)
-    if (file.size > 4 * 1024 * 1024) {
-      console.log('NEW IMAGE PROCESSOR - File is larger than 4MB, cannot process');
-      throw new Error('Image file is too large (over 4MB). Please compress your image or use a smaller file.');
+    // Compress image if it's larger than 3MB to ensure it stays under 4MB limit
+    let processedFile = file;
+    if (file.size > 3 * 1024 * 1024) {
+      console.log('NEW IMAGE PROCESSOR - Compressing large image...');
+      processedFile = await this.compressImage(file);
+    }
+    
+    // Final size check after compression
+    if (processedFile.size > 4 * 1024 * 1024) {
+      console.log('NEW IMAGE PROCESSOR - File is still too large after compression:', processedFile.size);
+      throw new Error('Image file is too large even after compression. Please try a smaller or lower quality image.');
     }
     
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', processedFile);
       
       console.log('NEW IMAGE PROCESSOR - Sending image to OCR API endpoint...');
+      console.log('NEW IMAGE PROCESSOR - Original size:', file.size, 'bytes');
+      console.log('NEW IMAGE PROCESSOR - Processed size:', processedFile.size, 'bytes');
       console.log('NEW IMAGE PROCESSOR - Current URL:', window.location.href);
       console.log('NEW IMAGE PROCESSOR - API URL:', '/api/extract-image');
       

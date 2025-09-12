@@ -90,9 +90,9 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
         return;
       }
 
-      const maxSize = isImage ? 25 * 1024 * 1024 : FileProcessorNew.getMaxFileSize(); // 25MB for images, 25MB for others
+      const maxSize = isImage ? 50 * 1024 * 1024 : FileProcessorNew.getMaxFileSize(); // 50MB for images (will be compressed), 25MB for others
       if (file.size > maxSize) {
-        const sizeLimit = isImage ? '25MB' : '25MB';
+        const sizeLimit = isImage ? '50MB' : '25MB';
         onError(`File too large: ${file.name}. Please upload files smaller than ${sizeLimit}.`);
         return;
       }
