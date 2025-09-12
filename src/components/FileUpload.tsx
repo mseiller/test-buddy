@@ -70,8 +70,6 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
   };
 
   const handleMultipleFiles = async (files: File[]) => {
-    // Set user plan in global context for file processor
-    (window as any).__userPlan = plan;
     
     // Validate all files
     for (const file of files) {

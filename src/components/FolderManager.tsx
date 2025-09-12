@@ -42,7 +42,7 @@ export default function FolderManager({
       loadAllTests();
     }
     // If selectedFolder is undefined, don't load any tests (initial state)
-  }, [selectedFolder, userId, folders.length]);
+  }, [selectedFolder, userId]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,15 +80,7 @@ export default function FolderManager({
       console.log('Setting folders state with:', userFolders);
       setFolders(userFolders);
       
-      // Auto-migrate tests when folders are first loaded to ensure all historical tests are available
-      try {
-        const migratedCount = await migrateFromTestHistory(userId);
-        if (migratedCount > 0) {
-          console.log(`Auto-migrated ${migratedCount} tests from testHistory when loading folders`);
-        }
-      } catch (migrationError) {
-        console.warn('Auto-migration failed during folder load:', migrationError);
-      }
+      // Migration is no longer needed - new tests save directly to users/{uid}/tests
       
       // Verify state was set
       setTimeout(() => {
@@ -103,16 +95,6 @@ export default function FolderManager({
   const loadAllTests = async () => {
     try {
       console.log('Loading all tests from single source of truth');
-      
-      // First, migrate any tests from testHistory that haven't been migrated yet
-      try {
-        const migratedCount = await migrateFromTestHistory(userId);
-        if (migratedCount > 0) {
-          console.log(`Migrated ${migratedCount} tests from testHistory to new collection`);
-        }
-      } catch (migrationError) {
-        console.warn('Migration failed, but continuing with existing tests:', migrationError);
-      }
       
       const allTests = await getAllTests(userId);
       console.log(`Loaded ${allTests.length} tests from new collection`);

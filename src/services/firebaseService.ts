@@ -158,9 +158,10 @@ export class FirebaseService {
         testHistoryData.folderId = testHistory.folderId;
       }
 
-      await logger.info('Attempting to save test history', 'firebase', { userId: testHistory.userId });
-      const docRef = await addDoc(collection(db, 'testHistory'), testHistoryData);
-      await logger.info('Test history saved successfully', 'firebase', { docId: docRef.id, userId: testHistory.userId });
+      await logger.info('Attempting to save test history', 'firebase', {}, testHistory.userId);
+      // Save directly to the new collection structure that the UI reads from
+      const docRef = await addDoc(collection(db, `users/${testHistory.userId}/tests`), testHistoryData);
+      await logger.info('Test history saved successfully', 'firebase', { docId: docRef.id }, testHistory.userId);
       return docRef.id;
     } catch (error: any) {
       safeConsole.error('Firestore save error:', error);
@@ -181,10 +182,9 @@ export class FirebaseService {
 
   static async getUserTestHistory(userId: string): Promise<TestHistory[]> {
     try {
-      // Temporarily remove orderBy to avoid index requirement
+      // Use the new collection structure
       const q = query(
-        collection(db, 'testHistory'),
-        where('userId', '==', userId)
+        collection(db, `users/${userId}/tests`)
       );
 
       const querySnapshot = await getDocs(q);
@@ -203,8 +203,9 @@ export class FirebaseService {
           questions: data.questions,
           answers: data.answers,
           score: data.score,
-          createdAt: data.createdAt.toDate(),
-          completedAt: data.completedAt ? data.completedAt.toDate() : undefined,
+          createdAt: data.createdAt instanceof Date ? data.createdAt : data.createdAt.toDate(),
+          completedAt: data.completedAt ? (data.completedAt instanceof Date ? data.completedAt : data.completedAt.toDate()) : undefined,
+          folderId: data.folderId,
         });
       });
 
@@ -221,18 +222,10 @@ export class FirebaseService {
 
   static async updateTestHistory(testId: string, updates: Partial<TestHistory>): Promise<void> {
     try {
-      const testRef = doc(db, 'testHistory', testId);
-      const updateData: any = { ...updates };
-
-      // Convert Date objects to Timestamps
-      if (updateData.createdAt) {
-        updateData.createdAt = Timestamp.fromDate(updateData.createdAt);
-      }
-      if (updateData.completedAt) {
-        updateData.completedAt = Timestamp.fromDate(updateData.completedAt);
-      }
-
-      await updateDoc(testRef, updateData);
+      // Find the test in the new collection structure
+      // We need to search across all user collections since we don't know which user owns this test
+      // For now, we'll need the userId parameter - this method signature needs to be updated
+      throw new Error('updateTestHistory method needs to be updated to include userId parameter');
     } catch (error: any) {
       throw new Error(error.message || 'Failed to update test history');
     }
@@ -240,8 +233,10 @@ export class FirebaseService {
 
   static async deleteTestHistory(testId: string): Promise<void> {
     try {
-      const testRef = doc(db, 'testHistory', testId);
-      await deleteDoc(testRef);
+      // Find the test in the new collection structure
+      // We need to search across all user collections since we don't know which user owns this test
+      // For now, we'll need the userId parameter - this method signature needs to be updated
+      throw new Error('deleteTestHistory method needs to be updated to include userId parameter');
     } catch (error: any) {
       throw new Error(error.message || 'Failed to delete test history');
     }
@@ -249,28 +244,10 @@ export class FirebaseService {
 
   static async getTestById(testId: string): Promise<TestHistory | null> {
     try {
-      const testRef = doc(db, 'testHistory', testId);
-      const testSnap = await getDocs(query(collection(db, 'testHistory'), where('__name__', '==', testId)));
-      
-      if (testSnap.empty) {
-        return null;
-      }
-
-      const data = testSnap.docs[0].data();
-      return {
-        id: testSnap.docs[0].id,
-        userId: data.userId,
-        testName: data.testName,
-        fileName: data.fileName,
-        fileType: data.fileType || data.fileName.split('.').pop() || 'txt', // Default from filename
-        extractedText: data.extractedText || '', // Default to empty string for existing data
-        quizType: data.quizType,
-        questions: data.questions,
-        answers: data.answers,
-        score: data.score,
-        createdAt: data.createdAt.toDate(),
-        completedAt: data.completedAt ? data.completedAt.toDate() : undefined,
-      };
+      // Find the test in the new collection structure
+      // We need to search across all user collections since we don't know which user owns this test
+      // For now, we'll need the userId parameter - this method signature needs to be updated
+      throw new Error('getTestById method needs to be updated to include userId parameter');
     } catch (error: any) {
       throw new Error(error.message || 'Failed to fetch test');
     }
@@ -377,6 +354,9 @@ export class FirebaseService {
 
   static async getUserFolders(userId: string): Promise<Folder[]> {
     try {
+      safeConsole.log('🔍 Getting folders for user:', userId);
+      safeConsole.log('🔍 Using Firebase project:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+      
       // Temporarily remove orderBy while index is building
       const foldersQuery = query(
         collection(db, 'folders'),
@@ -384,11 +364,15 @@ export class FirebaseService {
         // orderBy('createdAt', 'desc') // Temporarily disabled while index builds
       );
       
+      safeConsole.log('🔍 Executing folders query...');
       const querySnapshot = await getDocs(foldersQuery);
+      safeConsole.log('🔍 Query snapshot size:', querySnapshot.size);
+      
       const folders: Folder[] = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        safeConsole.log('🔍 Found folder:', doc.id, data.name);
         folders.push({
           id: doc.id,
           userId: data.userId,
@@ -403,9 +387,11 @@ export class FirebaseService {
       // Sort by createdAt descending (client-side sorting while index builds)
       folders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
+      safeConsole.log('🔍 Returning folders:', folders.length);
       return folders;
     } catch (error: any) {
       safeConsole.error('Firestore fetch error:', error);
+      safeConsole.error('Error details:', error.message);
       return [];
     }
   }
@@ -440,28 +426,10 @@ export class FirebaseService {
 
   static async moveTestToFolder(testId: string, folderId: string | null): Promise<void> {
     try {
-      // Update both collections for backward compatibility during transition
-      const testRef = doc(db, 'testHistory', testId);
-      await updateDoc(testRef, { folderId });
-      
-      // Also try to update in new collection if it exists
-      // We'll need the userId for this, so let's get it from the test
-      const testDoc = await getDoc(testRef);
-      if (testDoc.exists()) {
-        const data = testDoc.data();
-        if (data.userId) {
-          try {
-            const newTestRef = doc(db, `users/${data.userId}/tests/${testId}`);
-            const newTestDoc = await getDoc(newTestRef);
-            if (newTestDoc.exists()) {
-              await updateDoc(newTestRef, { folderId, updatedAt: new Date() });
-              safeConsole.log(`Updated test in new collection: ${testId} -> folder ${folderId}`);
-            }
-          } catch (newCollectionError) {
-            safeConsole.log('Test not found in new collection, only updated legacy collection');
-          }
-        }
-      }
+      // Find the test in the new collection structure
+      // We need to search across all user collections since we don't know which user owns this test
+      // For now, we'll need the userId parameter - this method signature needs to be updated
+      throw new Error('moveTestToFolder method needs to be updated to include userId parameter');
     } catch (error: any) {
       throw new Error(error.message || 'Failed to move test to folder');
     }
@@ -469,10 +437,9 @@ export class FirebaseService {
 
   static async getTestsInFolder(userId: string, folderId: string): Promise<TestHistory[]> {
     try {
-      // Temporarily remove orderBy to avoid index requirement
+      // Use the new collection structure
       const testsQuery = query(
-        collection(db, 'testHistory'),
-        where('userId', '==', userId),
+        collection(db, `users/${userId}/tests`),
         where('folderId', '==', folderId)
       );
       
@@ -492,8 +459,8 @@ export class FirebaseService {
           questions: data.questions,
           answers: data.answers,
           score: data.score,
-          createdAt: data.createdAt.toDate(),
-          completedAt: data.completedAt ? data.completedAt.toDate() : undefined,
+          createdAt: data.createdAt instanceof Date ? data.createdAt : data.createdAt.toDate(),
+          completedAt: data.completedAt ? (data.completedAt instanceof Date ? data.completedAt : data.completedAt.toDate()) : undefined,
           folderId: data.folderId,
         });
       });

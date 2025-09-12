@@ -159,7 +159,8 @@ export default function Home() {
         questionCount,
         undefined, // Let service choose model based on user plan
         isImageBased,
-        plan
+        plan,
+        user.uid
       );
       
       // Only increment usage counter AFTER successful generation

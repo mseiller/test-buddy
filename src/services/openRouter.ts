@@ -12,7 +12,8 @@ export class OpenRouterService {
     questionCount: number = 5,
     modelOverride?: string,
     isImageBased?: boolean,
-    userPlan?: 'free' | 'student' | 'pro'
+    userPlan?: 'free' | 'student' | 'pro',
+    userId?: string
   ): Promise<Question[]> {
     if (!this.API_KEY) {
       throw new Error('OpenRouter API key is not configured');
@@ -44,11 +45,11 @@ export class OpenRouterService {
     if (userPlan === 'pro') {
       // Pro users: Use GPT-4.1-nano for all content
       defaultModel = 'openai/gpt-4.1-nano';
-      await logger.info('Using Pro model for Pro user', 'openrouter', { userPlan });
+      await logger.info('Using Pro model for Pro user', 'openrouter', { userPlan }, userId);
     } else {
       // Free/Student users: Use Qwen for all content
       defaultModel = 'qwen/qwen3-235b-a22b:free';
-      await logger.info('Using Free model for Free/Student user', 'openrouter', { userPlan });
+      await logger.info('Using Free model for Free/Student user', 'openrouter', { userPlan }, userId);
     }
     
     if (isImageBased) {
@@ -62,7 +63,7 @@ export class OpenRouterService {
       questionCount: adjustedQuestionCount, 
       originalQuestionCount: questionCount,
       maxTokens 
-    });
+    }, userId);
     safeConsole.log('OpenRouter: Request payload size:', JSON.stringify({
       model: model,
       messages: [
@@ -308,7 +309,7 @@ CRITICAL OUTPUT FORMAT:
       for (const fallbackModel of fallbackModels) {
         safeConsole.log(`OpenRouter: Attempting fallback to ${fallbackModel}...`);
         try {
-          return await this.generateQuiz(text, quizType, questionCount, fallbackModel);
+          return await this.generateQuiz(text, quizType, questionCount, fallbackModel, undefined, undefined, userId);
         } catch (fallbackError) {
           safeConsole.error(`OpenRouter: Fallback model ${fallbackModel} also failed:`, fallbackError);
           // Continue to next fallback

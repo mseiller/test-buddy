@@ -112,13 +112,6 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userProfile]);
 
-  // Set global user plan for OCR access
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).__userPlan = plan;
-    }
-  }, [plan]);
-
   // Calculate derived values
   const canCreateTest = usage ? 
     (planFeatures.maxTestsPerMonth === Infinity || usage.testsGenerated < planFeatures.maxTestsPerMonth) : 

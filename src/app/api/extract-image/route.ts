@@ -1,77 +1,105 @@
 import { NextResponse } from 'next/server';
 
-const OR_KEY = process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
-const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
-
-export async function POST(req: Request) {
-  if (!OR_KEY) {
-    return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
-  }
-
-  // --- Pro-only gate ---
-  const plan = req.headers.get('x-user-plan')?.toLowerCase() ?? 'free';
-  if (plan !== 'pro') {
-    return NextResponse.json({ error: 'OCR is a Pro feature' }, { status: 403 });
-  }
-
-  let body: { fileName?: string; dataUrl?: string };
+export async function POST(request: Request) {
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-  const { dataUrl, fileName = 'image' } = body || {};
-  if (!dataUrl || !dataUrl.startsWith('data:image/')) {
-    return NextResponse.json({ error: 'Expected dataUrl: data:image/*;base64,...' }, { status: 400 });
-  }
-
-  // Only these two models, in this order
-  const models = ['openai/gpt-4o-mini', 'openai/gpt-5-mini'] as const;
-
-  // Build a single prompt that coerces JSON back
-  const content = [
-    {
-      type: 'input_text',
-      text: 'Extract all readable text from the image. Return plain text. No JSON, no extra words.'
-    },
-    { type: 'input_image', image_url: dataUrl }
-  ];
-
-  let lastErr: any;
-  for (const model of models) {
-    try {
-      const r = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OR_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://example.com',
-          'X-Title': 'Test Buddy OCR'
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content }],
-          temperature: 0.0,
-        })
-      });
-
-      const json = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(json?.error?.message || r.statusText);
-
-      const text = json?.choices?.[0]?.message?.content?.trim?.();
-      if (text) {
-        return NextResponse.json({ text, model, fileName });
-      } else {
-        throw new Error('Empty OCR result');
-      }
-    } catch (e) {
-      lastErr = e;
-      // continue to backup model
+    console.log('OCR API called');
+    
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
-  }
 
-  return NextResponse.json(
-    { error: 'OCR failed with both models', detail: String(lastErr) },
-    { status: 502 }
-  );
+    // Check if it's an image
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+    }
+
+    // Check file size (max 10MB for images)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Image file too large. Please use images smaller than 10MB.' }, { status: 400 });
+    }
+
+    // Convert file to base64
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64Image = buffer.toString('base64');
+
+    // Use OpenRouter's vision model to extract text
+    const openRouterApiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
+    if (!openRouterApiKey) {
+      return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
+    }
+
+    console.log('Starting OCR for file:', file.name, 'Size:', file.size);
+
+    // Use GPT-4 Vision for OCR
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openRouterApiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        'X-Title': 'Test Buddy - Image OCR'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Extract all text from this image. Return only the text content without any additional commentary or formatting.'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${file.type};base64,${base64Image}`,
+                  detail: 'high'
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 4000,
+        temperature: 0.1
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('OpenRouter API error:', errorData);
+      return NextResponse.json({ 
+        error: 'OCR service failed',
+        details: errorData.error?.message || 'Unknown error'
+      }, { status: 500 });
+    }
+
+    const data = await response.json();
+    const extractedText = data.choices?.[0]?.message?.content;
+
+    if (!extractedText || extractedText.trim().length === 0) {
+      return NextResponse.json({ 
+        error: 'No text found in image' 
+      }, { status: 400 });
+    }
+
+    console.log('OCR successful. Text length:', extractedText.length);
+
+    return NextResponse.json({
+      text: extractedText.trim(),
+      fileName: file.name,
+      fileSize: file.size,
+      success: true
+    });
+
+  } catch (error: any) {
+    console.error('OCR API Error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to process image',
+      details: error.message || 'Unknown error'
+    }, { status: 500 });
+  }
 }

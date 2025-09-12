@@ -209,33 +209,23 @@ export class FileProcessorNew {
   private static async extractFromImage(file: File): Promise<string> {
     safeConsole.log('NEW IMAGE PROCESSOR - Starting image OCR for file:', file.name, 'Size:', file.size);
     
-    // Check file size (max 25MB for images)
-    if (file.size > 25 * 1024 * 1024) {
-      safeConsole.log('NEW IMAGE PROCESSOR - File is larger than 25MB, cannot process');
-      throw new Error('Image file is too large (over 25MB). Please compress your image or use a smaller file.');
+    // Check file size (max 10MB for images)
+    if (file.size > 10 * 1024 * 1024) {
+      safeConsole.log('NEW IMAGE PROCESSOR - File is larger than 10MB, cannot process');
+      throw new Error('Image file is too large (over 10MB). Please compress your image or use a smaller file.');
     }
     
     try {
-      // Convert file to data URL for the new API format
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      const formData = new FormData();
+      formData.append('file', file);
       
       safeConsole.log('NEW IMAGE PROCESSOR - Sending image to OCR API endpoint...');
-      
-      // Get user plan from context
-      const userPlan = (window as any).__userPlan || 'free';
+      safeConsole.log('NEW IMAGE PROCESSOR - Current URL:', window.location.href);
+      safeConsole.log('NEW IMAGE PROCESSOR - API URL:', '/api/extract-image');
       
       const response = await fetch('/api/extract-image', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Plan': userPlan,
-        },
-        body: JSON.stringify({ dataUrl, fileName: file.name }),
+        body: formData,
       });
       
       safeConsole.log('NEW IMAGE PROCESSOR - OCR API response status:', response.status);
@@ -243,12 +233,11 @@ export class FileProcessorNew {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         safeConsole.error('NEW IMAGE PROCESSOR - OCR API error response:', errorData);
-        // Use the improved error message from the API
         throw new Error(errorData.error || 'Failed to extract text from image');
       }
       
       const result = await response.json();
-      safeConsole.log('NEW IMAGE PROCESSOR - OCR extraction successful. Text length:', result.text?.length || 0, 'Model:', result.model);
+      safeConsole.log('NEW IMAGE PROCESSOR - OCR extraction successful. Text length:', result.text?.length || 0);
       
       if (!result.text || result.text.trim().length === 0) {
         safeConsole.warn('NEW IMAGE PROCESSOR - Image processed but contains no text content');
@@ -258,10 +247,6 @@ export class FileProcessorNew {
       return result.text;
     } catch (error) {
       safeConsole.error('NEW IMAGE PROCESSOR - Image OCR failed:', error);
-      // Preserve the original error message if it's already user-friendly
-      if (error instanceof Error && (error.message.includes('OCR is a Pro feature') || error.message.includes('OCR failed with both models'))) {
-        throw error; // Re-throw the original error with the improved message
-      }
       throw new Error(`Image text extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
