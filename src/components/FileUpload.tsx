@@ -132,7 +132,8 @@ export default function FileUpload({ onFileProcessed, onError, selectedFolder, o
           if (file.type.startsWith('image/')) {
             onError(`Failed to extract text from image "${file.name}". ${error.message}. Try uploading a PDF or text file instead, or ensure the image contains clear, readable text.`);
           } else {
-            onError(`Failed to process "${file.name}": ${error.message}`);
+            // Pass the full error object for PDF conversion handling
+            onError(error);
           }
           return;
         }
