@@ -216,20 +216,26 @@ export class FileProcessorNew {
     }
     
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // Convert file to data URL for the new API format
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
       
       safeConsole.log('NEW IMAGE PROCESSOR - Sending image to OCR API endpoint...');
       
-      // Get user plan from context (we'll need to pass this from the component)
+      // Get user plan from context
       const userPlan = (window as any).__userPlan || 'free';
       
       const response = await fetch('/api/extract-image', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Plan': userPlan,
         },
-        body: formData,
+        body: JSON.stringify({ dataUrl, fileName: file.name }),
       });
       
       safeConsole.log('NEW IMAGE PROCESSOR - OCR API response status:', response.status);
@@ -242,7 +248,7 @@ export class FileProcessorNew {
       }
       
       const result = await response.json();
-      safeConsole.log('NEW IMAGE PROCESSOR - OCR extraction successful. Text length:', result.text?.length || 0);
+      safeConsole.log('NEW IMAGE PROCESSOR - OCR extraction successful. Text length:', result.text?.length || 0, 'Model:', result.model);
       
       if (!result.text || result.text.trim().length === 0) {
         safeConsole.warn('NEW IMAGE PROCESSOR - Image processed but contains no text content');
@@ -253,7 +259,7 @@ export class FileProcessorNew {
     } catch (error) {
       safeConsole.error('NEW IMAGE PROCESSOR - Image OCR failed:', error);
       // Preserve the original error message if it's already user-friendly
-      if (error instanceof Error && error.message.includes('OCR service is currently experiencing issues')) {
+      if (error instanceof Error && (error.message.includes('OCR is a Pro feature') || error.message.includes('OCR failed with both models'))) {
         throw error; // Re-throw the original error with the improved message
       }
       throw new Error(`Image text extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
