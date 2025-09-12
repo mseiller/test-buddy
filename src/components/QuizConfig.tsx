@@ -5,7 +5,7 @@ import { Settings, BookOpen, CheckSquare, Edit, FileText, Shuffle } from 'lucide
 import { QuizType } from '@/types';
 
 interface QuizConfigProps {
-  onConfigSubmit: (quizType: QuizType, questionCount: number, testName: string) => void;
+  onConfigSubmit: (quizType: QuizType, questionCount: number, testName: string, allowMultipleAnswers?: boolean) => void;
   loading?: boolean;
   isRetake?: boolean;
   originalTestName?: string;
@@ -15,10 +15,11 @@ export default function QuizConfig({ onConfigSubmit, loading = false, isRetake =
   const [quizType, setQuizType] = useState<QuizType>('MCQ');
   const [questionCount, setQuestionCount] = useState(5);
   const [testName, setTestName] = useState('');
+  const [allowMultipleAnswers, setAllowMultipleAnswers] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onConfigSubmit(quizType, questionCount, testName.trim() || `${quizType} Quiz`);
+    onConfigSubmit(quizType, questionCount, testName.trim() || `${quizType} Quiz`, allowMultipleAnswers);
   };
 
   const quizTypes = [
@@ -162,6 +163,24 @@ export default function QuizConfig({ onConfigSubmit, loading = false, isRetake =
             <span>100 questions</span>
           </div>
         </div>
+
+        {/* Multiple Answers Option */}
+        {quizType === 'MCQ' && (
+          <div className="pt-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="allowMultipleAnswers"
+                checked={allowMultipleAnswers}
+                onChange={(e) => setAllowMultipleAnswers(e.target.checked)}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              />
+              <label htmlFor="allowMultipleAnswers" className="ml-2 block text-sm text-gray-700">
+                Allow multiple answer questions (questions where more than one option can be correct)
+              </label>
+            </div>
+          </div>
+        )}
 
         {/* Generate Button */}
         <div className="pt-4">

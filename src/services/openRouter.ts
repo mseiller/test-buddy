@@ -13,7 +13,8 @@ export class OpenRouterService {
     modelOverride?: string,
     isImageBased?: boolean,
     userPlan?: 'free' | 'student' | 'pro',
-    userId?: string
+    userId?: string,
+    allowMultipleAnswers: boolean = false
   ): Promise<Question[]> {
     if (!this.API_KEY) {
       throw new Error('OpenRouter API key is not configured');
@@ -37,7 +38,7 @@ export class OpenRouterService {
       maxTokens = 16000;
     }
 
-    const prompt = this.createPrompt(text, quizType, adjustedQuestionCount);
+    const prompt = this.createPrompt(text, quizType, adjustedQuestionCount, allowMultipleAnswers);
 
     // Use appropriate model based on source type and user plan
     let defaultModel: string;
@@ -329,12 +330,16 @@ CRITICAL OUTPUT FORMAT:
     throw new Error('Failed to generate quiz questions: Unknown error');
   }
 
-  private static createPrompt(text: string, quizType: QuizType, questionCount: number): string {
+  private static createPrompt(text: string, quizType: QuizType, questionCount: number, allowMultipleAnswers: boolean = false): string {
     let typeInstruction = '';
     
     switch (quizType) {
       case 'MCQ':
-        typeInstruction = 'IMPORTANT: Create ONLY multiple choice questions with exactly 4-5 options each. Most questions should have 1 correct answer (type: "MCQ"), but when a question naturally requires multiple correct answers, use type: "MSQ" with correctAnswer as an array and include selectCount. Do NOT create any other question types.';
+        if (allowMultipleAnswers) {
+          typeInstruction = 'IMPORTANT: Create ONLY multiple choice questions with exactly 4-5 options each. You can create questions with either single correct answers (type: "MCQ") OR multiple correct answers (type: "MSQ" with correctAnswer as an array and include selectCount). Mix both types as appropriate for the content. Do NOT create any other question types.';
+        } else {
+          typeInstruction = 'IMPORTANT: Create ONLY multiple choice questions with exactly 4-5 options each. All questions should have exactly 1 correct answer (type: "MCQ"). Do NOT create any multiple answer questions (MSQ). Do NOT create any other question types.';
+        }
         break;
       case 'Fill-in-the-blank':
         typeInstruction = 'IMPORTANT: Create ONLY fill-in-the-blank questions with clear, concise answers. Do NOT create any other question types.';

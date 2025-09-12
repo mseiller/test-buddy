@@ -129,7 +129,7 @@ export default function Home() {
     setError(error);
   };
 
-  const handleConfigSubmit = async (quizType: QuizType, questionCount: number, name: string) => {
+  const handleConfigSubmit = async (quizType: QuizType, questionCount: number, name: string, allowMultipleAnswers: boolean = false) => {
     if (!uploadedFile || !user) return;
 
     // Check if user can create a test (this should already be handled by UI, but double-check)
@@ -160,7 +160,8 @@ export default function Home() {
         undefined, // Let service choose model based on user plan
         isImageBased,
         plan,
-        user.uid
+        user.uid,
+        allowMultipleAnswers
       );
       
       // Only increment usage counter AFTER successful generation
