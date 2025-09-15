@@ -23,10 +23,10 @@ export default function LandingPage() {
                 Get Started Free
               </Link>
               <Link href="/dashboard" className="rounded-lg border border-black/15 px-5 py-3 font-semibold hover:bg-black/5 transition-colors">
-                Try a Demo
+                Login
               </Link>
             </div>
-            <p className="mt-3 text-sm text-black/50">No credit card required.</p>
+            <p className="mt-3 text-sm text-black/50">No credit card required. Login to access your saved quizzes.</p>
           </div>
 
           <div className="flex justify-center md:justify-end">
