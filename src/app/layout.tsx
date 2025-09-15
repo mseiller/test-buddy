@@ -14,8 +14,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Test Buddy - AI-Powered Quiz Generator",
-  description: "AI-Powered Quiz Generation from Your Documents",
+  title: "Test Buddy — Turn notes into practice tests",
+  description: "Upload notes or PDFs and generate quizzes instantly. AI feedback shows what to improve.",
+  keywords: ["quiz generator", "study tools", "AI quiz", "practice tests", "study materials"],
+  authors: [{ name: "Test Buddy" }],
+  openGraph: {
+    title: "Test Buddy",
+    description: "Turn your notes into practice tests.",
+    type: "website",
+    images: [
+      {
+        url: "/assets/test-buddy-mascot.svg",
+        width: 360,
+        height: 360,
+        alt: "Test Buddy mascot",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Test Buddy",
+    description: "Turn your notes into practice tests.",
+    images: ["/assets/test-buddy-mascot.svg"],
+  },
   icons: {
     icon: [
       { url: '/favicon.png', sizes: '32x32', type: 'image/png' },

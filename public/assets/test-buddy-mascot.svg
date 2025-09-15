@@ -1,0 +1,77 @@
+<svg width="360" height="360" viewBox="0 0 360 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <circle cx="180" cy="180" r="160" fill="url(#gradient)" stroke="#E10600" stroke-width="4"/>
+  
+  <!-- Main character - friendly robot/assistant -->
+  <!-- Head -->
+  <circle cx="180" cy="140" r="50" fill="#ffffff" stroke="#E10600" stroke-width="3"/>
+  
+  <!-- Eyes -->
+  <circle cx="165" cy="130" r="8" fill="#E10600"/>
+  <circle cx="195" cy="130" r="8" fill="#E10600"/>
+  <circle cx="167" cy="128" r="3" fill="#ffffff"/>
+  <circle cx="197" cy="128" r="3" fill="#ffffff"/>
+  
+  <!-- Smile -->
+  <path d="M165 145 Q180 155 195 145" stroke="#E10600" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Antenna -->
+  <line x1="180" y1="90" x2="180" y2="105" stroke="#E10600" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="180" cy="85" r="6" fill="#E10600"/>
+  
+  <!-- Body -->
+  <rect x="140" y="190" width="80" height="100" rx="20" fill="#ffffff" stroke="#E10600" stroke-width="3"/>
+  
+  <!-- Chest screen -->
+  <rect x="150" y="210" width="60" height="40" rx="5" fill="#f8f9fa" stroke="#E10600" stroke-width="2"/>
+  
+  <!-- Screen content - quiz icon -->
+  <rect x="155" y="215" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="168" y="215" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="181" y="215" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="194" y="215" width="10" height="8" rx="2" fill="#E10600"/>
+  
+  <rect x="155" y="226" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="168" y="226" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="181" y="226" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="194" y="226" width="10" height="8" rx="2" fill="#E10600"/>
+  
+  <rect x="155" y="237" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="168" y="237" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="181" y="237" width="10" height="8" rx="2" fill="#E10600"/>
+  <rect x="194" y="237" width="10" height="8" rx="2" fill="#E10600"/>
+  
+  <!-- Arms -->
+  <rect x="110" y="200" width="25" height="15" rx="7" fill="#ffffff" stroke="#E10600" stroke-width="3"/>
+  <rect x="225" y="200" width="25" height="15" rx="7" fill="#ffffff" stroke="#E10600" stroke-width="3"/>
+  
+  <!-- Hands -->
+  <circle cx="115" cy="207" r="8" fill="#ffffff" stroke="#E10600" stroke-width="2"/>
+  <circle cx="245" cy="207" r="8" fill="#ffffff" stroke="#E10600" stroke-width="2"/>
+  
+  <!-- Legs -->
+  <rect x="150" y="290" width="20" height="30" rx="10" fill="#ffffff" stroke="#E10600" stroke-width="3"/>
+  <rect x="190" y="290" width="20" height="30" rx="10" fill="#ffffff" stroke="#E10600" stroke-width="3"/>
+  
+  <!-- Feet -->
+  <rect x="145" y="315" width="30" height="15" rx="7" fill="#ffffff" stroke="#E10600" stroke-width="3"/>
+  <rect x="185" y="315" width="30" height="15" rx="7" fill="#ffffff" stroke="#E10600" stroke-width="3"/>
+  
+  <!-- Sparkles around the character -->
+  <g opacity="0.7">
+    <path d="M100 100 L105 110 L95 110 Z" fill="#E10600"/>
+    <path d="M260 120 L270 130 L260 140 L250 130 Z" fill="#E10600"/>
+    <path d="M80 200 L90 210 L80 220 L70 210 Z" fill="#E10600"/>
+    <path d="M280 180 L290 190 L280 200 L270 190 Z" fill="#E10600"/>
+    <path d="M120 280 L130 290 L120 300 L110 290 Z" fill="#E10600"/>
+    <path d="M240 300 L250 310 L240 320 L230 310 Z" fill="#E10600"/>
+  </g>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fff5f5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fef2f2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>
