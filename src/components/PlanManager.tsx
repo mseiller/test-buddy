@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Crown, Star, Zap, Settings, Check } from 'lucide-react';
 import { useUserPlan, useUsageStatus } from '@/contexts/UserPlanContext';
 import { UserPlan, PLAN_FEATURES, getPlanFeatures } from '@/config/plans';
-import { updateUserPlan } from '@/services/userService';
 import { UsageLimit } from './FeatureGate';
 
 interface PlanManagerProps {
@@ -13,25 +12,8 @@ interface PlanManagerProps {
 }
 
 export default function PlanManager({ userId, onClose }: PlanManagerProps) {
-  const { plan, planFeatures, refreshProfile } = useUserPlan();
+  const { plan, planFeatures } = useUserPlan();
   const { usage, limit } = useUsageStatus();
-  const [switching, setSwitching] = useState<UserPlan | null>(null);
-
-  const handlePlanSwitch = async (newPlan: UserPlan) => {
-    if (newPlan === plan) return;
-
-    try {
-      setSwitching(newPlan);
-      await updateUserPlan(userId, newPlan);
-      await refreshProfile();
-      alert(`Successfully switched to ${PLAN_FEATURES[newPlan].name} plan!`);
-    } catch (error) {
-      console.error('Failed to switch plan:', error);
-      alert('Failed to switch plan. Please try again.');
-    } finally {
-      setSwitching(null);
-    }
-  };
 
   const getPlanIcon = (planType: UserPlan) => {
     switch (planType) {
@@ -86,7 +68,7 @@ export default function PlanManager({ userId, onClose }: PlanManagerProps) {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Plan Management</h2>
-              <p className="text-gray-700">Switch between plans for testing</p>
+              <p className="text-gray-700">View your current plan and available features</p>
             </div>
           </div>
           <button
@@ -173,14 +155,13 @@ export default function PlanManager({ userId, onClose }: PlanManagerProps) {
           </div>
         </div>
 
-        {/* Plan Switching */}
+        {/* Plan Information */}
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Switch Plan (Testing)</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Plans</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {(Object.keys(PLAN_FEATURES) as UserPlan[]).map((planType) => {
               const planInfo = PLAN_FEATURES[planType];
               const isActive = plan === planType;
-              const isLoading = switching === planType;
 
               return (
                 <div
@@ -195,30 +176,22 @@ export default function PlanManager({ userId, onClose }: PlanManagerProps) {
                     <p className="text-sm text-gray-600">{planInfo.price}</p>
                   </div>
 
-                  <button
-                    onClick={() => handlePlanSwitch(planType)}
-                    disabled={isActive || isLoading || switching !== null}
-                    className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-                      isActive
-                        ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                        : isLoading
-                        ? 'bg-gray-200 text-gray-700 cursor-not-allowed'
-                        : switching !== null
-                        ? 'bg-gray-200 text-gray-700 cursor-not-allowed'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {isActive ? 'Current Plan' : isLoading ? 'Switching...' : 'Switch to This Plan'}
-                  </button>
+                  <div className={`w-full py-2 px-4 rounded-lg font-medium text-center ${
+                    isActive
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {isActive ? 'Current Plan' : 'Upgrade Required'}
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Testing Mode:</strong> This allows you to manually switch between plans to test 
-              feature restrictions. In production, plan changes would be handled through Stripe subscriptions.
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Plan Management:</strong> To upgrade or change your plan, please use the upgrade options 
+              in the main interface. Plan changes are processed through secure payment systems.
             </p>
           </div>
         </div>
