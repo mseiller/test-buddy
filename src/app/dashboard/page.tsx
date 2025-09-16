@@ -67,6 +67,41 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
+  // Handle session verification for payments
+  useEffect(() => {
+    const sessionId = new URLSearchParams(window.location.search).get('session_id');
+    
+    if (sessionId && user) {
+      console.log('Verifying payment session:', sessionId);
+      
+      const verifySession = async () => {
+        try {
+          const response = await fetch('/api/verify-session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ sessionId }),
+          });
+
+          if (response.ok) {
+            console.log('Payment session verified successfully');
+            // Refresh user profile to get updated plan
+            refreshProfile();
+            // Remove session_id from URL
+            window.history.replaceState({}, '', '/dashboard');
+          } else {
+            console.error('Session verification failed');
+          }
+        } catch (error) {
+          console.error('Error verifying session:', error);
+        }
+      };
+
+      verifySession();
+    }
+  }, [user, refreshProfile]);
+
   // Handle URL parameters for folder selection
   useEffect(() => {
     if (user && appState === 'home') {

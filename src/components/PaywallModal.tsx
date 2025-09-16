@@ -180,7 +180,7 @@ export default function PaywallModal({
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Upgrade Your Plan</h2>
-              <p className="text-gray-600">
+              <p className="text-gray-800">
                 {triggerFeature && `Unlock ${triggerFeature} and more premium features`}
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function PaywallModal({
                   Start with a 7-day free trial (no payment required)
                 </label>
               </div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-gray-800 mt-1">
                 You can cancel anytime during the trial period
               </p>
             </div>
@@ -280,7 +280,7 @@ export default function PaywallModal({
                 <div className="mt-2">
                   <span className="text-3xl font-bold text-blue-600">{PLAN_FEATURES.student.price}</span>
                 </div>
-                <p className="text-gray-600 mt-2">{PLAN_FEATURES.student.description}</p>
+                <p className="text-gray-800 mt-2">{PLAN_FEATURES.student.description}</p>
               </div>
 
               <ul className="space-y-3 mb-6">
@@ -331,7 +331,7 @@ export default function PaywallModal({
                 <div className="mt-2">
                   <span className="text-3xl font-bold text-purple-600">{PLAN_FEATURES.pro.price}</span>
                 </div>
-                <p className="text-gray-600 mt-2">{PLAN_FEATURES.pro.description}</p>
+                <p className="text-gray-800 mt-2">{PLAN_FEATURES.pro.description}</p>
               </div>
 
               <ul className="space-y-3 mb-6">
@@ -362,10 +362,10 @@ export default function PaywallModal({
           </div>
 
           {/* Current Plan Info */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <div className="mt-6 p-4 bg-gray-100 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-sm text-gray-600">Current Plan:</span>
+                <span className="text-sm text-gray-800">Current Plan:</span>
                 <span className="ml-2 font-medium text-gray-900">{PLAN_FEATURES[currentPlan].name}</span>
               </div>
               <span className="text-sm text-gray-700">
