@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Folder, TestHistory } from '@/types';
 import { FirebaseService } from '@/services/firebaseService';
 import { getAllTests, getTestsInFolder, getUnorganizedTests, moveTest, migrateFromTestHistory } from '@/services/tests';
@@ -19,6 +20,7 @@ export default function FolderManager({
   selectedFolder, 
   onTestSelect 
 }: FolderManagerProps) {
+  const router = useRouter();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [tests, setTests] = useState<TestHistory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -399,7 +401,7 @@ export default function FolderManager({
           <button
             onClick={() => {
               // Navigate to upload page with folder pre-selected
-              window.location.href = '/?folder=' + selectedFolder.id;
+              router.push('/?folder=' + selectedFolder.id);
             }}
             className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
