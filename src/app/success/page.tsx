@@ -19,10 +19,36 @@ export default function SuccessPage() {
       return;
     }
 
-    // Here you could verify the session with Stripe if needed
-    // For now, we'll just show success after a brief delay
+    // Verify the session with Stripe and update user plan
+    const verifySession = async () => {
+      try {
+        const response = await fetch('/api/verify-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        if (response.ok) {
+          console.log('Session verified successfully');
+        } else {
+          console.error('Session verification failed');
+        }
+      } catch (error) {
+        console.error('Error verifying session:', error);
+      }
+    };
+
+    verifySession();
+
+    // Show success briefly then redirect to dashboard
     const timer = setTimeout(() => {
       setLoading(false);
+      // Redirect to dashboard after showing success
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
     }, 2000);
 
     return () => clearTimeout(timer);
@@ -71,23 +97,21 @@ export default function SuccessPage() {
           </h1>
           
           <p className="text-gray-600 mb-6">
-            Thank you for upgrading your Test Buddy plan. Your subscription is now active and you can enjoy all the premium features.
+            Thank you for upgrading your Test Buddy plan. Your subscription is now active and you can enjoy all the premium features. You'll be redirected to your dashboard shortly.
           </p>
+          
+          <div className="flex items-center justify-center text-green-600 mb-4">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600 mr-2"></div>
+            Redirecting to dashboard...
+          </div>
           
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/dashboard')}
               className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-lg font-medium hover:from-red-700 hover:to-red-800 transition-colors flex items-center justify-center space-x-2"
             >
-              <span>Start Using Test Buddy</span>
+              <span>Go to Dashboard</span>
               <ArrowRight className="h-4 w-4" />
-            </button>
-            
-            <button
-              onClick={() => router.push('/history')}
-              className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-            >
-              View Your Tests
             </button>
           </div>
         </div>

@@ -198,7 +198,7 @@ export default function PaywallModal({
           {/* Coupon and Trial Options */}
           <div className="mb-8 space-y-4">
             {/* Coupon Code Input */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-100 rounded-lg p-4">
               <h4 className="text-lg font-semibold text-gray-900 mb-3">Have a coupon code?</h4>
               <div className="flex gap-2">
                 <input
@@ -225,7 +225,7 @@ export default function PaywallModal({
                 )}
               </div>
               {couponDetails && (
-                <div className="mt-2 text-sm text-gray-600">
+                <div className="mt-2 text-sm text-gray-800">
                   <p><strong>{couponDetails.name}</strong></p>
                   {couponDetails.percent_off && (
                     <p>{couponDetails.percent_off}% off</p>
