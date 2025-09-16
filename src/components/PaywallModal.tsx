@@ -4,7 +4,7 @@ import React from 'react';
 import { X, Crown, Star, Check, Zap } from 'lucide-react';
 import { UserPlan, PLAN_FEATURES, getPlanFeatures } from '@/config/plans';
 import { updateUserPlan } from '@/services/userService';
-import { isStripeTestMode, getTestModeMessage } from '@/lib/stripe-test';
+// Test mode imports removed for security
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -66,17 +66,8 @@ export default function PaywallModal({
     try {
       setUpgrading(targetPlan);
       
-      // Check if we're in test mode
-      
-      if (isStripeTestMode()) {
-        // In test mode, simulate the upgrade
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-        await updateUserPlan(userId, targetPlan);
-        onUpgrade?.(targetPlan);
-        onClose();
-        alert(`Test Mode: Upgraded to ${targetPlan} plan! In production, this would redirect to Stripe checkout.`);
-        return;
-      }
+      // SECURITY: Test mode bypass removed - all upgrades must go through Stripe
+      // This prevents users from bypassing payment by manipulating environment variables
       
       // Create Stripe checkout session
       const response = await fetch('/api/create-checkout-session', {
@@ -376,20 +367,9 @@ export default function PaywallModal({
 
           {/* Note */}
           <div className="mt-4 text-center">
-            {isStripeTestMode() ? (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-sm text-yellow-800 font-medium">
-                  🧪 Test Mode: Stripe not configured
-                </p>
-                <p className="text-xs text-yellow-700 mt-1">
-                  Upgrades will work locally but won't process real payments. See DEPLOYMENT_GUIDE.md to set up Stripe.
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-700">
-                * Secure payments powered by Stripe. Cancel anytime.
-              </p>
-            )}
+            <p className="text-sm text-gray-700">
+              * Secure payments powered by Stripe. Cancel anytime.
+            </p>
           </div>
         </div>
       </div>

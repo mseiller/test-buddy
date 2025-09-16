@@ -28,6 +28,29 @@ if (!getApps().length) {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Verify this request is coming from our own server (webhook or verify-session)
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+    const userAgent = request.headers.get('user-agent');
+    
+    // Only allow requests from our own domain or internal server-to-server calls
+    const allowedOrigins = [
+      'https://test-buddy.com',
+      'https://www.test-buddy.com',
+      'https://test-buddy-working.vercel.app'
+    ];
+    
+    const isInternalCall = !origin && !referer; // Server-to-server call
+    const isAllowedOrigin = origin && allowedOrigins.includes(origin);
+    
+    if (!isInternalCall && !isAllowedOrigin) {
+      console.error('Unauthorized plan update attempt:', { origin, referer, userAgent });
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
     const { userId, plan, subscriptionId, isTrial, trialEnd } = await request.json();
     console.log('Update user plan request:', { userId, plan, subscriptionId, isTrial, trialEnd });
 
