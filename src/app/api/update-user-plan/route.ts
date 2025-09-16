@@ -29,8 +29,10 @@ if (!getApps().length) {
 export async function POST(request: NextRequest) {
   try {
     const { userId, plan, subscriptionId, isTrial, trialEnd } = await request.json();
+    console.log('Update user plan request:', { userId, plan, subscriptionId, isTrial, trialEnd });
 
     if (!userId || !plan) {
+      console.error('Missing userId or plan');
       return NextResponse.json(
         { error: 'Missing userId or plan' },
         { status: 400 }
@@ -64,21 +66,25 @@ export async function POST(request: NextRequest) {
     }
 
     const userRef = db.collection('users').doc(userId);
+    console.log('Updating user document:', userId, 'with data:', updateData);
     
     // Check if user document exists, if not create it
     const userDoc = await userRef.get();
     if (!userDoc.exists) {
       // Create new user document
-      await userRef.set({
+      const newUserData = {
         uid: userId,
         plan: plan,
         createdAt: new Date(),
         updatedAt: new Date(),
         ...updateData
-      });
+      };
+      console.log('Creating new user document with data:', newUserData);
+      await userRef.set(newUserData);
       console.log(`Created new user document for ${userId} with ${plan} plan`);
     } else {
       // Update existing user document
+      console.log('Updating existing user document with data:', updateData);
       await userRef.update(updateData);
       console.log(`Updated existing user document for ${userId} to ${plan} plan`);
     }

@@ -6,6 +6,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Webhook received at:', new Date().toISOString());
     const body = await request.text();
     const signature = request.headers.get('stripe-signature')!;
 
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
 
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      console.log('Webhook event type:', event.type);
     } catch (err) {
       console.error('Webhook signature verification failed:', err);
       return NextResponse.json(
@@ -25,9 +27,12 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
+        console.log('Checkout session completed:', session.id);
+        console.log('Session metadata:', session.metadata);
         const { userId, plan, isTrial } = session.metadata!;
         
         if (userId && plan) {
+          console.log(`Processing payment for user ${userId}, plan ${plan}`);
           try {
             // Check if this is a trial subscription
             const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
@@ -49,7 +54,9 @@ export async function POST(request: NextRequest) {
             });
 
             if (!updateResponse.ok) {
-              throw new Error('Failed to update user plan via API');
+              const errorText = await updateResponse.text();
+              console.error('Failed to update user plan via API:', errorText);
+              throw new Error(`Failed to update user plan via API: ${errorText}`);
             }
             
             console.log(`User ${userId} ${isTrialSubscription ? 'started trial for' : 'upgraded to'} ${plan} plan`);
